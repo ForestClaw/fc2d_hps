@@ -97,8 +97,9 @@ void hps_destroy (fc2d_hps_options_t * hps_opt)
     FCLAW_ASSERT (hps_opt->kv_patch_solver != NULL);
     sc_keyvalue_destroy (hps_opt->kv_patch_solver);
 
-    FCLAW_ASSERT (hps_opt->kv_patch_solver != NULL);
-    sc_keyvalue_destroy (hps_opt->kv_patch_solver);
+    FCLAW_ASSERT (hps_opt->kv_operator_type != NULL);
+    sc_keyvalue_destroy (hps_opt->kv_operator_type);
+
 }
 
 /* ------------------------------------------------------
