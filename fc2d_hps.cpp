@@ -70,40 +70,11 @@ void hps_rhs(fclaw2d_global_t *glob,
 /* ------------------------------------- Fake solution -------------------------------- */
 
 static
-void cb_copy_rhs(fclaw2d_domain_t *domain,
-                     fclaw2d_patch_t *patch,
-                     int blockno,
-                     int patchno,
-                     void* user)
-{
-    fclaw2d_global_iterate_t* g = (fclaw2d_global_iterate_t*) user;
-
-    int mx,my,mbc;
-    double dx,dy,xlower,ylower;
-    fclaw2d_clawpatch_grid_data(g->glob,patch,&mx,&my,&mbc,
-                                &xlower,&ylower,&dx,&dy);
-
-    int mfields;
-    double *rhs;
-    fclaw2d_clawpatch_rhs_data(g->glob,patch,&rhs,&mfields);
-    FCLAW_ASSERT(mfields == 1);
-
-    double *soln;
-    fclaw2d_clawpatch_elliptic_soln_data(g->glob,patch,&soln,&mfields);
-
-    int size = (mx+2*mbc)*(my + 2*mbc)*mfields;
-
-    /* Just copy RHS to soln;   working on solver */
-    memcpy(soln,rhs,size*sizeof(double));
-}
-
-static
 void hps_solve(fclaw2d_global_t *glob)
 {
     fclaw_global_essentialf("Solving ...\n");
 
-    /* Set up right hand side by iterating over patches. */
-    fclaw2d_global_iterate_patches (glob, cb_copy_rhs, NULL);
+    /* Solution is always returned  in RHS, so we just don't do anything ... */
 }
 
 
@@ -216,11 +187,18 @@ void hps_compute_error(fclaw2d_global_t *glob,
 
         double *area = fclaw2d_clawpatch_get_area(glob,patch);  /* Might be null */
 
-        /* Solution is stored in the RHS */
-        double *rhs, *err, *soln;  
+        /* Computing =olution is stored in the RHS; true solution is stored in soln */
         int mfields;
+
+        /* Computed solution */
+        double *rhs;
         fclaw2d_clawpatch_rhs_data(glob,patch,&rhs,&mfields);
+
+        double *err;
         fclaw2d_clawpatch_elliptic_error_data(glob,patch,&err,&mfields);
+
+        /* True solution */
+        double *soln;
         fclaw2d_clawpatch_elliptic_soln_data(glob,patch,&soln,&mfields);
 
         double t = glob->curr_time;

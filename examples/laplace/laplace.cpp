@@ -54,10 +54,6 @@ fclaw2d_domain_t* create_domain(sc_MPI_Comm mpicomm, fclaw_options_t* fclaw_opt)
 static
 void run_program(fclaw2d_global_t* glob)
 {
-    // const laplace_options_t           *user_opt;
-
-    // user_opt = laplace_get_options(glob);
-
     /* ---------------------------------------------------------------
        Set domain data.
        --------------------------------------------------------------- */
