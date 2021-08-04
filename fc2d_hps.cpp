@@ -321,8 +321,8 @@ void fc2d_hps_solver_initialize()
 
     /* BCs : Include inhomogeneous boundary conditions on the right hand side */
 	fc2d_hps_vtable_t*  hps_vt = hps_vt_init();	
-    hps_vt->fort_apply_bc = &FC2D_HPS_FORT_APPLY_BC;
-    hps_vt->fort_eval_bc  = &FC2D_HPS_FORT_EVAL_BC;
+    hps_vt->fort_apply_bc = &FC2D_HPS_FORT_APPLY_BC_DEFAULT;
+    hps_vt->fort_eval_bc  = &FC2D_HPS_FORT_EVAL_BC_DEFAULT;
 
     /* Diagnostics : Error, conservation */
     fclaw2d_clawpatch_vtable_t *clawpatch_vt = fclaw2d_clawpatch_vt();

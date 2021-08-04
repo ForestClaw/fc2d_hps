@@ -88,6 +88,10 @@ void laplace_link_solvers(fclaw2d_global_t *glob)
     /* Specialized for this example */
     clawpatch_vt->fort_compute_patch_error = &LAPLACE_COMPUTE_ERROR;
 
+    /* BCs : Include inhomogeneous boundary conditions on the right hand side */
+    hps_vt->fort_apply_bc = &LAPLACE_FORT_APPLY_BC;
+    hps_vt->fort_eval_bc  = &LAPLACE_FORT_EVAL_BC;
+
     // Output routines
 
     fclaw_options_t *fclaw_opt = fclaw2d_get_options(glob);

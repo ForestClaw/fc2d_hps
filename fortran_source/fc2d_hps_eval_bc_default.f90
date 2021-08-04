@@ -5,7 +5,7 @@ double precision function fc2d_hps_fort_eval_bc_default(iface,t,x,y)
     integer iface
     double precision t, x,y
 
-    hps_fort_eval_bc_default = 0
+    fc2d_hps_fort_eval_bc_default = 0
 
     return
     

@@ -84,7 +84,6 @@ void LAPLACE_COMPUTE_ERROR(int* blockno, int *mx, int *my, int* mbc, int* mfield
                            double error[], double soln[]);
 
 
-#if 0
 #define LAPLACE_FORT_APPLY_BC FCLAW_F77_FUNC(laplace_fort_apply_bc, \
                                             LAPLACE_FORT_APPLY_BC)
 
@@ -102,7 +101,6 @@ void LAPLACE_FORT_APPLY_BC(const int* blockno, const  int* mx, const  int* my,
 double LAPLACE_FORT_EVAL_BC(const int* iface, const double* t,
                             const double* x, const double* y);
 
-#endif
 
 /* ----------------------------- Fortran - output functions --------------------------- */
 
