@@ -1,5 +1,5 @@
-subroutine hps_fort_apply_bc_default(blockno, mx, my,mbc,meqn,xlower,ylower, &
-    dx,dy,t,intersects_bc,bctype,rhs,g_bc, cons_check, flux_sum)
+subroutine fc2d_hps_fort_apply_bc_default(blockno, mx, my,mbc,meqn, & 
+    xlower,ylower, dx,dy,t,intersects_bc,bctype,rhs,g_bc, cons_check, flux_sum)
 
     implicit none
 
@@ -32,6 +32,9 @@ subroutine hps_fort_apply_bc_default(blockno, mx, my,mbc,meqn,xlower,ylower, &
             elseif (bctype(iface) .eq. 2) then
                 a = 0
                 b = 1
+            else
+                !! Default values (shouldn't get here, but we want to avoid 
+                !! uninitialized compiler warnings)
             endif
 
             if (idir == 0) then
@@ -103,5 +106,5 @@ subroutine hps_fort_apply_bc_default(blockno, mx, my,mbc,meqn,xlower,ylower, &
         end if 
     end do
 
-end subroutine hps_fort_apply_bc_default
+end subroutine fc2d_hps_fort_apply_bc_default
 

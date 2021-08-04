@@ -26,13 +26,20 @@
 #ifndef FC2D_HPS_H
 #define FC2D_HPS_H
 
+/* Include headers here that are needed for other HPS routines */
+#include <fclaw2d_include_all.h>
+
+#include <fclaw2d_elliptic_solver.h>
+
+#include <fclaw2d_clawpatch.h>
+#include <fclaw2d_clawpatch_options.h>
+#include <fclaw2d_clawpatch_output_ascii.h> 
+#include <fclaw2d_clawpatch_output_vtk.h>
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-struct fclaw2d_global;
-struct fclaw2d_patch;
 
 typedef  struct fc2d_hps_vtable  fc2d_hps_vtable_t;
 
@@ -53,18 +60,29 @@ typedef  void (*fc2d_hps_fort_beta_t)(const double* x,
                                       double grad[]);
 
 typedef double (*fc2d_hps_fort_eval_bc_t)(const int *iface, const double *t, 
-                                                const double *x, const double *y);
+                                          const double *x, const double *y);
 
 typedef void (*fc2d_hps_fort_apply_bc_t)(const int* blockno, const  int* mx, const  int* my, 
-                                               const  int* mbc, const  int* meqn, 
-                                               const double* xlower, const double* ylower,
-                                               const double* dx, const double* dy, 
-                                               const double *t, 
-                                               int intersects_bc[], int mthbc[], 
-                                               double rhs[], fc2d_hps_fort_eval_bc_t g_bc, 
-                                               int* cons_check, double flux_sum[]);
+                                         const  int* mbc, const  int* meqn, 
+                                         const double* xlower, const double* ylower,
+                                         const double* dx, const double* dy, 
+                                         const double *t, 
+                                         int intersects_bc[], int mthbc[], 
+                                         double rhs[], fc2d_hps_fort_eval_bc_t g_bc, 
+                                         int* cons_check, double flux_sum[]);
 
 typedef void (*fc2d_hps_patch_solver_t)(struct fclaw2d_global *glob);
+
+
+typedef void (*fc2d_hps_fort_output_t)(const char* matname1,
+                                       int* mx,        int* my,
+                                       int* meqn,      int* mbc,
+                                       double* xlower, double* ylower,
+                                       double* dx,     double* dy,
+                                       double q[],double soln[], double error[],
+                                       int* patch_num, int* level,
+                                       int* blockno,   int* mpirank);
+
 
 /* -------------------------- Solver and utilities ------------------------------------ */
 
@@ -86,6 +104,9 @@ struct fc2d_hps_vtable
     fc2d_hps_fort_apply_bc_t   fort_apply_bc;
     fc2d_hps_fort_eval_bc_t    fort_eval_bc;
 
+    /* Allows us to output error and exact solution, along with computed solution */
+    fc2d_hps_fort_output_t     fort_output;   
+
 	int is_set;
 };
 
@@ -96,11 +117,11 @@ fc2d_hps_vtable_t* fc2d_hps_vt(void);
 
 /* ----------------------------- User access to solver functions ---------------------- */
 
-void fc2d_hps_setprob(struct fclaw2d_global* glob);
+void fc2d_hps_setprob(fclaw2d_global_t* glob);
 
 
-void fc2d_hps_rhs(struct fclaw2d_global* glob,
-                  struct fclaw2d_patch *patch,
+void fc2d_hps_rhs(fclaw2d_global_t* glob,
+                  fclaw2d_patch_t *patch,
                   int blockno,
                   int patchno);
 

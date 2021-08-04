@@ -10,8 +10,12 @@ libhps_compiled_sources = \
 	src/solvers/fc2d_hps/fc2d_hps.cpp \
 	src/solvers/fc2d_hps/fc2d_hps_options.c \
 	src/solvers/fc2d_hps/fc2d_hps_physical_bc.c \
-	src/solvers/fc2d_hps/fort_4.6/hps_apply_bc_default.f90 \
-	src/solvers/fc2d_hps/fort_4.6/hps_eval_bc_default.f90
+	src/solvers/fc2d_hps/fc2d_hps_output_ascii.c \
+	src/solvers/fc2d_hps/fc2d_hps_diagnostics.c \
+ 	src/solvers/fc2d_hps/fortran_source/fc2d_hps_apply_bc.f90 \
+	src/solvers/fc2d_hps/fortran_source/fc2d_hps_eval_bc.f90 \
+	src/solvers/fc2d_hps/fortran_source/fc2d_hps_tag4refinement.f90 \
+	src/solvers/fc2d_hps/fortran_source/fc2d_hps_tag4coarsening.f90
 
 ## Name of library to build
 lib_LTLIBRARIES += src/solvers/fc2d_hps/libfc2d_hps.la

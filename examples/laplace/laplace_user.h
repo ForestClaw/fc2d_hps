@@ -26,10 +26,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef LAPLACE_USER_H
 #define LAPLACE_USER_H
 
+/* ForestClaw headers */
 #include <fclaw2d_include_all.h>
 
-#include <fc2d_hps.h>
+#include <fclaw2d_output.h>
+#include <fclaw2d_diagnostics.h>
 
+#include <fclaw2d_elliptic_solver.h>
+
+#include <fclaw2d_clawpatch_options.h>
+#include <fclaw2d_clawpatch.h>
+
+#include <fc2d_hps.h>
+#include <fc2d_hps_options.h>
+#include <fc2d_hps_output_ascii.h>
+
+/* Application headers */
 #include "laplace_options.h"
 
 
@@ -72,6 +84,7 @@ void LAPLACE_COMPUTE_ERROR(int* blockno, int *mx, int *my, int* mbc, int* mfield
                            double error[], double soln[]);
 
 
+#if 0
 #define LAPLACE_FORT_APPLY_BC FCLAW_F77_FUNC(laplace_fort_apply_bc, \
                                             LAPLACE_FORT_APPLY_BC)
 
@@ -89,14 +102,14 @@ void LAPLACE_FORT_APPLY_BC(const int* blockno, const  int* mx, const  int* my,
 double LAPLACE_FORT_EVAL_BC(const int* iface, const double* t,
                             const double* x, const double* y);
 
-
+#endif
 
 /* ----------------------------- Fortran - output functions --------------------------- */
 
 #define  LAPLACE_FORT_OUTPUT_ASCII \
            FCLAW_F77_FUNC(laplace_fort_output_ascii, \
                           LAPLACE_FORT_OUTPUT_ASCII)
-void LAPLACE_FORT_OUTPUT_ASCII(char* matname1,
+void LAPLACE_FORT_OUTPUT_ASCII(const char* matname1,
                               int* mx,        int* my,
                               int* meqn,      int* mbc,
                               double* xlower, double* ylower,
@@ -105,12 +118,14 @@ void LAPLACE_FORT_OUTPUT_ASCII(char* matname1,
                               int* patch_num, int* level,
                               int* blockno,   int* mpirank);
 
+#if 0
 #define LAPLACE_FORT_HEADER_ASCII \
          FCLAW_F77_FUNC(laplace_fort_header_ascii, \
                         LAPLACE_FORT_HEADER_ASCII)
 void LAPLACE_FORT_HEADER_ASCII(char* matname1, char* matname2,
                               double* time, int* meqn, int* maux, 
                               int* ngrids);
+#endif
 
 
 

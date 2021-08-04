@@ -25,19 +25,6 @@
 
 #include "laplace_user.h"
     
-#include <fclaw2d_include_all.h>
-
-#include <fclaw2d_output.h>
-#include <fclaw2d_diagnostics.h>
-
-#include <fclaw2d_elliptic_solver.h>
-
-#include <fclaw2d_clawpatch_options.h>
-#include <fclaw2d_clawpatch.h>
-
-#include <fc2d_hps.h>
-#include <fc2d_hps_options.h>
-
 
 static
 fclaw2d_domain_t* create_domain(sc_MPI_Comm mpicomm, fclaw_options_t* fclaw_opt)

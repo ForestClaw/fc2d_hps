@@ -1,5 +1,5 @@
 
-double precision function hps_fort_eval_bc_default(iface,t,x,y)
+double precision function fc2d_hps_fort_eval_bc_default(iface,t,x,y)
     implicit none
 
     integer iface
@@ -9,4 +9,4 @@ double precision function hps_fort_eval_bc_default(iface,t,x,y)
 
     return
     
-end function hps_fort_eval_bc_default
+end function fc2d_hps_fort_eval_bc_default
