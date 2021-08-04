@@ -67,6 +67,45 @@ void hps_rhs(fclaw2d_global_t *glob,
                     &xlower,&ylower,&dx,&dy,rhs);
 }
 
+/* ------------------------------------- Fake solution -------------------------------- */
+
+static
+void cb_copy_rhs(fclaw2d_domain_t *domain,
+                     fclaw2d_patch_t *patch,
+                     int blockno,
+                     int patchno,
+                     void* user)
+{
+    fclaw2d_global_iterate_t* g = (fclaw2d_global_iterate_t*) user;
+
+    int mx,my,mbc;
+    double dx,dy,xlower,ylower;
+    fclaw2d_clawpatch_grid_data(g->glob,patch,&mx,&my,&mbc,
+                                &xlower,&ylower,&dx,&dy);
+
+    int mfields;
+    double *rhs;
+    fclaw2d_clawpatch_rhs_data(g->glob,patch,&rhs,&mfields);
+    FCLAW_ASSERT(mfields == 1);
+
+    double *soln;
+    fclaw2d_clawpatch_elliptic_soln_data(g->glob,patch,&soln,&mfields);
+
+    int size = (mx+2*mbc)*(my + 2*mbc)*mfields;
+
+    /* Just copy RHS to soln;   working on solver */
+    memcpy(soln,rhs,size*sizeof(double));
+}
+
+static
+void hps_solve(fclaw2d_global_t *glob)
+{
+    fclaw_global_essentialf("Solving ...\n");
+
+    /* Set up right hand side by iterating over patches. */
+    fclaw2d_global_iterate_patches (glob, cb_copy_rhs, NULL);
+}
+
 
 /* ---------------------------------- Output functions -------------------------------- */
 
@@ -277,7 +316,7 @@ void fc2d_hps_solver_initialize()
     /* Elliptic specific functions */
     fclaw2d_elliptic_vtable_t *elliptic_vt = fclaw2d_elliptic_vt();
     elliptic_vt->setup = hps_setup_solver;
-    elliptic_vt->solve = fc2d_hps_solve;    
+    elliptic_vt->solve = hps_solve;    
     elliptic_vt->apply_bc = fc2d_hps_physical_bc;
 
     /* BCs : Include inhomogeneous boundary conditions on the right hand side */

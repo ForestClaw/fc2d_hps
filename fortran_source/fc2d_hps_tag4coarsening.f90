@@ -50,7 +50,7 @@ subroutine fc2d_hps_fort_tag4coarsening(mx,my,mbc,mfields, &
 end subroutine fc2d_hps_fort_tag4coarsening
 
 subroutine fc2d_hps_test_refine(blockno,mx,my,mbc, & 
-    mfields,mq,rhsl, qmin,qmax,dx,dy,xlower,ylower, & 
+    mfields,mq,rhs, qmin,qmax,dx,dy,xlower,ylower, & 
     coarsen_threshold,init_flag,tag_patch)
     
     implicit none
@@ -64,7 +64,7 @@ subroutine fc2d_hps_test_refine(blockno,mx,my,mbc, &
     integer i,j, ii, jj
 
     integer :: exceeds_th, fclaw2d_clawpatch_exceeds_threshold
-    logical(kind=4) :: is_ghost, fclaw2d_clawpatch46_is_ghost
+    logical(kind=4) :: is_ghost
 
     is_ghost = .false.
     do i = 1,mx

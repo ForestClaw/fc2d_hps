@@ -1,7 +1,9 @@
 # -- fortran library
 add_library(hps_f OBJECT
-  fortran_source/fc2d_hps_apply_bc_default.f90  
-  fortran_source/fc2d_hps_eval_bc_default.f90
+  fortran_source/fc2d_hps_tag4refinement.f90
+  fortran_source/fc2d_hps_tag4coarsening.f90
+  fortran_source/fc2d_hps_apply_bc.f90  
+  fortran_source/fc2d_hps_eval_bc.f90
 )
 
 target_include_directories(hps_f INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/include)
@@ -14,7 +16,8 @@ target_sources(hps PRIVATE
   fc2d_hps.cpp  
   fc2d_hps_options.c  
   fc2d_hps_physical_bc.c  
-  fc2d_hps_solve.cpp  
+  fc2d_hps_output_ascii.c  
+  fc2d_hps_diagnostics.c  
   $<TARGET_OBJECTS:hps_f>
 )
 
