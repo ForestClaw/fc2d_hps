@@ -66,11 +66,11 @@ void cb_init_storage(fclaw2d_domain_t *domain,
 }
 
 static
-void cb_create_leaf_T(fclaw2d_domain_t *domain,
-                      fclaw2d_patch_t *fine_patches,
-                      int blockno,
-                      int fine0_patchno,
-                      void *user)
+void cb_merge(fclaw2d_domain_t *domain,
+              fclaw2d_patch_t *fine_patches,
+              int blockno,
+              int fine0_patchno,
+              void *user)
 {
     fclaw2d_global_iterate_t* g = (fclaw2d_global_iterate_t*) user;
 
@@ -137,7 +137,7 @@ void fc2d_hps_solve(fclaw2d_global_t* glob)
     FCLAW_ASSERT(hps_vt->patch_solver != NULL);
 
     /* Create T matrices for each leaf and merge to create T for parent leaves */
-    fclaw2d_global_iterate_families(glob, cb_create_leaf_T, &Tstore);
+    fclaw2d_global_iterate_families(glob, cb_merge, &Tstore);
 
 
 #if 0
