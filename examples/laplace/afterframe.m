@@ -12,7 +12,7 @@ if Frame == 0
     if mq == 1
         % RHS 
         caxis([-0.01, 0.01]);
-        tstr = 'RHS';
+        tstr = 'RHS (Frame = 0)';
     else
         error('Only print out RHS for Frame == 0');
     end
@@ -20,15 +20,15 @@ elseif Frame == 1
     if mq == 1
         % Computed solution
         caxis([-0.2, 1]);
-        tstr = 'Computed solution';
+        tstr = 'Computed solution (Frame = 1)';
     elseif mq == 2
         % Exact solution
         caxis([-0.2, 1]);
-        tstr = 'Exact solution';
+        tstr = 'Exact solution (Frame = 1)';
     elseif mq == 3        
         % Error
         caxis([-1,1]*1e-2);
-        tstr = 'Error';
+        tstr = 'Error (Frame = 1)';
     end
 end
 

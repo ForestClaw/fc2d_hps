@@ -49,17 +49,18 @@ void fc2d_hps_time_header_ascii(fclaw2d_global_t* glob, int iframe)
     int mfields = clawpatch_opt->rhs_fields;  
     int maux = clawpatch_opt->maux;
 
+    int mf;
+    const fclaw_options_t *fclaw_opt = fclaw2d_get_options(glob);
+    if (fclaw_opt->compute_error)
+        mf = mfields + 2;  /* Print out error and true solution */
+    else
+        mf = mfields;  /* Only print out computed solution */
+
 
     FILE *f2 = fopen(matname2,"w");
     fprintf(f2,"%12.6f %23s\n%5d %30s\n%5d %30s\n%5d %30s\n%5d %30s\n",time,"time",
-            mfields+2,"mfields",ngrids,"ngrids",maux,"num_aux",2,"num_dim");
+            mf,"mfields",ngrids,"ngrids",maux,"num_aux",2,"num_dim");
     fclose(f2);
-
-#if 0
-    fclaw2d_clawpatch_vtable_t *clawpatch_vt = fclaw2d_clawpatch_vt();
-    /* header writes out mfields+2 fields (computed soln, true soln, error); */
-    clawpatch_vt->fort_header_ascii(matname1,matname2,&time,&mfields,&maux,&ngrids);
-#endif    
 
 }
 
@@ -102,8 +103,20 @@ void cb_hps_output_ascii(fclaw2d_domain_t * domain,
     fc2d_hps_vtable_t*  hps_vt = fc2d_hps_vt(); 
     FCLAW_ASSERT(hps_vt->fort_output != NULL);
 
-    hps_vt->fort_output(fname,&mx,&my,&mfields,&mbc,
-                        &xlower,&ylower,&dx,&dy,rhs,
-                        soln, err, &global_num, &level,&blockno,
-                        &glob->mpirank);
+    if (fclaw_opt->compute_error)
+    {        
+        hps_vt->fort_output(fname,&mx,&my,&mfields,&mbc,
+                            &xlower,&ylower,&dx,&dy,rhs,
+                            soln, err, &global_num, &level,&blockno,
+                            &glob->mpirank);
+    }
+    else
+    {
+        fclaw2d_clawpatch_vtable_t* clawpatch_vt = fclaw2d_clawpatch_vt();
+        clawpatch_vt->fort_output_ascii(fname,&mx,&my,&mfields,&mbc,
+                                        &xlower,&ylower,&dx,&dy,rhs,
+                                        &global_num,&level,&blockno,
+                                        &glob->mpirank);        
+    }
+
 }

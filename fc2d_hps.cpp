@@ -294,10 +294,12 @@ void fc2d_hps_solver_initialize()
     /* Elliptic specific functions */
     fclaw2d_elliptic_vtable_t *elliptic_vt = fclaw2d_elliptic_vt();
     elliptic_vt->setup = hps_setup_solver;
+
+    /* Solver doesn't do anything so far */
     elliptic_vt->solve = hps_solve;    
     elliptic_vt->apply_bc = fc2d_hps_physical_bc;
 
-    /* BCs : Include inhomogeneous boundary conditions on the right hand side */
+    /* BCs : Homogeneous BCs by default */
 	fc2d_hps_vtable_t*  hps_vt = hps_vt_init();	
     hps_vt->fort_apply_bc = &FC2D_HPS_FORT_APPLY_BC_DEFAULT;
     hps_vt->fort_eval_bc  = &FC2D_HPS_FORT_EVAL_BC_DEFAULT;
@@ -317,11 +319,6 @@ void fc2d_hps_solver_initialize()
     diag_vt->patch_compute_diagnostics  = fc2d_hps_diagnostics_compute;
     diag_vt->patch_gather_diagnostics   = fc2d_hps_diagnostics_gather;
     diag_vt->patch_finalize_diagnostics = fc2d_hps_diagnostics_finalize;
-
-#if 0
-    /* solver is specified in solve routine, above*/
-    hps_vt->patch_solver = NULL;
-#endif    
 
 	hps_vt->is_set = 1;
 }

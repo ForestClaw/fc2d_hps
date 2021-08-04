@@ -93,13 +93,11 @@ void laplace_link_solvers(fclaw2d_global_t *glob)
     hps_vt->fort_eval_bc  = &LAPLACE_FORT_EVAL_BC;
 
     // Output routines
+    clawpatch_vt->time_header_ascii = fc2d_hps_time_header_ascii;
+    clawpatch_vt->cb_output_ascii = cb_hps_output_ascii;     
 
-    fclaw_options_t *fclaw_opt = fclaw2d_get_options(glob);
-    if (fclaw_opt->compute_error) 
-    {
-        clawpatch_vt->time_header_ascii = fc2d_hps_time_header_ascii;
-        clawpatch_vt->cb_output_ascii = cb_hps_output_ascii;        
-        hps_vt->fort_output = &LAPLACE_FORT_OUTPUT_ASCII; 
-    }
+    /* This one will be used only if we are also computing the error.  In this case
+       the error and exact solution will be output, along with computed solution */          
+    hps_vt->fort_output = &LAPLACE_FORT_OUTPUT_ASCII; 
 }
 

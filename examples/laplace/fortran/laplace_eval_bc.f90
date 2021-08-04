@@ -8,7 +8,7 @@ double precision function laplace_fort_eval_bc(iface,t,x,y)
     common /comm_bc/ bctype
 
     integer :: normals(0:3,2)
-    double precision :: q,grad(2), qn, a,b
+    double precision :: q, grad(2), qn, a,b
 
     data normals /-1,1,0,0,0,0,-1,1/
 
@@ -24,6 +24,8 @@ double precision function laplace_fort_eval_bc(iface,t,x,y)
     elseif (bctype(iface) .eq. 2) then
         a = 0
         b = 1
+    else
+        !! keep compiler warnings happy
     endif
 
     laplace_fort_eval_bc = a*q + b*qn
