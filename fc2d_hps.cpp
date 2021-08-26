@@ -29,8 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fc2d_hps_fort.h"
 #include "fc2d_hps_solve.h"
 #include "fc2d_hps_diagnostics.h"
-
-
+#include "fc2d_hps_vector.hpp"
 
 static fc2d_hps_vtable_t s_hps_vt;
 
