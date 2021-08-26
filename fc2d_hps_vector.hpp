@@ -27,6 +27,7 @@
 #define FC2D_HPS_VECTOR_HPP
 
 #include <vector>
+#include <string>
 
 template<class T>
 class fc2d_hps_vector : public std::vector<T> {
@@ -96,10 +97,21 @@ public:
 
 	}
 
-private:
-
-
-
 };
+
+template<class T>
+fc2d_hps_vector<T> operator+(fc2d_hps_vector<T> lhs, fc2d_hps_vector<T> rhs) {
+
+	if (lhs.size() != rhs.size()) {
+		throw std::invalid_argument("[fc2d_hps_vector<T>::operator+] Size mismatch. Size of `lhs` and `rhs` are not the same");
+	}
+
+	fc2d_hps_vector<T> res = lhs;
+	for (int i = 0; i < res.size(); i++) {
+		res[i] += rhs[i];
+	}
+	return res;
+
+}
 
 #endif // FC2D_HPS_VECTOR_HPP
