@@ -1,0 +1,16 @@
+# CMake Version
+cmake_minimum_required(VERSION 3.1)
+
+# Inputs for GTest Configuration
+project(googletest-download NONE)
+include(ExternalProject)
+ExternalProject_Add(googletest
+	GIT_REPOSITORY https://github.com/google/googletest
+	GIT_TAG release-1.11.0
+	SOURCE_DIR "${CMAKE_BINARY_DIR}/src/solvers/fc2d_hps/googletest-src"
+	BINARY_DIR "${CMAKE_BINARY_DIR}/src/solvers/fc2d_hps/googletest-build"
+	CONFIGURE_COMMAND ""
+	BUILD_COMMAND ""
+	INSTALL_COMMAND ""
+	TEST_COMMAND ""
+)

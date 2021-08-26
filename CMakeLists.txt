@@ -49,3 +49,10 @@ install(TARGETS hps
 # -- imported target, for use from FetchContent
 add_library(FORESTCLAW::HPS INTERFACE IMPORTED GLOBAL)
 target_link_libraries(FORESTCLAW::HPS INTERFACE hps)
+
+# -- unit tests
+configure_file(CMakeLists.txt.in ${CMAKE_BINARY_DIR}/src/solvers/fc2d_hps/googletest-download/CMakeLists.txt)
+execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" . WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/src/solvers/fc2d_hps/googletest-download )
+execute_process(COMMAND ${CMAKE_COMMAND} --build . WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/src/solvers/fc2d_hps/googletest-download )
+add_subdirectory(${CMAKE_BINARY_DIR}/src/solvers/fc2d_hps/googletest-src ${CMAKE_BINARY_DIR}/src/solvers/fc2d_hps/googletest-build)
+add_subdirectory(tests)
