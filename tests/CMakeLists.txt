@@ -2,11 +2,8 @@ enable_testing()
 find_package(GTest REQUIRED)
 include(GoogleTest)
 
-# file(
-# 	GLOB tests "./*.cpp"
-# )
 file(
-	GLOB tests "./fc2d_hps_unittest_hello.cpp"
+	GLOB tests "./*.cpp"
 )
 list(REMOVE_ITEM tests "./main.cpp")
 

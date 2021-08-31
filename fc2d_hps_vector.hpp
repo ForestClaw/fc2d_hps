@@ -52,9 +52,13 @@ public:
 	 * @param index Index of object
 	 * @return T& Object at index
 	 */
-	T& operator[](std::size_t index) {
-		return this->std::vector<T>::operator[](index);
-	}
+	// @TODO: Fix index operator to allow for error handling
+	// T& operator[](std::size_t index) {
+	// 	if (index < 0 || index >= this->size()) {
+	// 		throw std::out_of_range("[fc2d_hps_vector<T>::operator[]] `index` is either negative or out of range.");
+	// 	}
+	// 	return this->std::vector<T>::operator[](index);
+	// }
 
 	/**
 	 * @brief Extracts and returns a subset of the vector.
@@ -100,7 +104,7 @@ public:
 };
 
 template<class T>
-fc2d_hps_vector<T> operator+(fc2d_hps_vector<T> lhs, fc2d_hps_vector<T> rhs) {
+fc2d_hps_vector<T> operator+(fc2d_hps_vector<T> & lhs, fc2d_hps_vector<T> & rhs) {
 
 	if (lhs.size() != rhs.size()) {
 		throw std::invalid_argument("[fc2d_hps_vector<T>::operator+] Size mismatch. Size of `lhs` and `rhs` are not the same");
@@ -109,6 +113,103 @@ fc2d_hps_vector<T> operator+(fc2d_hps_vector<T> lhs, fc2d_hps_vector<T> rhs) {
 	fc2d_hps_vector<T> res = lhs;
 	for (int i = 0; i < res.size(); i++) {
 		res[i] += rhs[i];
+	}
+	return res;
+
+}
+
+template<class T>
+fc2d_hps_vector<T> operator+(fc2d_hps_vector<T> & lhs, T rhs) {
+
+	fc2d_hps_vector<T> res = lhs;
+	for (int i = 0; i < res.size(); i++) {
+		res[i] += rhs;
+	}
+	return res;
+
+}
+
+template<class T>
+fc2d_hps_vector<T> operator+(T lhs, fc2d_hps_vector<T> & rhs) {
+
+	fc2d_hps_vector<T> res = rhs;
+	for (int i = 0; i < res.size(); i++) {
+		res[i] += lhs;
+	}
+	return res;
+
+}
+
+template<class T>
+fc2d_hps_vector<T> operator-(fc2d_hps_vector<T> & lhs, fc2d_hps_vector<T> & rhs) {
+
+	if (lhs.size() != rhs.size()) {
+		throw std::invalid_argument("[fc2d_hps_vector<T>::operator+] Size mismatch. Size of `lhs` and `rhs` are not the same");
+	}
+
+	fc2d_hps_vector<T> res = lhs;
+	for (int i = 0; i < res.size(); i++) {
+		res[i] -= rhs[i];
+	}
+	return res;
+
+}
+
+template<class T>
+fc2d_hps_vector<T> operator-(fc2d_hps_vector<T> & lhs, T rhs) {
+
+	fc2d_hps_vector<T> res = lhs;
+	for (int i = 0; i < res.size(); i++) {
+		res[i] -= rhs;
+	}
+	return res;
+
+}
+
+// @TODO: Not sure why this function isn't working in unit testing...
+// template<class T>
+// fc2d_hps_vector<T> operator-(T lhs, fc2d_hps_vector<T> & rhs) {
+
+// 	fc2d_hps_vector<T> res(rhs.size(), lhs);
+// 	for (int i = 0; i < res.size(); i++) {
+// 		res[i] = res[i] - rhs[i];
+// 	}
+// 	return res;
+
+// }
+
+template<class T>
+fc2d_hps_vector<T> operator*(fc2d_hps_vector<T> & lhs, fc2d_hps_vector<T> & rhs) {
+
+	if (lhs.size() != rhs.size()) {
+		throw std::invalid_argument("[fc2d_hps_vector<T>::operator+] Size mismatch. Size of `lhs` and `rhs` are not the same");
+	}
+
+	fc2d_hps_vector<T> res = lhs;
+	for (int i = 0; i < res.size(); i++) {
+		res[i] *= rhs[i];
+	}
+	return res;
+
+}
+
+template<class T>
+fc2d_hps_vector<T> operator*(fc2d_hps_vector<T> & lhs, T rhs) {
+
+	fc2d_hps_vector<T> res = lhs;
+	for (int i = 0; i < res.size(); i++) {
+		res[i] *= rhs;
+	}
+	return res;
+
+}
+
+template<class T>
+fc2d_hps_vector<T> operator*(T lhs, fc2d_hps_vector<T> & rhs) {
+
+	fc2d_hps_vector<T> res = rhs;
+	for (int i = 0; i < res.size(); i++) {
+		res[i] *= lhs;
 	}
 	return res;
 
