@@ -21,7 +21,7 @@ target_sources(hps PRIVATE
   $<TARGET_OBJECTS:hps_f>
 )
 
-target_link_libraries(hps PUBLIC clawpatch)
+target_link_libraries(hps PUBLIC clawpatch blas lapack)
 
 target_include_directories(hps
   INTERFACE
@@ -36,7 +36,9 @@ install(FILES
   fc2d_hps_fort.h  
   fc2d_hps_options.h  
   fc2d_hps_physical_bc.h  
-  fc2d_hps_solve.h    
+  fc2d_hps_solve.h
+  fc2d_hps_vector.hpp
+  fc2d_hps_matrix.hpp
   DESTINATION include
 )
 
