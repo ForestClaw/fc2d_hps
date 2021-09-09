@@ -20,14 +20,6 @@ foreach(file ${tests})
 		FORESTCLAW::HPS
 		gtest_main
 	)
-	# target_include_directories(
-	# 	"${name}_tests" PRIVATE
-	# 	${CMAKE_CURRENT_SOURCE_DIR}
-	# )
-	# add_test(
-	# 	NAME ${name}
-	# 	COMMAND "${name}_tests"
-	# )
 	gtest_add_tests(
 		TARGET "${name}_tests"
 	)
