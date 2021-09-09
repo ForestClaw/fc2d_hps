@@ -28,7 +28,8 @@
 
 #include <vector>
 #include <string>
-#include <fc2d_hps_vector.hpp>
+#include <iostream>
+#include "fc2d_hps_vector.hpp"
 
 extern "C" {
     void dgemv_(char* TRANS, int* M, int* N, double* ALPHA, double* A, int* LDA, double* X, int* INCX, double* BETA, double* Y, int* INCY);
@@ -48,6 +49,10 @@ public:
 
 	fc2d_hps_matrix() :
 		rows(0), cols(0)
+			{}
+
+	fc2d_hps_matrix(std::size_t n_rows, std::size_t n_cols) :
+		std::vector<T>(n_rows * n_cols), rows(n_rows), cols(n_cols)
 			{}
 
 	fc2d_hps_matrix(std::size_t n_rows, std::size_t n_cols, T value) :
