@@ -135,6 +135,7 @@ TEST(QuadTree, traverse) {
 
 void visit2(int& data, int& data0, int& data1, int& data2, int& data3) {
 	std::cerr
+		<< "data  = " << data  << ", "
 		<< "data0 = " << data0 << ", "
 		<< "data1 = " << data1 << ", "
 		<< "data2 = " << data2 << ", "
@@ -152,7 +153,9 @@ TEST(QuadTree, merge) {
 	 * 				/	 |	 |	 \	 
 	 * 				1  	 2 	 3 	  4 
 	 * 			 / | | \        / | | \
-	 *           5 6 7 8       9 10 11 12 
+	 *           5 6 7 8       9 10 11 12
+	 *                      /  |  |  \
+	 *                     13 14 15 16 
 	 * and then merge by adding the leaf values.
 	 * 
 	 * The result at the root should be (5 + 6 + 7 + 8) + 1 + 2 + 3 + (9 + 10 + 11 + 12) + 4 = 78.
