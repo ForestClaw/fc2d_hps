@@ -13,7 +13,9 @@ add_library(hps)
 set_target_properties(hps PROPERTIES EXPORT_NAME HPS)
 
 target_sources(hps PRIVATE 
-  fc2d_hps.cpp  
+  fc2d_hps.cpp
+  fc2d_hps_patchgrid.cpp
+  fc2d_hps_patch.cpp  
   fc2d_hps_options.c  
   fc2d_hps_physical_bc.c  
   fc2d_hps_output_ascii.c  
