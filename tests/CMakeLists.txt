@@ -19,6 +19,7 @@ foreach(file ${tests})
 		"${name}_tests"
 		FORESTCLAW::HPS
 		gtest_main
+		fishpack90
 	)
 	gtest_add_tests(
 		TARGET "${name}_tests"

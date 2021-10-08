@@ -24,6 +24,8 @@ fc2d_hps_matrix<double> merge_operation_T(fc2d_hps_matrix<double> T_alpha_11, fc
 
 }
 
+
+
 void merge_4to1(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& child1, fc2d_hps_patch& child2, fc2d_hps_patch& child3) {
 
 	// Error checks
@@ -49,6 +51,8 @@ void merge_4to1(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
 
 	fc2d_hps_matrix<double> T_alpha = child0.T; // TODO: Write copy constructor for fc2d_hps_matrix<T>
 	fc2d_hps_matrix<double> T_beta = child1.T;
+
+	
 
 	// ...
 

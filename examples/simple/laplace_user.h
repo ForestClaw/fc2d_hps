@@ -41,8 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fc2d_hps_options.h>
 #include <fc2d_hps_output_ascii.h>
 
-#include <fclaw2d_clawpatch_fort.h>
-
 /* Application headers */
 #include "laplace_options.h"
 
@@ -127,22 +125,7 @@ void LAPLACE_FORT_HEADER_ASCII(char* matname1, char* matname2,
                               int* ngrids);
 #endif
 
-#define USER_EXCEEDS_TH \
-                  FCLAW_F77_FUNC(user_exceeds_th, \
-                                 USER_EXCEEDS_TH)
 
-int USER_EXCEEDS_TH(const int *blockno,
-                    const double *qval, 
-                    const double* qmin, 
-                    const double *qmax,
-                    const double quad[], 
-                    const double *dx, 
-                    const double *dy, 
-                    const double *xc, 
-                    const double *yc, 
-                    const double *tag_threshold,
-                    const int *init_flag,
-                    const int *is_ghost);
 
 
 #ifdef __cplusplus
