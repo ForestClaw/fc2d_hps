@@ -70,7 +70,41 @@ fc2d_hps_vector<double> fc2d_hps_FISHPACK_solver::dtn(fc2d_hps_patchgrid grid, f
 
 	throw std::logic_error("[fc2d_hps_FISHPACK_solver::dtn] PLACEHOLDER; NOT IMPLEMENTED");
 
-	return dirichlet_data;
+	// Unpack grid data
+	int N_cells = grid.Nx;
+
+	// Unpack Dirichlet data
+	fc2d_hps_vector<double> g_west = dirichlet_data.extract(0*N_cells, N_cells);
+	fc2d_hps_vector<double> g_east = dirichlet_data.extract(1*N_cells, N_cells);
+	fc2d_hps_vector<double> g_south = dirichlet_data.extract(2*N_cells, N_cells);
+	fc2d_hps_vector<double> g_north = dirichlet_data.extract(3*N_cells, N_cells);
+
+	// Compute solution on interior nodes
+	fc2d_hps_vector<double> u = this->solve(grid, dirichlet_data, rhs_data);
+
+	// Get interior edge cell data and compute Neumann data
+	//    Interior cell data
+	fc2d_hps_vector<double> u_west = u.extract();
+	fc2d_hps_vector<double> u_east = u.extract();
+	fc2d_hps_vector<double> u_south = u.extract();
+	fc2d_hps_vector<double> u_north = u.extract();
+
+	//    Neumann data
+	double dtn_x = 2.0 / grid.dx;
+	double dtn_y = 2.0 / grid.dy;
+	fc2d_hps_vector<double> h_west = (u_west - g_west) * (dtn_x);
+	fc2d_hps_vector<double> h_east = (u_east - g_east) * (-dtn_x);
+	fc2d_hps_vector<double> h_south = (u_south - g_south) * (dtn_x);
+	fc2d_hps_vector<double> h_north = (u_north - g_north) * (-dtn_x);
+
+	//    Column stack and return
+	fc2d_hps_vector<double> neumann_data(4*N_cells);
+	neumann_data.intract(0*N_cells, h_west);
+	neumann_data.intract(1*N_cells, h_east);
+	neumann_data.intract(2*N_cells, h_south);
+	neumann_data.intract(3*N_cells, h_north);
+	return neumann_data;
+	
 }
 
 fc2d_hps_matrix<double> fc2d_hps_FISHPACK_solver::build_dtn(fc2d_hps_patchgrid grid) {
