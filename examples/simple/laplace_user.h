@@ -41,8 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fc2d_hps_options.h>
 #include <fc2d_hps_output_ascii.h>
 
-#include <fclaw2d_clawpatch_fort.h>
-
 /* Application headers */
 #include "laplace_options.h"
 
@@ -80,16 +78,9 @@ void LAPLACE_FORT_RHS(const int* blockno, const int* mbc, const int* mx,
 
 #define LAPLACE_COMPUTE_ERROR FCLAW_F77_FUNC(laplace_compute_error,LAPLACE_COMPUTE_ERROR)
 
-void LAPLACE_COMPUTE_ERROR(const int* blockno, 
-                           const int *mx, 
-                           const int *my, 
-                           const int* mbc, 
-                           const int* mfields,
-                           const double *dx, 
-                           const double *dy, 
-                           const double *xlower,
-                           const double *ylower, 
-                           const double *t, double q[],
+void LAPLACE_COMPUTE_ERROR(int* blockno, int *mx, int *my, int* mbc, int* mfields,
+                           double *dx, double *dy, double *xlower,
+                           double *ylower, double *t, double q[],
                            double error[], double soln[]);
 
 
@@ -134,22 +125,7 @@ void LAPLACE_FORT_HEADER_ASCII(char* matname1, char* matname2,
                               int* ngrids);
 #endif
 
-#define USER_EXCEEDS_TH \
-                  FCLAW_F77_FUNC(user_exceeds_th, \
-                                 USER_EXCEEDS_TH)
 
-int USER_EXCEEDS_TH(const int *blockno,
-                    const double *qval, 
-                    const double* qmin, 
-                    const double *qmax,
-                    const double quad[], 
-                    const double *dx, 
-                    const double *dy, 
-                    const double *xc, 
-                    const double *yc, 
-                    const double *tag_threshold,
-                    const int *init_flag,
-                    const int *is_ghost);
 
 
 #ifdef __cplusplus

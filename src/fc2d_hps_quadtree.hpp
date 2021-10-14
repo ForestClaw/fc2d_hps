@@ -1,14 +1,25 @@
 #ifndef FC2D_HPS_QUADTREE_HPP
 #define FC2D_HPS_QUADTREE_HPP
 
+#include <forestclaw2d.h>
+#include <p4est.h>
+#include <p4est_wrap.h>
+#include <p4est_iterate.h>
+#include <fc2d_hps_patch.hpp>
+
 #define FC2D_HPS_NUMBER_CHILDREN 		4
 #define FC2D_HPS_QUADTREE_LOWER_LEFT 	0
 #define FC2D_HPS_QUADTREE_LOWER_RIGHT 	1
 #define FC2D_HPS_QUADTREE_UPPER_LEFT 	2
 #define FC2D_HPS_QUADTREE_UPPER_RIGHT 	3
 
+// Forward declaration
+void p4est_iterate_fn(p4est_iter_volume_info_t* info, void* user_data);
+
 template<class T>
 class fc2d_hps_quadtree {
+
+public:
 
 	struct fc2d_hps_quadnode {
 		T data;
@@ -23,8 +34,6 @@ class fc2d_hps_quadtree {
 		}
 	};
 
-public:
-
 	fc2d_hps_quadnode* root;	// Root of tree
 	// std::size_t height;			// Height of tree, i.e., number of levels
 
@@ -35,6 +44,20 @@ public:
 	fc2d_hps_quadtree(T& root_data) :
 		root(new fc2d_hps_quadnode(root_data))
 			{}
+	
+	// fc2d_hps_quadtree(fclaw2d_domain_t* domain) :
+	// 	root(nullptr) {
+	// 	// Build a quadtree from a forestclaw domain object
+
+	// 	// Variables
+	// 	p4est_wrap_t* wrap = (p4est_wrap_t*) domain->pp;
+	// 	p4est_t* p4est = wrap->p4est;
+
+	// 	// Begin growth algorithm
+	// 	fc2d_hps_quadnode* temp_node = root;
+
+
+	// }
 
 	~fc2d_hps_quadtree() {}
 
@@ -71,6 +94,8 @@ public:
 		// 	this->height = node_level + 2;
 		// }
 	}
+
+	// TODO: Write grow function that takes a function that takes the parent node and returns 4 children
 
 	void trim(fc2d_hps_quadnode* siblings[FC2D_HPS_NUMBER_CHILDREN]) {
 		// Trims a siblings of leaves
@@ -155,6 +180,58 @@ private:
 		}
 	}
 
+
 };
+
+fc2d_hps_quadtree<fc2d_hps_patch> fc2d_hps_create_quadtree_from_domain(fclaw2d_domain_t* domain) {
+	// WORKING HERE!
+	// My current approach doesn't look like it will work... I believe I need to come up with a recursive approach.
+
+
+	// Create and initialize variables
+	fc2d_hps_patch root_patch;
+	fc2d_hps_quadtree<fc2d_hps_patch> tree(root_patch);
+	fc2d_hps_quadtree<fc2d_hps_patch>::fc2d_hps_quadnode** temp_node = &(tree.root);
+	p4est_wrap_t* wrap = (p4est_wrap_t*) domain->pp;
+	p4est_t* p4est = wrap->p4est;
+	p4est_tree_t* p4est_tree = p4est_tree_array_index(p4est->trees, 0);
+
+	// Iterate through quadrants in tree in Morton order
+	for (std::size_t ID = 0; ID < p4est->local_num_quadrants; ID++) {
+
+		// Get access to quadrant
+		p4est_quadrant_t* p4est_quad = p4est_quadrant_array_index(&(p4est_tree->quadrants), ID);
+
+		// // Get levels of node and quad
+		// int node_level = temp_node->level;
+		// int quad_level = p4est_quad->level;
+
+		while ((*temp_node)->level != p4est_quad->level) {
+
+			// Create four new nodes of patches
+			fc2d_hps_patch child_patches[FC2D_HPS_NUMBER_CHILDREN];
+			child_patches[0] = *(new fc2d_hps_patch());
+			child_patches[1] = *(new fc2d_hps_patch());
+			child_patches[2] = *(new fc2d_hps_patch());
+			child_patches[3] = *(new fc2d_hps_patch());
+			
+			// Grow tree
+			tree.grow(*temp_node, child_patches);
+
+			// Move temp_node to point to first child of new family
+			temp_node = &((*temp_node)->children[0]);
+
+		}
+
+		// temp_node should point to a leaf corresponding to the correct level p4est_quadrant
+		// Store RHS data on leaf patches
+		// Access RHS data from forestclaw domain
+
+	}
+
+
+	return tree;
+
+}
 
 #endif // FC2D_HPS_QUADTREE_HPP

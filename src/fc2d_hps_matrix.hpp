@@ -63,6 +63,17 @@ public:
 		std::vector<T>(data), rows(n_rows), cols(n_cols)
 			{}
 
+	// TODO: Write copy and move constructors
+	// fc2d_hps_matrix(const fc2d_hps_matrix<T>& to_copy) :
+	// 	std::vector<T>(to_copy.rows * to_copy.cols), rows(to_copy.rows), cols(to_copy.cols)
+	// 	{
+	// 		for (int i = 0; i < rows; i++) {
+	// 			for (int j = 0; j < cols; j++) {
+	// 				this->operator()(i, j) = to_copy.operator()(i, j);
+	// 			}
+	// 		}
+	// 	}
+
 	T& operator()(std::size_t i, std::size_t j) {
 		return this->operator[](flatten_index(i,j));
 	}

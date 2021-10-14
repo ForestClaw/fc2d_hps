@@ -34,7 +34,7 @@ typedef struct hps_tree_T_storage
     double *Tmat;  /* T Matrix for parent  */
     int is_leaf;
     struct hps_tree_T_storage *children;  /* Pointer to first of four quadrants */
-} hpt_tree_T_storage_t;
+} hpt_tree_T_storage_t; // TODO: Fix typo
 
 
 void cb_init_storage(fclaw2d_domain_t *domain,
