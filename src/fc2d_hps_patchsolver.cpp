@@ -15,8 +15,13 @@ fc2d_hps_vector<double> fc2d_hps_FISHPACK_solver::solve(fc2d_hps_patchgrid grid,
 	fc2d_hps_vector<double> g_south = dirichlet_data.extract(2*N_side, N_side);
 	fc2d_hps_vector<double> g_north = dirichlet_data.extract(3*N_side, N_side);
 
-	// Transpose RHS for FORTRAN call
-	// @NOTE: Does this need to be done prior to function call as a vector?
+	// Transpose RHS data for FORTRAN call
+	fc2d_hps_vector<double> fT(N_side * N_side);
+	for (int i = 0; i < grid.Nx; i++) {
+		for (int j = 0; j < grid.Ny; j++) {
+			fT[i + j*N_side] = rhs_data[j + i*N_side];
+		}
+	}
 
 	// Setup FORTRAN call to FISHPACK
 	double A = grid.x_lower;
@@ -40,25 +45,21 @@ fc2d_hps_vector<double> fc2d_hps_FISHPACK_solver::solve(fc2d_hps_patchgrid grid,
 	double* W = (double*) malloc(WSIZE*sizeof(double));
 
 	// Make FORTRAN call to FISHPACK
-	// std::cout << "Calling hstcrt..." << std::endl;
 	hstcrtt_(&A, &B, &M, &MBDCND, BDA, BDB,
 			&C, &D, &N, &NBDCND, BDC, BDD,
 			&ELMBDA, F, &IDIMF, &PERTRB, &IERROR, W);
 	// hstcrt_(&A, &B, &M, &MBDCND, BDA, BDB,
 	// 		&C, &D, &N, &NBDCND, BDC, BDD,
 	// 		&ELMBDA, F, &IDIMF, &PERTRB, &IERROR);
-	// std::cout << "Done with hstcrt!" << std::endl;
 	if (IERROR != 0) {
 		std::cerr << "[fc2d_hps_FISHPACK_solver::solve] WARNING: call to hstcrt_ returned non-zero error value: IERROR = " << IERROR << std::endl;
 	}
 
 	// Move FISHPACK solution into fc2d_hps_vector for output
-	// @TODO
 	fc2d_hps_vector<double> solution(grid.Nx * grid.Ny);
 	for (int i = 0; i < grid.Nx; i++) {
 		for (int j = 0; j < grid.Ny; j++) {
-			int running_index = j + i*grid.Nx;
-			solution[running_index] = F[running_index];
+			solution[j + i*N_side] = F[i + j*N_side];
 		}
 	}
 

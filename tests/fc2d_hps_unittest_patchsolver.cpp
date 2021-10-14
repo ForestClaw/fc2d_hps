@@ -162,7 +162,8 @@ TEST(FISHPACK, convergence) {
 				
 				for (int j = 0; j < Ny; j++) {
 					double y = grid.point(YDIM, j);
-					int running_index = i + j*Nx;
+					// int running_index = i + j*Nx; // Transpose Order
+					int running_index = j + i*Nx; // Patch Order
 
 					f_data[running_index] = poisson.f(x, y);
 					u_data[running_index] = poisson.u(x, y);
