@@ -78,9 +78,16 @@ void LAPLACE_FORT_RHS(const int* blockno, const int* mbc, const int* mx,
 
 #define LAPLACE_COMPUTE_ERROR FCLAW_F77_FUNC(laplace_compute_error,LAPLACE_COMPUTE_ERROR)
 
-void LAPLACE_COMPUTE_ERROR(int* blockno, int *mx, int *my, int* mbc, int* mfields,
-                           double *dx, double *dy, double *xlower,
-                           double *ylower, double *t, double q[],
+void LAPLACE_COMPUTE_ERROR(const int* blockno, 
+                           const int *mx, 
+                           const int *my, 
+                           const int* mbc, 
+                           const int* mfields,
+                           const double *dx, 
+                           const double *dy, 
+                           const double *xlower,
+                           const double *ylower, 
+                           const double *t, double q[],
                            double error[], double soln[]);
 
 

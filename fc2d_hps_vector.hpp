@@ -28,6 +28,8 @@
 
 #include <vector>
 #include <string>
+#include <stdexcept>
+
 
 template<class T>
 class fc2d_hps_vector : public std::vector<T> {
