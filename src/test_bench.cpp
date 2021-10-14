@@ -9,7 +9,7 @@ int main() {
 	std::cout << "Hello from test_bench" << std::endl;
 
 	// Set up grid
-	int N_points_side = 8;
+	int N_points_side = 32;
 	int Nx = N_points_side;
 	int Ny = N_points_side;
 	double x_lower = -1;
@@ -22,7 +22,7 @@ int main() {
 	fc2d_hps_patchgrid grid(Nx, Ny, x_lower, x_upper, y_lower, y_upper);
 
 	// Set up Poisson problem
-	fc2d_hps_poisson_problem poisson(LINEAR, x_lower, x_upper, y_lower, y_upper);
+	fc2d_hps_poisson_problem poisson(POLY, x_lower, x_upper, y_lower, y_upper);
 	fc2d_hps_vector<double> f_data(N_unknowns);
 	fc2d_hps_vector<double> u_data(N_unknowns);
 	fc2d_hps_vector<double> g_west(Ny);
@@ -37,7 +37,7 @@ int main() {
 		
 		for (int j = 0; j < Ny; j++) {
 			double y = grid.point(YDIM, j);
-			int running_index = j + i*Nx;
+			int running_index = i + j*Nx;
 
 			f_data[running_index] = poisson.f(x, y);
 			u_data[running_index] = poisson.u(x, y);

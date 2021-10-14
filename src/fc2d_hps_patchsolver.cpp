@@ -69,7 +69,7 @@ fc2d_hps_vector<double> fc2d_hps_FISHPACK_solver::solve(fc2d_hps_patchgrid grid,
 fc2d_hps_vector<double> fc2d_hps_FISHPACK_solver::dtn(fc2d_hps_patchgrid grid, fc2d_hps_vector<double> dirichlet_data, fc2d_hps_vector<double> rhs_data) {
 
 	throw std::logic_error("[fc2d_hps_FISHPACK_solver::dtn] PLACEHOLDER; NOT IMPLEMENTED");
-
+#if 0
 	// Unpack grid data
 	int N_cells = grid.Nx;
 
@@ -104,6 +104,8 @@ fc2d_hps_vector<double> fc2d_hps_FISHPACK_solver::dtn(fc2d_hps_patchgrid grid, f
 	neumann_data.intract(2*N_cells, h_south);
 	neumann_data.intract(3*N_cells, h_north);
 	return neumann_data;
+#endif
+	return dirichlet_data;
 	
 }
 
