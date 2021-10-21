@@ -117,7 +117,7 @@ TEST(FISHPACK, linear_solve) {
 
 }
 
-TEST(FISHPACK, convergence) {
+TEST(FISHPACK, solver_convergence) {
 
 	std::vector<int> problems = {
 		QUAD,
@@ -210,6 +210,114 @@ TEST(FISHPACK, convergence) {
 		}
 
 		double expected_convergence_order = 1.8;
+		EXPECT_GT(order, expected_convergence_order);
+	}
+
+}
+
+TEST(FISHPACK, dtn_convergence) {
+
+	std::vector<int> problems = {
+		POLY,
+		TRIG	
+	};
+
+	for (auto& problem_ID : problems) {
+		std::cout << "PROBLEM_ID = " << problem_ID << std::endl;
+
+		int N_tests = 10;
+		fc2d_hps_vector<double> errors(N_tests);
+		fc2d_hps_vector<double> deltas(N_tests);
+		for (int n = 0; n < N_tests; n++) {
+
+			// Set up grid
+			int N_points_side = pow(2, n+2);
+			int Nx = N_points_side;
+			int Ny = N_points_side;
+			double x_lower = -1;
+			double x_upper = 1;
+			double y_lower = -1;
+			double y_upper = 1;
+			int N_unknowns = Nx * Ny;
+			int N_boundary_points = 2*Nx + 2*Ny;
+
+			fc2d_hps_patchgrid grid(Nx, Ny, x_lower, x_upper, y_lower, y_upper);
+
+			// Set up Poisson problem
+			fc2d_hps_poisson_problem poisson(problem_ID, x_lower, x_upper, y_lower, y_upper);
+			fc2d_hps_vector<double> f_data(N_unknowns);
+			fc2d_hps_vector<double> g_west(Ny);
+			fc2d_hps_vector<double> g_east(Ny);
+			fc2d_hps_vector<double> g_south(Nx);
+			fc2d_hps_vector<double> g_north(Nx);
+			fc2d_hps_vector<double> g_data(N_boundary_points);
+			fc2d_hps_vector<double> h_west(Ny);
+			fc2d_hps_vector<double> h_east(Ny);
+			fc2d_hps_vector<double> h_south(Nx);
+			fc2d_hps_vector<double> h_north(Nx);
+			fc2d_hps_vector<double> h_data(N_boundary_points);
+
+			// Fill Poisson data
+			for (int i = 0; i < Nx; i++) {
+				double x = grid.point(XDIM, i);
+				
+				for (int j = 0; j < Ny; j++) {
+					double y = grid.point(YDIM, j);
+					// int running_index = i + j*Nx; // Transpose Order
+					int running_index = j + i*Nx; // Patch Order
+
+					f_data[running_index] = poisson.f(x, y);
+				}
+			}
+
+			// Fill boundary data
+			for (int j = 0; j < Ny; j++) {
+				g_west[j] = poisson.u(grid.x_lower, grid.point(YDIM, j));
+				g_east[j] = poisson.u(grid.x_upper, grid.point(YDIM, j));
+				h_west[j] = poisson.dudx(grid.x_lower, grid.point(YDIM, j));
+				h_east[j] = poisson.dudx(grid.x_upper, grid.point(YDIM, j));
+			}
+			for (int i = 0; i < Nx; i++) {
+				g_south[i] = poisson.u(grid.point(XDIM, i), grid.y_lower);
+				g_north[i] = poisson.u(grid.point(XDIM, i), grid.y_upper);
+				h_south[i] = poisson.dudy(grid.point(XDIM, i), grid.y_lower);
+				h_north[i] = poisson.dudy(grid.point(XDIM, i), grid.y_upper);
+			}
+			g_data.intract(0*Nx, g_west);
+			g_data.intract(1*Nx, g_east);
+			g_data.intract(2*Nx, g_south);
+			g_data.intract(3*Nx, g_north);
+			h_data.intract(0*Nx, h_west);
+			h_data.intract(1*Nx, h_east);
+			h_data.intract(2*Nx, h_south);
+			h_data.intract(3*Nx, h_north);
+			
+			// Create solver and solve
+			fc2d_hps_FISHPACK_solver solver;
+			fc2d_hps_vector<double> h_FISHPACK = solver.dtn(grid, g_data, f_data);
+
+			// Compute max error
+			fc2d_hps_vector<double> h_error = h_FISHPACK - h_data;
+			double max_diff = -1;
+			for (int i = 0; i < 4*N_points_side; i++) {
+				max_diff = fmax(max_diff, fabs(h_error[i]));
+			}
+			errors[n] = max_diff;
+			deltas[n] = grid.dx;
+
+			// Check for correctness
+			printf("  N_unknowns = %8i    max_diff = %8.4e\n", N_unknowns, max_diff);
+			
+		}
+
+		// Compute convergence order
+		double order = 0;
+		for (int n = 0; n < N_tests - 1; n++) {
+			order = fmax(order, (log(errors[n]/errors[n+1])) / (log(deltas[n]/deltas[n+1])));
+			printf("  order = %8.4e\n", order);
+		}
+
+		double expected_convergence_order = 0.8;
 		EXPECT_GT(order, expected_convergence_order);
 	}
 
