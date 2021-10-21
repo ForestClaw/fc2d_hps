@@ -138,7 +138,27 @@ fc2d_hps_vector<double> fc2d_hps_FISHPACK_solver::dtn(fc2d_hps_patchgrid grid, f
 
 fc2d_hps_matrix<double> fc2d_hps_FISHPACK_solver::build_dtn(fc2d_hps_patchgrid grid) {
 
-	throw std::logic_error("[fc2d_hps_FISHPACK_solver::build_dtn] PLACEHOLDER; NOT IMPLEMENTED");
+	// throw std::logic_error("[fc2d_hps_FISHPACK_solver::build_dtn] PLACEHOLDER; NOT IMPLEMENTED");
 
-	return fc2d_hps_matrix<double>{};
+	int N = grid.Nx;
+	int M = 4*N;
+	fc2d_hps_matrix<double> T(M, M);
+	fc2d_hps_vector<double> e_hat_j(M, 0.0);
+	fc2d_hps_vector<double> f_zero(N*N, 0.0);
+	fc2d_hps_vector<double> col_j(M);
+
+	for (int j = 0; j < M; j++) {
+		if (j == 0) {
+			e_hat_j[j] = 1.0;
+		}
+		else {
+			e_hat_j[j-1] = 0.0;
+			e_hat_j[j] = 1.0;
+		}
+
+		col_j = this->dtn(grid, e_hat_j, f_zero);
+		T.intract_column(j, col_j);
+	}
+
+	return T;
 }
