@@ -29,6 +29,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <cassert>
 #include "fc2d_hps_vector.hpp"
 
 extern "C" {

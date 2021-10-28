@@ -140,8 +140,8 @@ fc2d_hps_matrix<double> fc2d_hps_FISHPACK_solver::build_dtn(fc2d_hps_patchgrid g
 
 	// throw std::logic_error("[fc2d_hps_FISHPACK_solver::build_dtn] PLACEHOLDER; NOT IMPLEMENTED");
 
-	int N = grid.Nx;
-	int M = 4*N;
+	std::size_t N = grid.Nx;
+	std::size_t M = 4*N;
 	fc2d_hps_matrix<double> T(M, M);
 	fc2d_hps_vector<double> e_hat_j(M, 0.0);
 	fc2d_hps_vector<double> f_zero(N*N, 0.0);
