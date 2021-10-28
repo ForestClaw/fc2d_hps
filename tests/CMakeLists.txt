@@ -1,5 +1,4 @@
 enable_testing()
-find_package(GTest REQUIRED)
 include(GoogleTest)
 
 file(
@@ -20,9 +19,10 @@ foreach(file ${tests})
 		FORESTCLAW::HPS
 		gtest_main
 		fishpack90
+		lapack
 	)
-	gtest_add_tests(
-		TARGET "${name}_tests"
+	gtest_discover_tests(
+		"${name}_tests"
 	)
 endforeach()
 
