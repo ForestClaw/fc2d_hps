@@ -9,7 +9,7 @@ int main() {
 	std::cout << "Hello from test_bench" << std::endl;
 
 	// Set up grid
-	int N_points_side = 32;
+	int N_points_side = 4;
 	int Nx = N_points_side;
 	int Ny = N_points_side;
 	double x_lower = -1;
@@ -85,6 +85,7 @@ int main() {
 	// Create solver and solve
 	fc2d_hps_FISHPACK_solver solver;
 	fc2d_hps_vector<double> u_FISHPACK = solver.solve(grid, g_data, f_data);
+	fc2d_hps_matrix<double> T = solver.build_dtn(grid);
 
 	// Print and check for correctness
 	printf("  Solution Data:\n");
@@ -92,6 +93,21 @@ int main() {
 		for (int j = 0; j < Ny; j++) {
 			printf("    x = %8.4f    y = %8.4f    u_FIHSPACK[%i, %i] = %8.4f    u_EXACT[%i, %i] = %8.4f\n", grid.point(XDIM, i), grid.point(YDIM, j), i, j, u_FISHPACK[j + i*Nx], i, j, u_data[j + i*Nx]);
 			// EXPECT_NEAR(u_FISHPACK[j+i*Nx], u_data[j+i*Nx], 1e-14);
+		}
+	}
+
+	// Print out DtN matrix T
+	printf("  DtN Matrix:\n");
+	for (int i = 0; i < 4*Nx; i++) {
+		for (int j = 0; j < 4*Ny; j++) {
+			if (j % 4 == 0) {
+				printf("  |  ");
+			}
+			printf("%12.6f", T(i,j));
+		}
+		printf("\n");
+		if (i % 4 == 3) {
+			printf("--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
 		}
 	}
 

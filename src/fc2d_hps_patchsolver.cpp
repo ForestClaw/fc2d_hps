@@ -126,7 +126,8 @@ fc2d_hps_matrix<double> fc2d_hps_FISHPACK_solver::build_dtn(fc2d_hps_patchgrid g
 	fc2d_hps_vector<double> f_zero(N*N, 0.0);
 	fc2d_hps_vector<double> col_j(M);
 
-	for (int j = 0; j < M; j++) {
+	// Compute first column of block T
+	for (int j = 0; j < N; j++) {
 		if (j == 0) {
 			e_hat_j[j] = 1.0;
 		}
@@ -138,6 +139,77 @@ fc2d_hps_matrix<double> fc2d_hps_FISHPACK_solver::build_dtn(fc2d_hps_patchgrid g
 		col_j = this->dtn(grid, e_hat_j, f_zero);
 		T.intract_column(j, col_j);
 	}
+
+	// Extract blocks of T
+	fc2d_hps_matrix<double> T_WW = T.extract(0*N, 0*N, N, N);
+	fc2d_hps_matrix<double> T_EW = T.extract(1*N, 0*N, N, N);
+	fc2d_hps_matrix<double> T_SW = T.extract(2*N, 0*N, N, N);
+	fc2d_hps_matrix<double> T_NW = T.extract(3*N, 0*N, N, N);
+
+	// Define other blocks in terms of first block column
+	// T_WE = -T_EW
+	// T_EE = -T_WW
+	// T_SE = -T_NW^T
+	// T_NE = Reversed columns from T_NW
+	// 
+	// T_WS = T_SW
+	// T_ES = T_NW
+	// T_SS = T_WW
+	// T_NS = T_EW
+	//
+	// T_WN = -T_NW
+	// T_EN = T_NE
+	// T_SN = -T_EW
+	// T_NN = -T_WW
+	fc2d_hps_matrix<double> T_WE(N, N);
+	fc2d_hps_matrix<double> T_EE(N, N);
+	fc2d_hps_matrix<double> T_SE(N, N);
+	fc2d_hps_matrix<double> T_NE(N, N);
+
+	fc2d_hps_matrix<double> T_WS(N, N);
+	fc2d_hps_matrix<double> T_ES(N, N);
+	fc2d_hps_matrix<double> T_SS(N, N);
+	fc2d_hps_matrix<double> T_NS(N, N);
+
+	fc2d_hps_matrix<double> T_WN(N, N);
+	fc2d_hps_matrix<double> T_EN(N, N);
+	fc2d_hps_matrix<double> T_SN(N, N);
+	fc2d_hps_matrix<double> T_NN(N, N);
+
+	for (int i = 0; i < N; i++) {
+		for (int j = 0; j < N; j++) {
+			T_WE(i,j) = -T_EW(i,j);
+			T_EE(i,j) = -T_WW(i,j);
+			T_SE(i,j) = -T_NW(j,i);
+			T_NE(i,j) = T_NW((N-1) - i, j);
+
+			T_WS(i,j) = T_SW(i,j);
+			T_ES(i,j) = T_NW(i,j);
+			T_SS(i,j) = T_WW(i,j);
+			T_NS(i,j) = T_EW(i,j);
+
+			T_WN(i,j) = -T_NW(j,i);
+			T_EN(i,j) = T_NE(i,j);
+			T_SN(i,j) = -T_EW(i,j);
+			T_NN(i,j) = -T_WW(i,j);
+		}
+	}
+
+	// Intract blocks into T
+	T.intract(0*N, 1*N, T_WE);
+	T.intract(1*N, 1*N, T_EE);
+	T.intract(2*N, 1*N, T_SE);
+	T.intract(3*N, 1*N, T_NE);
+	
+	T.intract(0*N, 2*N, T_WS);
+	T.intract(1*N, 2*N, T_ES);
+	T.intract(2*N, 2*N, T_SS);
+	T.intract(3*N, 2*N, T_NS);
+
+	T.intract(0*N, 3*N, T_WN);
+	T.intract(1*N, 3*N, T_EN);
+	T.intract(2*N, 3*N, T_SN);
+	T.intract(3*N, 3*N, T_NN);
 
 	return T;
 }
