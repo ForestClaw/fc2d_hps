@@ -5,8 +5,6 @@ fc2d_hps_FISHPACK_solver::fc2d_hps_FISHPACK_solver() {}
 std::string fc2d_hps_FISHPACK_solver::get_moniker() { return "FISHPACK90"; }
 
 fc2d_hps_vector<double> fc2d_hps_FISHPACK_solver::solve(fc2d_hps_patchgrid grid, fc2d_hps_vector<double> dirichlet_data, fc2d_hps_vector<double> rhs_data) {
-	
-	// throw std::logic_error("[fc2d_hps_FISHPACK_solver::solve] PLACEHOLDER; NOT IMPLEMENTED");
 
 	// Unpack Dirichlet Data
 	int N_side = grid.Nx;
@@ -48,9 +46,6 @@ fc2d_hps_vector<double> fc2d_hps_FISHPACK_solver::solve(fc2d_hps_patchgrid grid,
 	hstcrtt_(&A, &B, &M, &MBDCND, BDA, BDB,
 			&C, &D, &N, &NBDCND, BDC, BDD,
 			&ELMBDA, F, &IDIMF, &PERTRB, &IERROR, W);
-	// hstcrt_(&A, &B, &M, &MBDCND, BDA, BDB,
-	// 		&C, &D, &N, &NBDCND, BDC, BDD,
-	// 		&ELMBDA, F, &IDIMF, &PERTRB, &IERROR);
 	if (IERROR != 0) {
 		// std::cerr << "[fc2d_hps_FISHPACK_solver::solve] WARNING: call to hstcrt_ returned non-zero error value: IERROR = " << IERROR << std::endl;
 	}
@@ -68,8 +63,6 @@ fc2d_hps_vector<double> fc2d_hps_FISHPACK_solver::solve(fc2d_hps_patchgrid grid,
 }
 
 fc2d_hps_vector<double> fc2d_hps_FISHPACK_solver::dtn(fc2d_hps_patchgrid grid, fc2d_hps_vector<double> dirichlet_data, fc2d_hps_vector<double> rhs_data) {
-
-	// throw std::logic_error("[fc2d_hps_FISHPACK_solver::dtn] PLACEHOLDER; NOT IMPLEMENTED");
 
 	// Unpack grid data
 	int N_side = grid.Nx;
@@ -99,18 +92,6 @@ fc2d_hps_vector<double> fc2d_hps_FISHPACK_solver::dtn(fc2d_hps_patchgrid grid, f
 		u_south[i] = u[i*N_side];
 		u_north[i] = u[(i+1)*N_side - 1];
 	}
-	// if (N_side <= 4) {
-	// 	for (int i = 0; i < N_side; i++) {
-	// 		for (int j = 0; j < N_side; j++) {
-	// 			printf("u[%i, %i] = u[%i] = %8.4f    ", i, j, i*N_side + j, u[i*N_side + j]);
-	// 		}
-	// 		printf("\n");
-	// 	}
-	// 	for (int i = 0; i < N_side; i++) {
-	// 		printf("u_west[%i] = %8.4f    u_east[%i] = %8.4f    u_south[%i] = %8.4f    u_north[%i] = %8.4f\n",
-	// 				i, u_west[i], i, u_east[i], i, u_south[i], i, u_north[i]);
-	// 	}
-	// }
 
 	//    Neumann data
 	double dtn_x = 2.0 / grid.dx;
@@ -137,8 +118,6 @@ fc2d_hps_vector<double> fc2d_hps_FISHPACK_solver::dtn(fc2d_hps_patchgrid grid, f
 }
 
 fc2d_hps_matrix<double> fc2d_hps_FISHPACK_solver::build_dtn(fc2d_hps_patchgrid grid) {
-
-	// throw std::logic_error("[fc2d_hps_FISHPACK_solver::build_dtn] PLACEHOLDER; NOT IMPLEMENTED");
 
 	std::size_t N = grid.Nx;
 	std::size_t M = 4*N;
