@@ -1,6 +1,7 @@
 #ifndef FC2D_HPS_PATCH_HPP
 #define FC2D_HPS_PATCH_HPP
 
+#include <vector>
 #include "fc2d_hps_vector.hpp"
 #include "fc2d_hps_matrix.hpp"
 #include "fc2d_hps_patchgrid.hpp"
@@ -10,12 +11,13 @@ class fc2d_hps_patch {
 public:
 
 	// Metadata
-	int ID;
-	int level;
-	bool is_leaf;
+	int ID;											// Patch's global ID
+	int level;										// Level in tree
+	bool is_leaf;									// Flag for if patch is a leaf
+	std::vector<int> N_patch_side = {0, 0, 0, 0};	// To keep track of patch's side based on children
 
 	// Patch grid information
-	fc2d_hps_patchgrid grid;
+	fc2d_hps_patchgrid grid;	// Grid information
 
 	// HPS Data
 	fc2d_hps_matrix<double> T;	// DtN Matrix
