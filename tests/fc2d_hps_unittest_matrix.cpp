@@ -97,6 +97,37 @@ TEST(Matrix, transpose) {
 	}
 }
 
+TEST(Matrix, from_index_set) {
+	int n_rows = 4;
+	int n_cols = 4;
+	std::vector<int> data = {
+		1, 2, 3, 4,
+		5, 6, 7, 8,
+		9, 10, 11, 12,
+		13, 14, 15, 16
+	};
+	fc2d_hps_matrix<int> mat(n_rows, n_cols, data);
+
+	std::vector<int> I = {1, 3};
+	std::vector<int> J = {2, 3};
+
+	fc2d_hps_matrix<int> extracted = mat.from_index_set(I, J);
+	std::vector<int> data_true = {
+		7, 8,
+		15, 16
+	};
+	fc2d_hps_matrix<int> expected(I.size(), J.size(), data_true);
+	
+	for (int i = 0; i < extracted.rows; i++) {
+		for (int j = 0; j < extracted.cols; j++) {
+			EXPECT_EQ(extracted(i,j), expected(i,j));
+			printf("A[%3i, %3i] = %3i  ", i, j, extracted(i,j));
+		}
+		printf("\n");
+	}
+
+}
+
 TEST(Matrix, extract) {
 	int n_rows = 3;
 	int n_cols = 4;

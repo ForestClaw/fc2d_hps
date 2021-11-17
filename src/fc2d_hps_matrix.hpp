@@ -92,6 +92,20 @@ public:
 		return fc2d_hps_matrix<T>{this->cols, this->rows, std::move(data)};
 	}
 
+	fc2d_hps_matrix<T> from_index_set(std::vector<int> I, std::vector<int> J) {
+		
+		std::vector<T> out_data;
+		out_data.reserve(I.size() * J.size());
+		for (std::size_t i = 0; i < I.size(); i++) {
+			for (std::size_t j = 0; j < J.size(); j++) {
+				out_data.emplace_back(this->operator()(I[i], J[j]));
+			}
+		}
+
+		return {I.size(), J.size(), std::move(out_data)};
+
+	}
+
 	fc2d_hps_matrix<T> extract(std::size_t row_index, std::size_t col_index, std::size_t row_length, std::size_t col_length) {
 		if (row_index + row_length > rows) {
 			throw std::invalid_argument("[fc2d_hps_matrix<T>::extract] Row size exceeds matrix size");
