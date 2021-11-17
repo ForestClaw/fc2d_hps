@@ -6,6 +6,13 @@
 #include "fc2d_hps_matrix.hpp"
 #include "fc2d_hps_patchgrid.hpp"
 
+enum PATCH_SIDES {
+	WEST,
+	EAST,
+	SOUTH,
+	NORTH
+};
+
 class fc2d_hps_patch {
 
 public:

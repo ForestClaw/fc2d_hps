@@ -17,7 +17,8 @@ target_sources(hps PRIVATE
   fc2d_hps_poissonproblem.cpp
   fc2d_hps_patchgrid.cpp
   fc2d_hps_patch.cpp
-  fc2d_hps_patchsolver.cpp  
+  fc2d_hps_patchsolver.cpp
+  fc2d_hps_merge.cpp  
   fc2d_hps_options.c  
   fc2d_hps_physical_bc.c  
   fc2d_hps_output_ascii.c  

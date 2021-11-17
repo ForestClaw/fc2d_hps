@@ -1,30 +1,138 @@
-#include <fc2d_hps_merge.hpp>
+#include "fc2d_hps_merge.hpp"
 
-fc2d_hps_matrix<double> merge_operation_S(fc2d_hps_matrix<double> T_alpha_33, fc2d_hps_matrix<double> T_beta_33, fc2d_hps_matrix<double> T_alpha_31, fc2d_hps_matrix<double> T_beta_32) {
+fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 
-	fc2d_hps_matrix<double> S_RHS(T_alpha_31.rows, T_alpha_31.cols + T_beta_32.cols);
-	// T_alpha_31.negate();
-	S_RHS.intract(0, 0, T_alpha_31);
-	S_RHS.intract(0, T_alpha_31.cols, T_beta_32);
-	fc2d_hps_matrix<double> S = solve(T_alpha_33 - T_beta_33, S_RHS);
-	return S;
+	// Build index vectors
+	int N_points_leaf_side = alpha.grid.Nx; // TODO: Need to make sure this is in fact for a leaf patch
+	std::vector<int> I_W_alpha(alpha.N_patch_side[WEST] * N_points_leaf_side);
+	std::vector<int> I_E_alpha(alpha.N_patch_side[EAST] * N_points_leaf_side);
+	std::vector<int> I_S_alpha(alpha.N_patch_side[SOUTH] * N_points_leaf_side);
+	std::vector<int> I_N_alpha(alpha.N_patch_side[NORTH] * N_points_leaf_side);
+	std::vector<int> I_W_beta(beta.N_patch_side[WEST] * N_points_leaf_side);
+	std::vector<int> I_E_beta(beta.N_patch_side[EAST] * N_points_leaf_side);
+	std::vector<int> I_S_beta(beta.N_patch_side[SOUTH] * N_points_leaf_side);
+	std::vector<int> I_N_beta(beta.N_patch_side[NORTH] * N_points_leaf_side);
+	std::vector<int> I_1(0);
+	std::vector<int> I_2(0);
+	std::vector<int> I_3_alpha(0);
+	std::vector<int> I_3_beta(0);
 
+	std::iota(I_W_alpha.begin(), I_W_alpha.end(), 0);
+	std::iota(I_E_alpha.begin(), I_E_alpha.end(), alpha.N_patch_side[WEST]);
+	std::iota(I_S_alpha.begin(), I_S_alpha.end(), alpha.N_patch_side[WEST] + alpha.N_patch_side[EAST]);
+	std::iota(I_N_alpha.begin(), I_N_alpha.end(), alpha.N_patch_side[WEST] + alpha.N_patch_side[EAST] + alpha.N_patch_side[SOUTH]);
+	std::iota(I_W_beta.begin(), I_W_beta.end(), 0);
+	std::iota(I_E_beta.begin(), I_E_beta.end(), beta.N_patch_side[WEST]);
+	std::iota(I_S_beta.begin(), I_S_beta.end(), beta.N_patch_side[WEST] + beta.N_patch_side[EAST]);
+	std::iota(I_N_beta.begin(), I_N_beta.end(), beta.N_patch_side[WEST] + beta.N_patch_side[EAST] + alpha.N_patch_side[SOUTH]);
+
+	I_1.insert(I_1.end(), I_W_alpha.begin(), I_W_alpha.end());
+	I_1.insert(I_1.end(), I_S_alpha.begin(), I_S_alpha.end());
+	I_1.insert(I_1.end(), I_N_alpha.begin(), I_N_alpha.end());
+	I_2.insert(I_2.end(), I_E_beta.begin(), I_E_beta.end());
+	I_2.insert(I_2.end(), I_S_beta.begin(), I_S_beta.end());
+	I_2.insert(I_2.end(), I_N_beta.begin(), I_N_beta.end());
+	I_3_alpha.insert(I_3_alpha.end(), I_E_alpha.begin(), I_E_alpha.end());
+	I_3_beta.insert(I_3_beta.end(), I_W_beta.begin(), I_W_beta.end());
+
+	// Extract blocks
+	fc2d_hps_matrix<double> T_11_alpha = alpha.T.from_index_set(I_1, I_1);
+	fc2d_hps_matrix<double> T_13_alpha = alpha.T.from_index_set(I_1, I_3_alpha);
+	fc2d_hps_matrix<double> T_31_alpha = alpha.T.from_index_set(I_3_alpha, I_1);
+	fc2d_hps_matrix<double> T_33_alpha = alpha.T.from_index_set(I_3_alpha, I_3_alpha);
+
+	fc2d_hps_matrix<double> T_22_beta = beta.T.from_index_set(I_2, I_2);
+	fc2d_hps_matrix<double> T_23_beta = beta.T.from_index_set(I_2, I_3_beta);
+	fc2d_hps_matrix<double> T_32_beta = beta.T.from_index_set(I_3_beta, I_2);
+	fc2d_hps_matrix<double> T_33_beta = beta.T.from_index_set(I_3_beta, I_3_beta);
+
+	// Perform merge linear algebra
+	// @TODO
+
+	// Create new merged patch
+	fc2d_hps_patch merged;
+	merged.level = alpha.level;
+	merged.is_leaf = false;
+	merged.N_patch_side = {
+		alpha.N_patch_side[WEST],
+		beta.N_patch_side[EAST],
+		alpha.N_patch_side[SOUTH] + beta.N_patch_side[SOUTH],
+		alpha.N_patch_side[NORTH] + beta.N_patch_side[NORTH]
+	};
+	// merged.X = X_tau;
+	// merged.H = H_tau;
+	// merged.S = S_tau;
+	// merged.T = T_tau;
+	return merged;
+	
 }
 
-fc2d_hps_matrix<double> merge_operation_T(fc2d_hps_matrix<double> T_alpha_11, fc2d_hps_matrix<double> T_beta_22, fc2d_hps_matrix<double> T_alpha_13, fc2d_hps_matrix<double> T_beta_23, fc2d_hps_matrix<double> S) {
+fc2d_hps_patch merge_vertical(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 
-	fc2d_hps_matrix<double> T(T_alpha_11.rows + T_beta_22.rows, T_alpha_11.cols + T_beta_22.cols, 0);
-	T.intract(0, 0, T_alpha_11);
-	T.intract(T_alpha_11.rows, T_alpha_11.cols, T_beta_22);
-	fc2d_hps_matrix<double> T_RHS(T_alpha_13.rows + T_beta_23.rows, T_alpha_13.cols);
-	T_RHS.intract(0, 0, T_alpha_13);
-	T_RHS.intract(T_alpha_13.rows, 0, T_beta_23);
-	T = T + T_RHS*S;
-	return T;
+	// Build index vectors
+	int N_points_leaf_side = alpha.grid.Nx; // TODO: Need to make sure this is in fact for a leaf patch
+	std::vector<int> I_W_alpha(alpha.N_patch_side[WEST] * N_points_leaf_side);
+	std::vector<int> I_E_alpha(alpha.N_patch_side[EAST] * N_points_leaf_side);
+	std::vector<int> I_S_alpha(alpha.N_patch_side[SOUTH] * N_points_leaf_side);
+	std::vector<int> I_N_alpha(alpha.N_patch_side[NORTH] * N_points_leaf_side);
+	std::vector<int> I_W_beta(beta.N_patch_side[WEST] * N_points_leaf_side);
+	std::vector<int> I_E_beta(beta.N_patch_side[EAST] * N_points_leaf_side);
+	std::vector<int> I_S_beta(beta.N_patch_side[SOUTH] * N_points_leaf_side);
+	std::vector<int> I_N_beta(beta.N_patch_side[NORTH] * N_points_leaf_side);
+	std::vector<int> I_1(0);
+	std::vector<int> I_2(0);
+	std::vector<int> I_3_alpha(0);
+	std::vector<int> I_3_beta(0);
+
+	std::iota(I_W_alpha.begin(), I_W_alpha.end(), 0);
+	std::iota(I_E_alpha.begin(), I_E_alpha.end(), alpha.N_patch_side[WEST]);
+	std::iota(I_S_alpha.begin(), I_S_alpha.end(), alpha.N_patch_side[WEST] + alpha.N_patch_side[EAST]);
+	std::iota(I_N_alpha.begin(), I_N_alpha.end(), alpha.N_patch_side[WEST] + alpha.N_patch_side[EAST] + alpha.N_patch_side[SOUTH]);
+	std::iota(I_W_beta.begin(), I_W_beta.end(), 0);
+	std::iota(I_E_beta.begin(), I_E_beta.end(), beta.N_patch_side[WEST]);
+	std::iota(I_S_beta.begin(), I_S_beta.end(), beta.N_patch_side[WEST] + beta.N_patch_side[EAST]);
+	std::iota(I_N_beta.begin(), I_N_beta.end(), beta.N_patch_side[WEST] + beta.N_patch_side[EAST] + alpha.N_patch_side[SOUTH]);
+
+	I_1.insert(I_1.end(), I_W_alpha.begin(), I_W_alpha.end());
+	I_1.insert(I_1.end(), I_E_alpha.begin(), I_E_alpha.end());
+	I_1.insert(I_1.end(), I_S_alpha.begin(), I_S_alpha.end());
+	I_2.insert(I_2.end(), I_W_beta.begin(), I_W_beta.end());
+	I_2.insert(I_2.end(), I_E_beta.begin(), I_E_beta.end());
+	I_2.insert(I_2.end(), I_N_beta.begin(), I_N_beta.end());
+	I_3_alpha.insert(I_3_alpha.end(), I_N_alpha.begin(), I_N_alpha.end());
+	I_3_beta.insert(I_3_beta.end(), I_S_beta.begin(), I_S_beta.end());
+
+	// Extract blocks
+	fc2d_hps_matrix<double> T_11_alpha = alpha.T.from_index_set(I_1, I_1);
+	fc2d_hps_matrix<double> T_13_alpha = alpha.T.from_index_set(I_1, I_3_alpha);
+	fc2d_hps_matrix<double> T_31_alpha = alpha.T.from_index_set(I_3_alpha, I_1);
+	fc2d_hps_matrix<double> T_33_alpha = alpha.T.from_index_set(I_3_alpha, I_3_alpha);
+
+	fc2d_hps_matrix<double> T_22_beta = beta.T.from_index_set(I_2, I_2);
+	fc2d_hps_matrix<double> T_23_beta = beta.T.from_index_set(I_2, I_3_beta);
+	fc2d_hps_matrix<double> T_32_beta = beta.T.from_index_set(I_3_beta, I_2);
+	fc2d_hps_matrix<double> T_33_beta = beta.T.from_index_set(I_3_beta, I_3_beta);
+
+	// Perform merge linear algebra
+	// @TODO
+
+	// Create new merged patch
+	fc2d_hps_patch merged;
+	merged.level = alpha.level - 1;
+	merged.is_leaf = false;
+	merged.N_patch_side = {
+		alpha.N_patch_side[WEST] + beta.N_patch_side[WEST],
+		alpha.N_patch_side[EAST] + beta.N_patch_side[EAST],
+		alpha.N_patch_side[SOUTH],
+		beta.N_patch_side[NORTH]
+	};
+	// merged.X = X_tau;
+	// merged.H = H_tau;
+	// merged.S = S_tau;
+	// merged.T = T_tau;
+	return merged;
 
 }
-
-
 
 void merge_4to1(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& child1, fc2d_hps_patch& child2, fc2d_hps_patch& child3) {
 
@@ -46,18 +154,10 @@ void merge_4to1(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
 	if (child3.S.size() == 0) { throw std::invalid_argument("[fc2d_hps_merge merge_4to1] `child3.S.size()` is 0; it shouldn't be..."); }
 
 	// Horizontal merge
-	// fc2d_hps_patch lower_merged();
-	// fc2d_hps_patch upper_merged();
-
-	fc2d_hps_matrix<double> T_alpha = child0.T; // TODO: Write copy constructor for fc2d_hps_matrix<T>
-	fc2d_hps_matrix<double> T_beta = child1.T;
-
-	
-
-	// ...
+	fc2d_hps_patch alpha_prime = merge_horizontal(child0, child1);
+	fc2d_hps_patch beta_prime = merge_horizontal(child2, child3);
 
 	// Vertical merge
-	
-	
+	parent = merge_vertical(alpha_prime, beta_prime);
 
 }
