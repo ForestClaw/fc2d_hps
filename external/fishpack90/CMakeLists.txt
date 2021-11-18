@@ -52,6 +52,11 @@ add_library(
 	${FISHPACK_SOURCES}
 )
 
+target_compile_options(
+	fishpack90 PUBLIC
+	"-w"
+)
+
 install(
 	TARGETS fishpack90
 	EXPORT ${PROJECT_NAME}Targets
