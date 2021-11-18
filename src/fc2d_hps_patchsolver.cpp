@@ -128,16 +128,10 @@ fc2d_hps_matrix<double> fc2d_hps_FISHPACK_solver::build_dtn(fc2d_hps_patchgrid g
 
 	// Compute first column of block T
 	for (int j = 0; j < N; j++) {
-		if (j == 0) {
-			e_hat_j[j] = 1.0;
-		}
-		else {
-			e_hat_j[j-1] = 0.0;
-			e_hat_j[j] = 1.0;
-		}
-
+		e_hat_j[j] = 1.0;
 		col_j = this->dtn(grid, e_hat_j, f_zero);
 		T.intract_column(j, col_j);
+		e_hat_j[j] = 0.0;
 	}
 
 	// Extract blocks of T
