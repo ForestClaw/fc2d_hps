@@ -21,6 +21,7 @@ public:
 	int ID;											// Patch's global ID
 	int level;										// Level in tree
 	bool is_leaf;									// Flag for if patch is a leaf
+	int N_cells_leaf;								// Storage for number of cells on leaf patch side
 	std::vector<int> N_patch_side = {0, 0, 0, 0};	// To keep track of patch's side based on children
 
 	// Patch grid information
@@ -39,6 +40,8 @@ public:
 
 	fc2d_hps_patch();
 	fc2d_hps_patch(fc2d_hps_patchgrid patch_grid, int ID, int level, bool is_leaf);
+
+	// @TODO: Output functions
 
 };
 

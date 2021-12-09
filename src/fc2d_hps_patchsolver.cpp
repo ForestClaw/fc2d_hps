@@ -1,5 +1,7 @@
 #include "fc2d_hps_patchsolver.hpp"
 
+#define DTN_OPTIMIZE 1
+
 fc2d_hps_FISHPACK_solver::fc2d_hps_FISHPACK_solver() {}
 
 std::string fc2d_hps_FISHPACK_solver::get_moniker() { return "FISHPACK90"; }
@@ -126,6 +128,8 @@ fc2d_hps_matrix<double> fc2d_hps_FISHPACK_solver::build_dtn(fc2d_hps_patchgrid g
 	fc2d_hps_vector<double> f_zero(N*N, 0.0);
 	fc2d_hps_vector<double> col_j(M);
 
+#if DTN_OPTIMIZE
+	// Iterate through first side of grid to form T
 	// Compute first column of block T
 	for (int j = 0; j < N; j++) {
 		e_hat_j[j] = 1.0;
@@ -204,6 +208,14 @@ fc2d_hps_matrix<double> fc2d_hps_FISHPACK_solver::build_dtn(fc2d_hps_patchgrid g
 	T.intract(1*N, 3*N, T_EN);
 	T.intract(2*N, 3*N, T_SN);
 	T.intract(3*N, 3*N, T_NN);
-
+#else
+	// Iterate through all points on boundary to form T
+	for (int j = 0; j < M; j++) {
+		e_hat_j[j] = 1.0;
+		col_j = this->dtn(grid, e_hat_j, f_zero);
+		T.intract_column(j, col_j);
+		e_hat_j[j] = 0.0;
+	}
+#endif
 	return T;
 }
