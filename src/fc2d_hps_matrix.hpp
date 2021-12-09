@@ -93,16 +93,81 @@ public:
 	}
 
 	fc2d_hps_matrix<T> from_index_set(std::vector<int> I, std::vector<int> J) {
+		if (I.size() > this->rows) {
+			throw std::invalid_argument("[fc2d_hps_matrix<T>::from_index_set] Size of index set `I` is greater than number of rows in `this`.");
+		}
+		if (J.size() > this->cols) {
+			throw std::invalid_argument("[fc2d_hps_matrix<T>::from_index_set] Size of index set `J` is greater than number of columns in `this`.");
+		}
 		
 		std::vector<T> out_data;
 		out_data.reserve(I.size() * J.size());
 		for (std::size_t i = 0; i < I.size(); i++) {
 			for (std::size_t j = 0; j < J.size(); j++) {
+				if (I[i] > this->rows || I[i] < 0) {
+					throw std::invalid_argument("[fc2d_hps_matrix<T>::from_index_set] Index in `I` is out of range.");
+				}
+				if (J[j] > this->cols || J[j] < 0) {
+					throw std::invalid_argument("[fc2d_hps_matrix<T>::from_index_set] Index in `J` is out of range.");
+				}
 				out_data.emplace_back(this->operator()(I[i], J[j]));
 			}
 		}
 
 		return {I.size(), J.size(), std::move(out_data)};
+
+	}
+
+	fc2d_hps_matrix<T> block_permute(std::vector<int> I, std::vector<int> J, std::vector<int> R, std::vector<int> C) {
+		/**
+		 * std::vector<int> I : Index set of permuted row indices for each block
+		 * std::vector<int> J : Index set of permuted column indices for each block
+		 * std::vector<int> R : Vector containing number of rows in each block
+		 * std::vector<int> C : Vector containing number of columns in each block
+		 */
+
+		// Error checks
+		std::size_t rows_check = 0;
+		for (auto& r : R) rows_check += r;
+		if (rows_check != this->rows) {
+			throw std::invalid_argument("[fc2d_hps_matrix<T>::block_permute] Rows in `R` do not add up to number of rows in `this`.");
+		}
+		std::size_t cols_check = 0;
+		for (auto& c : C) cols_check += c;
+		if (cols_check != this->cols) {
+			throw std::invalid_argument("[fc2d_hps_matrix<T>::block_permute] Rows in `R` do not add up to number of rows in `this`.");
+		}
+
+		std::vector<int> I_global(this->rows);
+		std::vector<int> J_global(this->cols);
+
+		// Build global index set I
+		std::size_t I_counter = 0;
+		for (auto& i : I) {
+			// Get starting index for i-th block
+			std::size_t r = 0;
+			for (std::size_t ii = 0; ii < i; ii++) r += R[ii];
+
+			// Create increasing index set from starting index to ending index of i-th block and put into I_global
+			for (std::size_t iii = r; iii < (r + R[i]); iii++) {
+				I_global[I_counter++] = iii;
+			}
+		}
+
+		// Build global index set J
+		std::size_t J_counter = 0;
+		for (auto& j : J) {
+			// Get starting index for j-th block
+			std::size_t c = 0;
+			for (std::size_t jj = 0; jj < j; jj++) c += C[jj];
+
+			// Create increasing index set from starting index to ending index of j-th block and put into J_global
+			for (std::size_t jjj = c; jjj < (c + C[j]); jjj++) {
+				J_global[J_counter++] = jjj;
+			}
+		}
+
+		return this->from_index_set(I_global, J_global);
 
 	}
 
@@ -187,6 +252,12 @@ public:
 
 		for (int i = 0; i < this->rows; i++) {
 			this->operator()(i, col_index) = vec[i];
+		}
+	}
+
+	void negate() {
+		for (std::size_t i = 0; i < this->size(); i++) {
+			this->data()[i] = -this->data()[i];
 		}
 	}
 
