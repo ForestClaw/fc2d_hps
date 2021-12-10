@@ -151,6 +151,9 @@ fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	merged.S = S_tau;
 	merged.T = T_tau;
 
+	// Set alpha to hold horizontal merge solution matrix
+	alpha.S_prime = S_tau;
+
 	std::cout << "[merge_horizontal]  returning..." << std::endl;
 	return merged;
 	

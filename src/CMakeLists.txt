@@ -14,15 +14,17 @@ set_target_properties(hps PROPERTIES EXPORT_NAME HPS)
 
 target_sources(hps PRIVATE 
   fc2d_hps.cpp
-  fc2d_hps_poissonproblem.cpp
-  fc2d_hps_patchgrid.cpp
-  fc2d_hps_patch.cpp
-  fc2d_hps_patchsolver.cpp
+  fc2d_hps_diagnostics.c  
   fc2d_hps_merge.cpp  
   fc2d_hps_options.c  
-  fc2d_hps_physical_bc.c  
   fc2d_hps_output_ascii.c  
-  fc2d_hps_diagnostics.c  
+  fc2d_hps_patch.cpp
+  fc2d_hps_patchgrid.cpp
+  fc2d_hps_patchsolver.cpp
+  fc2d_hps_physical_bc.c  
+  fc2d_hps_poissonproblem.cpp
+  fc2d_hps_solve.cpp
+  fc2d_hps_split.cpp
   $<TARGET_OBJECTS:hps_f>
 )
 
@@ -34,6 +36,7 @@ target_include_directories(hps
   $<INSTALL_INTERFACE:include>
 )
 
+# -- test bench executable (delete later)
 add_executable(
   test_bench test_bench.cpp
 )

@@ -27,7 +27,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fc2d_hps_options.h"
 #include "fc2d_hps_physical_bc.h"
 #include "fc2d_hps_fort.h"
-#include "fc2d_hps_solve.h"
+#include "fc2d_hps_solve.hpp"
 #include "fc2d_hps_diagnostics.h"
 #include "fc2d_hps_vector.hpp"
 
@@ -72,6 +72,8 @@ static
 void hps_solve(fclaw2d_global_t *glob)
 {
     fclaw_global_essentialf("Solving ...\n");
+    fc2d_hps_build(glob);
+    fc2d_hps_solve(glob);
 
     /* Solution is always returned  in RHS, so we just don't do anything ... */
 }

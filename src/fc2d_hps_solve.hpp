@@ -23,23 +23,22 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef FC2D_HPS_SOLVE_H
-#define FC2D_HPS_SOLVE_H
+#ifndef FC2D_HPS_SOLVE_HPP_
+#define FC2D_HPS_SOLVE_HPP_
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+#include <iostream>
+#include "fclaw2d_global.h"
+#include "fc2d_hps.h"
+#include "fc2d_hps_options.h"
+#include "fc2d_hps_patchgrid.hpp"
+#include "fc2d_hps_patch.hpp"
+#include "fc2d_hps_patchsolver.hpp"
 
+// struct fclaw2d_global; 
 
-struct fclaw2d_global; 
+static void cb_merge(fclaw2d_global_t *glob, fclaw2d_patch_t *fine_patches, int blockno, int fine0_patchno, void *user);
+void fc2d_hps_build(struct fclaw2d_global* glob);
+void fc2d_hps_solve(struct fclaw2d_global* glob);
 
-void fc2d_hps_solve(struct fclaw2d_global *glob);
-
-#ifdef __cplusplus
-}
-#endif
-
-
-#endif /* !FC2D_HPS_SOLVE_H */
+#endif /* !FC2D_HPS_SOLVE_HPP_ */
 

@@ -10,7 +10,7 @@ double fc2d_hps_poisson_problem::u(double x, double y) {
 			return 1.0;
 		case LINEAR:
 			return x + y;
-		case LAPLACE:
+		case LAPLACE1:
 			return y*sin(2*M_PI*x) + x*cos(2*M_PI*y) + 4;
 		case QUAD:
 			return x*x + y*y + 2*x*y;
@@ -29,7 +29,7 @@ double fc2d_hps_poisson_problem::f(double x, double y) {
 			return 0.0;
 		case LINEAR:
 			return 0.0;
-		case LAPLACE:
+		case LAPLACE1:
 			return 0.0;
 		case QUAD:
 			return 4.0;
