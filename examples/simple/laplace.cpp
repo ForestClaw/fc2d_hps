@@ -24,7 +24,7 @@
 */
 
 #include "laplace_user.h"
-    
+#include <iostream>
 
 static
 fclaw2d_domain_t* create_domain(sc_MPI_Comm mpicomm, fclaw_options_t* fclaw_opt)
@@ -54,6 +54,7 @@ fclaw2d_domain_t* create_domain(sc_MPI_Comm mpicomm, fclaw_options_t* fclaw_opt)
 static
 void run_program(fclaw2d_global_t* glob)
 {
+    std::cout << "[laplace.cpp::run_program]  Running program" << std::endl;
     /* ---------------------------------------------------------------
        Set domain data.
        --------------------------------------------------------------- */
@@ -126,10 +127,10 @@ main (int argc, char **argv)
     app = fclaw_app_new (&argc, &argv, NULL);
 
     /* Create new options packages */
-    fclaw_opt =                   fclaw_options_register(app,"fclaw_options.ini");
-    clawpatch_opt =   fclaw2d_clawpatch_options_register(app,"fclaw_options.ini");
-    hps_opt =        fc2d_hps_options_register(app,"fclaw_options.ini");
-    user_opt =                    laplace_options_register(app,"fclaw_options.ini");  
+    fclaw_opt = fclaw_options_register(app,"fclaw_options.ini");
+    clawpatch_opt = fclaw2d_clawpatch_options_register(app,"fclaw_options.ini");
+    hps_opt = fc2d_hps_options_register(app,"fclaw_options.ini");
+    user_opt = laplace_options_register(app,"fclaw_options.ini");  
 
     /* Read configuration file(s) and command line, and process options */
     options = fclaw_app_get_options (app);
@@ -141,7 +142,7 @@ main (int argc, char **argv)
     {
         /* Options have been checked and are valid */
 
-        mpicomm = fclaw_app_get_mpi_size_rank (app, NULL, NULL);
+        mpicomm = fclaw_app_get_mpi_size_rank(app, NULL, NULL);
         domain = create_domain(mpicomm, fclaw_opt);
     
         /* Create global structure which stores the domain, timers, etc */
@@ -149,10 +150,10 @@ main (int argc, char **argv)
         fclaw2d_global_store_domain(glob, domain);
 
         /* Store option packages in glob */
-        fclaw2d_options_store           (glob, fclaw_opt);
+        fclaw2d_options_store (glob, fclaw_opt);
         fclaw2d_clawpatch_options_store (glob, clawpatch_opt);
-        fc2d_hps_options_store    (glob, hps_opt);
-        laplace_options_store            (glob, user_opt);
+        fc2d_hps_options_store (glob, hps_opt);
+        laplace_options_store (glob, user_opt);
 
         run_program(glob);
 
