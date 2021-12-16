@@ -14,7 +14,7 @@
       double precision xc,yc, laplace_qexact
 
       cont = get_context()
-
+      write(6,*) 'HERE'
 c     # Assume a single field variable only
       do j = 1,my
          do i = 1,mx

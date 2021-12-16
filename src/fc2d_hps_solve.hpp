@@ -28,7 +28,11 @@
 
 #include <iostream>
 #include "fclaw2d_global.h"
+#include "fclaw2d_patch.h"
+#include "fclaw2d_physical_bc.h"
+#include "fclaw2d_clawpatch.h"
 #include "fc2d_hps.h"
+#include "fc2d_hps_physical_bc.h"
 #include "fc2d_hps_options.h"
 #include "fc2d_hps_patchgrid.hpp"
 #include "fc2d_hps_patch.hpp"

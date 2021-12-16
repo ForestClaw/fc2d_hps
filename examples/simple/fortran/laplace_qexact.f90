@@ -75,10 +75,14 @@ SUBROUTINE laplace_qexact_complete(example,x,y,q,qlap,grad,flag)
     integer :: id
 
     if (example .eq. 0) then
-        q = x**2 + y**2
-        qx = 2*x
-        qy = 2*y
-        qlap = 4
+        ! q = x**2 + y**2
+        ! qx = 2*x
+        ! qy = 2*y
+        ! qlap = 4
+        q = x
+        qx = 1
+        qy = 0
+        qlap = 0
     elseif (example .eq. 1) then
         !! example in polar coordinates (r)
         r2 = (x-x0)**2 + (y-y0)**2
