@@ -68,19 +68,29 @@ void hps_rhs(fclaw2d_global_t *glob,
 
 /* ------------------------------------- Fake solution -------------------------------- */
 
+void visit_print(fc2d_hps_patch& patch) {
+    patch.print_info();
+}
+
 static
 void hps_solve(fclaw2d_global_t *glob)
 {
-    fclaw_global_essentialf("Solving ...\n");
+    fclaw_global_essentialf("----- Begin HPS solver -----\n");
 
-    const fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
+    // Setup HPS method
+    fc2d_hps_setup(glob);
 
-    if (fclaw_opt->maxlevel > 0) {
-        fc2d_hps_build(glob);
-    }
+    // HPS build stage
+    fc2d_hps_build(glob);
+
+    // Upwards pass for non-homogeneous RHS and BCs
+    fc2d_hps_physical_bc(glob);
+    fc2d_hps_upwards(glob);
+
+    // HPS solve stage
     fc2d_hps_solve(glob);
 
-    /* Solution is always returned  in RHS, so we just don't do anything ... */
+    fclaw_global_essentialf("----- End of HPS solver -----\n");
 }
 
 

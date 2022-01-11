@@ -1,20 +1,19 @@
 #ifndef FC2D_HPS_QUADTREE_HPP
 #define FC2D_HPS_QUADTREE_HPP
 
+#include <vector>
 #include <forestclaw2d.h>
 #include <p4est.h>
 #include <p4est_wrap.h>
 #include <p4est_iterate.h>
-#include <fc2d_hps_patch.hpp>
+#include "fc2d_hps_patch.hpp"
 
 #define FC2D_HPS_NUMBER_CHILDREN 		4
 #define FC2D_HPS_QUADTREE_LOWER_LEFT 	0
 #define FC2D_HPS_QUADTREE_LOWER_RIGHT 	1
 #define FC2D_HPS_QUADTREE_UPPER_LEFT 	2
 #define FC2D_HPS_QUADTREE_UPPER_RIGHT 	3
-
-// Forward declaration
-void p4est_iterate_fn(p4est_iter_volume_info_t* info, void* user_data);
+#define FC2D_HPS_QUADTREE_MAX_HEIGHT    25 // Arbitrary right now, change if needed
 
 template<class T>
 class fc2d_hps_quadtree {
@@ -35,40 +34,36 @@ public:
 	};
 
 	fc2d_hps_quadnode* root;	// Root of tree
-	// std::size_t height;			// Height of tree, i.e., number of levels
+	std::size_t height;			// Height of tree, i.e., number of levels
 
 	fc2d_hps_quadtree() :
-		root(nullptr)
+		root(nullptr), height(0)
 			{}
 
 	fc2d_hps_quadtree(T& root_data) :
-		root(new fc2d_hps_quadnode(root_data))
+		root(new fc2d_hps_quadnode(root_data)), height(1)
 			{}
-	
-	// fc2d_hps_quadtree(fclaw2d_domain_t* domain) :
-	// 	root(nullptr) {
-	// 	// Build a quadtree from a forestclaw domain object
-
-	// 	// Variables
-	// 	p4est_wrap_t* wrap = (p4est_wrap_t*) domain->pp;
-	// 	p4est_t* p4est = wrap->p4est;
-
-	// 	// Begin growth algorithm
-	// 	fc2d_hps_quadnode* temp_node = root;
-
-
-	// }
 
 	~fc2d_hps_quadtree() {}
 
+	void build(std::function<bool(T&)> bigger, std::function<std::vector<T>(T&)> init) {
+		// Build a quadtree by calling `bigger` which returns true or false to determine if the tree gets bigger.
+		// Any new leaves are built by calling `init`
+
+		if (this->root == nullptr) {
+			throw std::invalid_argument("[fc2d_hps_quadtree::build] Tree's `root` is null. Build tree from filled in root.");
+		}
+
+		std::size_t current_height = 0;
+		build_(this->root, bigger, init, current_height);
+	}
+
 	void grow(fc2d_hps_quadnode* node, T children_data[FC2D_HPS_NUMBER_CHILDREN]) {
 		// Grows a leaf node with supplied data
-
 		// Check if node is a leaf
 		if (node->children[0] != nullptr) {
 			throw std::invalid_argument("[fc2d_hps_quadtree::grow] `node` is not a leaf");
 		}
-
 		// Get node's level
 		// std::size_t node_level = node->level;
 		
@@ -87,12 +82,12 @@ public:
 
 			// Set children height
 			node->children[i]->level = node->level + 1;
-		}
 
-		// Update tree height if adding another level
-		// if ((node_level + 1) >= this->height) {
-		// 	this->height = node_level + 2;
-		// }
+			// Set tree's height
+			if (node->children[i]->level > this->height - 1) {
+				this->height++;
+			}
+		}
 	}
 
 	// TODO: Write grow function that takes a function that takes the parent node and returns 4 children
@@ -107,7 +102,7 @@ public:
 			is_leaf_(siblings[FC2D_HPS_QUADTREE_UPPER_LEFT]) == false ||
 			is_leaf_(siblings[FC2D_HPS_QUADTREE_UPPER_RIGHT]) == false
 		) {
-			throw std::invalid_argument("[fc2d_hps_quadtree::trim] `siblings` are note all leaves");
+			throw std::invalid_argument("[fc2d_hps_quadtree::trim] `siblings` are not all leaves");
 		}
 
 		// Get node's level
@@ -120,6 +115,9 @@ public:
 			// Point siblings' parent's children to null
 			siblings[i]->parent->children[i] = nullptr;
 
+			// Update tree hieght
+			
+
 			// Delete siblings
 			delete siblings[i];
 		}
@@ -127,6 +125,7 @@ public:
 
 
 	}
+
 
 	void traverse(std::function<void(T&)> visit) {
 		// Traverse the tree by visiting all children prior to visiting node (Inorder traversal)
@@ -140,7 +139,24 @@ public:
 		merge_(this->root, visit);
 	}
 
+	// TODO: Create delete function
+
 private:
+
+	void build_(fc2d_hps_quadnode* node, std::function<bool(T&)> bigger, std::function<std::vector<T>(T&)> init, std::size_t current_height) {
+		if (current_height >= FC2D_HPS_QUADTREE_MAX_HEIGHT) {
+			std::cerr << "[fc2d_hps_quadtree::build] WARNING: Tree exceeds `FC2D_HPS_QUADTREE_MAX_HEIGHT`. Change max hieght or adjust `bigger` function." << std::endl;
+			return;
+		}
+		if (bigger(node->data)) {
+			std::vector<T> children = init(node->data);
+			grow(node, children.data());
+			for (std::size_t i = 0; i < FC2D_HPS_NUMBER_CHILDREN; i++) {
+				build_(node->children[i], bigger, init, current_height++);
+			}
+			return;
+		}
+	}
 
 	bool is_leaf_(fc2d_hps_quadnode* node) {
 		for (std::size_t i = 0; i < FC2D_HPS_NUMBER_CHILDREN; i++) {
@@ -180,58 +196,6 @@ private:
 		}
 	}
 
-
 };
-
-fc2d_hps_quadtree<fc2d_hps_patch> fc2d_hps_create_quadtree_from_domain(fclaw2d_domain_t* domain) {
-	// WORKING HERE!
-	// My current approach doesn't look like it will work... I believe I need to come up with a recursive approach.
-
-
-	// Create and initialize variables
-	fc2d_hps_patch root_patch;
-	fc2d_hps_quadtree<fc2d_hps_patch> tree(root_patch);
-	fc2d_hps_quadtree<fc2d_hps_patch>::fc2d_hps_quadnode** temp_node = &(tree.root);
-	p4est_wrap_t* wrap = (p4est_wrap_t*) domain->pp;
-	p4est_t* p4est = wrap->p4est;
-	p4est_tree_t* p4est_tree = p4est_tree_array_index(p4est->trees, 0);
-
-	// Iterate through quadrants in tree in Morton order
-	for (std::size_t ID = 0; ID < p4est->local_num_quadrants; ID++) {
-
-		// Get access to quadrant
-		p4est_quadrant_t* p4est_quad = p4est_quadrant_array_index(&(p4est_tree->quadrants), ID);
-
-		// // Get levels of node and quad
-		// int node_level = temp_node->level;
-		// int quad_level = p4est_quad->level;
-
-		while ((*temp_node)->level != p4est_quad->level) {
-
-			// Create four new nodes of patches
-			fc2d_hps_patch child_patches[FC2D_HPS_NUMBER_CHILDREN];
-			child_patches[0] = *(new fc2d_hps_patch());
-			child_patches[1] = *(new fc2d_hps_patch());
-			child_patches[2] = *(new fc2d_hps_patch());
-			child_patches[3] = *(new fc2d_hps_patch());
-			
-			// Grow tree
-			tree.grow(*temp_node, child_patches);
-
-			// Move temp_node to point to first child of new family
-			temp_node = &((*temp_node)->children[0]);
-
-		}
-
-		// temp_node should point to a leaf corresponding to the correct level p4est_quadrant
-		// Store RHS data on leaf patches
-		// Access RHS data from forestclaw domain
-
-	}
-
-
-	return tree;
-
-}
 
 #endif // FC2D_HPS_QUADTREE_HPP

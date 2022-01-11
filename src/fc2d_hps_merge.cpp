@@ -287,7 +287,7 @@ void merge_4to1(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
 	parent.N_cells_leaf = tau.N_cells_leaf;
 	parent.grid = tau.grid;
 	parent.T = tau.T;
-	parent.S = tau.T;
+	parent.S = tau.S;
 	parent.X = tau.X;
 
 	std::cout << "[merge_4to1]  end 4-to-1 merge, returning..." << std::endl;

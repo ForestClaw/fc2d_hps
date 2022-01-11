@@ -28,6 +28,9 @@ public:
 	// Patch grid information
 	fc2d_hps_patchgrid grid;	// Grid information
 
+	// User data
+	void* user;
+
 	// HPS Data
 	fc2d_hps_matrix<double> T;			// DtN Matrix
 	fc2d_hps_matrix<double> S;			// Solution Matrix
@@ -44,7 +47,7 @@ public:
 	fc2d_hps_patch(fc2d_hps_patchgrid patch_grid, int ID, int level, bool is_leaf);
 
 	// @TODO: Output functions
-	
+	void print_info();
 
 };
 

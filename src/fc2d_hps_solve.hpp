@@ -36,12 +36,28 @@
 #include "fc2d_hps_options.h"
 #include "fc2d_hps_patchgrid.hpp"
 #include "fc2d_hps_patch.hpp"
+#include "fc2d_hps_quadtree.hpp"
 #include "fc2d_hps_patchsolver.hpp"
+#include "fc2d_hps_merge.hpp"
 
-// struct fclaw2d_global; 
+// HPS Setup Routines
+bool build_from_p4est_callback_bigger(fc2d_hps_patch& patch);
+std::vector<fc2d_hps_patch> build_from_p4est_callback_init(fc2d_hps_patch& parent);
+fc2d_hps_quadtree<fc2d_hps_patch> fc2d_hps_create_quadtree_from_domain(fclaw2d_global_t* glob);
+void fc2d_hps_setup(struct fclaw2d_global* glob);
 
+// HPS Build Routines
 static void cb_merge(fclaw2d_global_t *glob, fclaw2d_patch_t *fine_patches, int blockno, int fine0_patchno, void *user);
+void visit_print2(fc2d_hps_patch& patch);
+void visit_leaves_build_dtn(fc2d_hps_patch& patch);
+void visit_merge(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& beta, fc2d_hps_patch& gamma, fc2d_hps_patch& omega);
 void fc2d_hps_build(struct fclaw2d_global* glob);
+
+// HPS Upwards Pass Routines
+void visit_upwards(fc2d_hps_patch& patch);
+void fc2d_hps_upwards(struct fclaw2d_global* glob);
+
+// HPS Solve Routine
 void fc2d_hps_solve(struct fclaw2d_global* glob);
 
 #endif /* !FC2D_HPS_SOLVE_HPP_ */
