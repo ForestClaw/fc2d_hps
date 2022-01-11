@@ -23,8 +23,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef LAPLACE_USER_H
-#define LAPLACE_USER_H
+#ifndef SIMPLE_USER_H
+#define SIMPLE_USER_H
 
 /* ForestClaw headers */
 #include <fclaw2d_include_all.h>
@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fc2d_hps_output_ascii.h>
 
 /* Application headers */
-#include "laplace_options.h"
+#include "simple_options.h"
 
 
 #ifdef __cplusplus
@@ -57,7 +57,7 @@ extern "C"
 
 /* --------------------------- Problem dependent functions -----------------------------*/
 
-void laplace_link_solvers(fclaw2d_global_t *glob);
+void simple_link_solvers(fclaw2d_global_t *glob);
 
 
 /* --------------------------- Fortran functions ---------------------------------------*/
@@ -68,26 +68,26 @@ void SETPROB();
 
 
 
-#define LAPLACE_FORT_RHS FCLAW_F77_FUNC(laplace_fort_rhs,LAPLACE_FORT_RHS)
+#define SIMPLE_FORT_RHS FCLAW_F77_FUNC(simple_fort_rhs,SIMPLE_FORT_RHS)
 
-void LAPLACE_FORT_RHS(const int* blockno, const int* mbc, const int* mx, 
+void SIMPLE_FORT_RHS(const int* blockno, const int* mbc, const int* mx, 
                      const int* my, const int* mfields, 
                      const double *xlower, const double *ylower,
                      const double* dx, const double* dy, double rhs[]);
 
 
-#define LAPLACE_COMPUTE_ERROR FCLAW_F77_FUNC(laplace_compute_error,LAPLACE_COMPUTE_ERROR)
+#define SIMPLE_COMPUTE_ERROR FCLAW_F77_FUNC(simple_compute_error,SIMPLE_COMPUTE_ERROR)
 
-void LAPLACE_COMPUTE_ERROR(int* blockno, int *mx, int *my, int* mbc, int* mfields,
+void SIMPLE_COMPUTE_ERROR(int* blockno, int *mx, int *my, int* mbc, int* mfields,
                            double *dx, double *dy, double *xlower,
                            double *ylower, double *t, double q[],
                            double error[], double soln[]);
 
 
-#define LAPLACE_FORT_APPLY_BC FCLAW_F77_FUNC(laplace_fort_apply_bc, \
-                                            LAPLACE_FORT_APPLY_BC)
+#define SIMPLE_FORT_APPLY_BC FCLAW_F77_FUNC(simple_fort_apply_bc, \
+                                            SIMPLE_FORT_APPLY_BC)
 
-void LAPLACE_FORT_APPLY_BC(const int* blockno, const  int* mx, const  int* my, 
+void SIMPLE_FORT_APPLY_BC(const int* blockno, const  int* mx, const  int* my, 
                           const  int* mbc, const  int* mfields, 
                           const double* xlower, const double* ylower,
                           const double* dx, const double* dy, const double* t,
@@ -96,18 +96,18 @@ void LAPLACE_FORT_APPLY_BC(const int* blockno, const  int* mx, const  int* my,
                           int* cons_check, double flux_sum[]);
 
 
-#define LAPLACE_FORT_EVAL_BC FCLAW_F77_FUNC(laplace_fort_eval_bc, LAPLACE_FORT_EVAL_BC)
+#define SIMPLE_FORT_EVAL_BC FCLAW_F77_FUNC(simple_fort_eval_bc, SIMPLE_FORT_EVAL_BC)
 
-double LAPLACE_FORT_EVAL_BC(const int* iface, const double* t,
+double SIMPLE_FORT_EVAL_BC(const int* iface, const double* t,
                             const double* x, const double* y);
 
 
 /* ----------------------------- Fortran - output functions --------------------------- */
 
-#define  LAPLACE_FORT_OUTPUT_ASCII \
-           FCLAW_F77_FUNC(laplace_fort_output_ascii, \
-                          LAPLACE_FORT_OUTPUT_ASCII)
-void LAPLACE_FORT_OUTPUT_ASCII(const char* matname1,
+#define  SIMPLE_FORT_OUTPUT_ASCII \
+           FCLAW_F77_FUNC(simple_fort_output_ascii, \
+                          SIMPLE_FORT_OUTPUT_ASCII)
+void SIMPLE_FORT_OUTPUT_ASCII(const char* matname1,
                               int* mx,        int* my,
                               int* meqn,      int* mbc,
                               double* xlower, double* ylower,
@@ -117,10 +117,10 @@ void LAPLACE_FORT_OUTPUT_ASCII(const char* matname1,
                               int* blockno,   int* mpirank);
 
 #if 0
-#define LAPLACE_FORT_HEADER_ASCII \
-         FCLAW_F77_FUNC(laplace_fort_header_ascii, \
-                        LAPLACE_FORT_HEADER_ASCII)
-void LAPLACE_FORT_HEADER_ASCII(char* matname1, char* matname2,
+#define SIMPLE_FORT_HEADER_ASCII \
+         FCLAW_F77_FUNC(simple_fort_header_ascii, \
+                        SIMPLE_FORT_HEADER_ASCII)
+void SIMPLE_FORT_HEADER_ASCII(char* matname1, char* matname2,
                               double* time, int* meqn, int* maux, 
                               int* ngrids);
 #endif

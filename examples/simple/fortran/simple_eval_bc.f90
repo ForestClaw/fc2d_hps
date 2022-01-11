@@ -1,4 +1,4 @@
-double precision function laplace_fort_eval_bc(iface,t,x,y)
+double precision function simple_fort_eval_bc(iface,t,x,y)
     implicit none
 
     integer :: iface
@@ -12,7 +12,7 @@ double precision function laplace_fort_eval_bc(iface,t,x,y)
 
     data normals /-1,1,0,0,0,0,-1,1/
 
-    call laplace_qexact_gradient(x,y,q,grad)
+    call simple_qexact_gradient(x,y,q,grad)
 
     !! q_n = grad q \cdot n
     qn = normals(iface,1)*grad(1) + normals(iface,2)*grad(2)
@@ -28,8 +28,8 @@ double precision function laplace_fort_eval_bc(iface,t,x,y)
         !! keep compiler warnings happy
     endif
 
-    laplace_fort_eval_bc = a*q + b*qn
+    simple_fort_eval_bc = a*q + b*qn
 
     return
     
-end function laplace_fort_eval_bc
+end function simple_fort_eval_bc

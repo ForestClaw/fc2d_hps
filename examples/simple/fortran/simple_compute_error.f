@@ -1,4 +1,4 @@
-      subroutine laplace_compute_error(blockno, mx,my,mbc,mfields,
+      subroutine simple_compute_error(blockno, mx,my,mbc,mfields,
      &      dx,dy,xlower,ylower,t,rhs,error,soln)
       implicit none
 
@@ -11,7 +11,7 @@
       integer*8 cont, get_context
 
       integer i,j,m
-      double precision xc,yc, laplace_qexact
+      double precision xc,yc, simple_qexact
 
       cont = get_context()
       write(6,*) 'HERE'
@@ -21,7 +21,7 @@ c     # Assume a single field variable only
             yc = ylower + (j-0.5)*dy
             xc = xlower + (i-0.5)*dx
 
-            soln(i,j,1) = laplace_qexact(xc,yc)
+            soln(i,j,1) = simple_qexact(xc,yc)
             do m = 1,mfields
                error(i,j,m) = rhs(i,j,m) - soln(i,j,1)
             end do

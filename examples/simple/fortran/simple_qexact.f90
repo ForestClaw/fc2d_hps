@@ -1,4 +1,4 @@
-DOUBLE PRECISION function laplace_qexact(x,y)
+DOUBLE PRECISION function simple_qexact(x,y)
     IMPLICIT NONE
 
     DOUBLE PRECISION :: x,y
@@ -11,13 +11,13 @@ DOUBLE PRECISION function laplace_qexact(x,y)
 
 
     flag = 0  !! Don't compute the gradient
-    call laplace_qexact_complete(example,x,y,q,qlap,grad,flag)
+    call simple_qexact_complete(example,x,y,q,qlap,grad,flag)
 
-    laplace_qexact = q
+    simple_qexact = q
 
-end function laplace_qexact
+end function simple_qexact
 
-DOUBLE PRECISION function laplace_qexact_rhs(x,y)
+DOUBLE PRECISION function simple_qexact_rhs(x,y)
     implicit none
 
     double precision :: x,y
@@ -29,15 +29,15 @@ DOUBLE PRECISION function laplace_qexact_rhs(x,y)
     double precision :: q,qlap,grad_q(2)
 
     flag = 2
-    CALL laplace_qexact_complete(example,x,y,q,qlap,grad_q,flag)
+    CALL simple_qexact_complete(example,x,y,q,qlap,grad_q,flag)
 
-    laplace_qexact_rhs = qlap
+    simple_qexact_rhs = qlap
 
-END FUNCTION laplace_qexact_rhs
+END FUNCTION simple_qexact_rhs
 
 
 
-SUBROUTINE laplace_qexact_gradient(x,y,q,grad)
+SUBROUTINE simple_qexact_gradient(x,y,q,grad)
     IMPLICIT NONE
 
     DOUBLE PRECISION :: x,y, q, grad(2)
@@ -49,13 +49,13 @@ SUBROUTINE laplace_qexact_gradient(x,y,q,grad)
     COMMON /comm_example/ example
 
     flag = 1
-    CALL laplace_qexact_complete(example,x,y,q,qlap,grad,flag)
+    CALL simple_qexact_complete(example,x,y,q,qlap,grad,flag)
 
-END SUBROUTINE laplace_qexact_gradient
+END SUBROUTINE simple_qexact_gradient
 
 
 
-SUBROUTINE laplace_qexact_complete(example,x,y,q,qlap,grad,flag)
+SUBROUTINE simple_qexact_complete(example,x,y,q,qlap,grad,flag)
     use hsmooth_mod, only : m_polar, x0_polar, y0_polar
     IMPLICIT NONE
 
@@ -170,7 +170,7 @@ SUBROUTINE laplace_qexact_complete(example,x,y,q,qlap,grad,flag)
         grad(2) = qy
     endif
 
-end subroutine laplace_qexact_complete
+end subroutine simple_qexact_complete
 
 double precision function sech(x)
     implicit none

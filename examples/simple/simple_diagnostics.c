@@ -23,7 +23,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "laplace_diagnostics.h"
+#include "simple_diagnostics.h"
 
 #include <fclaw2d_clawpatch.h>
 #include <fclaw2d_clawpatch_options.h>
@@ -34,17 +34,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fclaw2d_domain.h>
 #include <fclaw2d_diagnostics.h>
 
-void laplace_diagnostics_initialize(fclaw2d_global_t *glob,
+void simple_diagnostics_initialize(fclaw2d_global_t *glob,
                                    void **acc_patch)
 {
     const fclaw2d_clawpatch_options_t *clawpatch_opt = 
               fclaw2d_clawpatch_get_options(glob);
 
-    laplace_error_info_t *error_data;
+    simple_error_info_t *error_data;
 
     int mfields = clawpatch_opt->rhs_fields;
 
-    error_data = FCLAW_ALLOC(laplace_error_info_t,1);
+    error_data = FCLAW_ALLOC(simple_error_info_t,1);
 
     /* Allocate memory for 1-norm, 2-norm, and inf-norm errors */
     error_data->local_error  = FCLAW_ALLOC_ZERO(double,3*mfields);
@@ -60,10 +60,10 @@ void laplace_diagnostics_initialize(fclaw2d_global_t *glob,
 
 }
 
-void laplace_diagnostics_reset(fclaw2d_global_t *glob,
+void simple_diagnostics_reset(fclaw2d_global_t *glob,
                               void* patch_acc)
 {
-    laplace_error_info_t *error_data = (laplace_error_info_t*) patch_acc;
+    simple_error_info_t *error_data = (simple_error_info_t*) patch_acc;
     const fclaw2d_clawpatch_options_t *clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
 
     int mfields = clawpatch_opt->rhs_fields;
@@ -86,14 +86,14 @@ void laplace_diagnostics_reset(fclaw2d_global_t *glob,
 }
 
 static
-void laplace_compute(fclaw2d_domain_t *domain,
+void simple_compute(fclaw2d_domain_t *domain,
                     fclaw2d_patch_t *patch,
                     int blockno,
                     int patchno,
                     void* user) //void *patch_acc)
 {
     fclaw2d_global_iterate_t *s = (fclaw2d_global_iterate_t *) user;
-    laplace_error_info_t *error_data = (laplace_error_info_t*) s->user; 
+    simple_error_info_t *error_data = (simple_error_info_t*) s->user; 
 
     /* Accumulate area for final computation of error */
     int mx, my, mbc;
@@ -118,26 +118,26 @@ void laplace_compute(fclaw2d_domain_t *domain,
     }
 }
 
-void laplace_diagnostics_compute(fclaw2d_global_t* glob,
+void simple_diagnostics_compute(fclaw2d_global_t* glob,
                                            void* patch_acc)
 {
     const fclaw_options_t *fclaw_opt = fclaw2d_get_options(glob);
     int check = fclaw_opt->compute_error || fclaw_opt->conservation_check;
     if (!check) return;
 
-    fclaw2d_global_iterate_patches(glob, laplace_compute, patch_acc);
+    fclaw2d_global_iterate_patches(glob, simple_compute, patch_acc);
 }
 
 
 
 /* Accumulate the errors computed above */
-void laplace_diagnostics_gather(fclaw2d_global_t *glob,
+void simple_diagnostics_gather(fclaw2d_global_t *glob,
                                void* patch_acc,
                                int init_flag)
 {
     fclaw2d_domain_t *domain = glob->domain;
     
-    laplace_error_info_t *error_data = (laplace_error_info_t*) patch_acc;
+    simple_error_info_t *error_data = (simple_error_info_t*) patch_acc;
     const fclaw_options_t *fclaw_opt = fclaw2d_get_options(glob);
     const fclaw2d_clawpatch_options_t *clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
     
@@ -199,10 +199,10 @@ void laplace_diagnostics_gather(fclaw2d_global_t *glob,
 }
 
 
-void laplace_diagnostics_finalize(fclaw2d_global_t *glob,
+void simple_diagnostics_finalize(fclaw2d_global_t *glob,
                                  void** patch_acc)
 {
-    laplace_error_info_t *error_data = *((laplace_error_info_t**) patch_acc);
+    simple_error_info_t *error_data = *((simple_error_info_t**) patch_acc);
     FCLAW_FREE(error_data->mass);
     FCLAW_FREE(error_data->mass0);
     FCLAW_FREE(error_data->rhs);

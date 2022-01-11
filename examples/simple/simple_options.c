@@ -23,12 +23,12 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "laplace_user.h"
+#include "simple_user.h"
 
 static int s_user_options_package_id = -1;
 
 static void *
-laplace_register (laplace_options_t *user, sc_options_t * opt)
+simple_register (simple_options_t *user, sc_options_t * opt)
 {
     /* [user] User options */
 
@@ -79,7 +79,7 @@ laplace_register (laplace_options_t *user, sc_options_t * opt)
 }
 
 static fclaw_exit_type_t
-laplace_postprocess(laplace_options_t *user)
+simple_postprocess(simple_options_t *user)
 {
     fclaw_options_convert_double_array (user->x0_polar_string,&user->x0_polar,user->m_polar);
     fclaw_options_convert_double_array (user->y0_polar_string,&user->y0_polar,user->m_polar);
@@ -93,14 +93,14 @@ laplace_postprocess(laplace_options_t *user)
 
 
 static fclaw_exit_type_t
-laplace_check (laplace_options_t *user)
+simple_check (simple_options_t *user)
 {
     /* Nothing to check ? */
     return FCLAW_NOEXIT;
 }
 
 static void
-laplace_destroy(laplace_options_t *user)
+simple_destroy(simple_options_t *user)
 {
     fclaw_options_destroy_array (user->x0_polar);
     fclaw_options_destroy_array (user->y0_polar);
@@ -118,15 +118,15 @@ laplace_destroy(laplace_options_t *user)
 static void*
 options_register (fclaw_app_t * app, void *package, sc_options_t * opt)
 {
-    laplace_options_t *user;
+    simple_options_t *user;
 
     FCLAW_ASSERT (app != NULL);
     FCLAW_ASSERT (package != NULL);
     FCLAW_ASSERT (opt != NULL);
 
-    user = (laplace_options_t*) package;
+    user = (simple_options_t*) package;
 
-    return laplace_register(user,opt);
+    return simple_register(user,opt);
 }
 
 static fclaw_exit_type_t
@@ -137,43 +137,43 @@ options_postprocess (fclaw_app_t * a, void *package, void *registered)
     FCLAW_ASSERT (registered == NULL);
 
     /* errors from the key-value options would have showed up in parsing */
-    laplace_options_t *user = (laplace_options_t *) package;
+    simple_options_t *user = (simple_options_t *) package;
 
     /* post-process this package */
     FCLAW_ASSERT(user->is_registered);
 
     /* Convert strings to arrays */
-    return laplace_postprocess (user);
+    return simple_postprocess (user);
 }
 
 
 static fclaw_exit_type_t
 options_check(fclaw_app_t *app, void *package,void *registered)
 {
-    laplace_options_t           *user;
+    simple_options_t           *user;
 
     FCLAW_ASSERT (app != NULL);
     FCLAW_ASSERT (package != NULL);
     FCLAW_ASSERT(registered == NULL);
 
-    user = (laplace_options_t*) package;
+    user = (simple_options_t*) package;
 
-    return laplace_check(user);
+    return simple_check(user);
 }
 
 static void
 options_destroy (fclaw_app_t * app, void *package, void *registered)
 {
-    laplace_options_t *user;
+    simple_options_t *user;
 
     FCLAW_ASSERT (app != NULL);
     FCLAW_ASSERT (package != NULL);
     FCLAW_ASSERT (registered == NULL);
 
-    user = (laplace_options_t*) package;
+    user = (simple_options_t*) package;
     FCLAW_ASSERT (user->is_registered);
 
-    laplace_destroy (user);
+    simple_destroy (user);
 
     FCLAW_FREE (user);
 }
@@ -189,13 +189,13 @@ static const fclaw_app_options_vtable_t options_vtable_user =
 
 /* --------------------- Public interface access functions ---------------------------- */
 
-laplace_options_t* laplace_options_register (fclaw_app_t * app,
+simple_options_t* simple_options_register (fclaw_app_t * app,
                                        const char *configfile)
 {
-    laplace_options_t *user;
+    simple_options_t *user;
     FCLAW_ASSERT (app != NULL);
 
-    user = FCLAW_ALLOC (laplace_options_t, 1);
+    user = FCLAW_ALLOC (simple_options_t, 1);
     fclaw_app_options_register (app,"user", configfile, &options_vtable_user,
                                 user);
 
@@ -203,15 +203,15 @@ laplace_options_t* laplace_options_register (fclaw_app_t * app,
     return user;
 }
 
-void laplace_options_store (fclaw2d_global_t* glob, laplace_options_t* user)
+void simple_options_store (fclaw2d_global_t* glob, simple_options_t* user)
 {
     FCLAW_ASSERT(s_user_options_package_id == -1);
     int id = fclaw_package_container_add_pkg(glob,user);
     s_user_options_package_id = id;
 }
 
-const laplace_options_t* laplace_get_options(fclaw2d_global_t* glob)
+const simple_options_t* simple_get_options(fclaw2d_global_t* glob)
 {
     int id = s_user_options_package_id;
-    return (laplace_options_t*) fclaw_package_get_options(glob, id);    
+    return (simple_options_t*) fclaw_package_get_options(glob, id);    
 }

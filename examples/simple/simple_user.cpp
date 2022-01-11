@@ -24,15 +24,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "laplace_user.h"
+#include "simple_user.h"
 
 static
-void laplace_problem_setup(fclaw2d_global_t *glob)
+void simple_problem_setup(fclaw2d_global_t *glob)
 {
     if (glob->mpirank == 0)
     {
         FILE *f = fopen("setprob.data","w");
-        const laplace_options_t* user = laplace_get_options(glob);
+        const simple_options_t* user = simple_get_options(glob);
 
         fprintf(f,  "%-24d   %s",  user->example,    "% example\n");
         fprintf(f,  "%-24.6f   %s",user->alpha,      "% alpha\n");
@@ -72,26 +72,26 @@ void laplace_problem_setup(fclaw2d_global_t *glob)
 }
 
 
-void laplace_link_solvers(fclaw2d_global_t *glob)
+void simple_link_solvers(fclaw2d_global_t *glob)
 {
     /* ForestClaw vtable */
     fclaw2d_vtable_t *fclaw_vt = fclaw2d_vt();
-    fclaw_vt->problem_setup = &laplace_problem_setup;  
+    fclaw_vt->problem_setup = &simple_problem_setup;  
 
     /* HPS virtual table : Initialize RHS */
     fc2d_hps_vtable_t*  hps_vt = fc2d_hps_vt();
-    hps_vt->fort_rhs = &LAPLACE_FORT_RHS;
+    hps_vt->fort_rhs = &SIMPLE_FORT_RHS;
 
     /* Clawpatch : Compute the error */
     fclaw2d_clawpatch_vtable_t *clawpatch_vt = fclaw2d_clawpatch_vt();
 
     /* Specialized for this example */
-    // clawpatch_vt->fort_compute_patch_error = &LAPLACE_COMPUTE_ERROR; // @TODO: Why does this give an error?
+    // clawpatch_vt->fort_compute_patch_error = &SIMPLE_COMPUTE_ERROR; // @TODO: Why does this give an error?
     clawpatch_vt->fort_user_exceeds_threshold = &USER_EXCEEDS_TH;
 
     /* BCs : Include inhomogeneous boundary conditions on the right hand side */
-    hps_vt->fort_apply_bc = &LAPLACE_FORT_APPLY_BC;
-    hps_vt->fort_eval_bc  = &LAPLACE_FORT_EVAL_BC;
+    hps_vt->fort_apply_bc = &SIMPLE_FORT_APPLY_BC;
+    hps_vt->fort_eval_bc  = &SIMPLE_FORT_EVAL_BC;
 
     // Output routines
     clawpatch_vt->time_header_ascii = fc2d_hps_time_header_ascii;
@@ -99,6 +99,6 @@ void laplace_link_solvers(fclaw2d_global_t *glob)
 
     /* This one will be used only if we are also computing the error.  In this case
        the error and exact solution will be output, along with computed solution */          
-    hps_vt->fort_output = &LAPLACE_FORT_OUTPUT_ASCII; 
+    hps_vt->fort_output = &SIMPLE_FORT_OUTPUT_ASCII; 
 }
 

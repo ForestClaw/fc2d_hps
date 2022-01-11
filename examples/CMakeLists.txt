@@ -3,7 +3,6 @@
 #
 # --------------------------------------------
 
-
 cmake_minimum_required(VERSION 3.13...3.20)
 
 project(HPSApps LANGUAGES C CXX Fortran)

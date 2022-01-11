@@ -23,7 +23,7 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "laplace_user.h"
+#include "simple_user.h"
 #include <iostream>
 
 static
@@ -54,7 +54,7 @@ fclaw2d_domain_t* create_domain(sc_MPI_Comm mpicomm, fclaw_options_t* fclaw_opt)
 static
 void run_program(fclaw2d_global_t* glob)
 {
-    std::cout << "[laplace.cpp::run_program]  Running program" << std::endl;
+    std::cout << "[simple.cpp::run_program]  Running program" << std::endl;
     /* ---------------------------------------------------------------
        Set domain data.
        --------------------------------------------------------------- */
@@ -68,7 +68,7 @@ void run_program(fclaw2d_global_t* glob)
     fc2d_hps_solver_initialize();
 
     /* set up elliptic solver to use the hps solver */
-    laplace_link_solvers(glob);
+    simple_link_solvers(glob);
 
     /* ---------------------------------------------------------------
        Run
@@ -115,7 +115,7 @@ main (int argc, char **argv)
 
     fclaw2d_clawpatch_options_t *clawpatch_opt;
     fc2d_hps_options_t *hps_opt;
-    laplace_options_t *user_opt;
+    simple_options_t *user_opt;
 
     fclaw2d_global_t *glob;
     fclaw2d_domain_t *domain;
@@ -130,7 +130,7 @@ main (int argc, char **argv)
     fclaw_opt = fclaw_options_register(app,"fclaw_options.ini");
     clawpatch_opt = fclaw2d_clawpatch_options_register(app,"fclaw_options.ini");
     hps_opt = fc2d_hps_options_register(app,"fclaw_options.ini");
-    user_opt = laplace_options_register(app,"fclaw_options.ini");  
+    user_opt = simple_options_register(app,"fclaw_options.ini");  
 
     /* Read configuration file(s) and command line, and process options */
     options = fclaw_app_get_options (app);
@@ -153,7 +153,7 @@ main (int argc, char **argv)
         fclaw2d_options_store (glob, fclaw_opt);
         fclaw2d_clawpatch_options_store (glob, clawpatch_opt);
         fc2d_hps_options_store (glob, hps_opt);
-        laplace_options_store (glob, user_opt);
+        simple_options_store (glob, user_opt);
 
         run_program(glob);
 

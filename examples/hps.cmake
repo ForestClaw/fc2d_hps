@@ -7,6 +7,7 @@
 ## Laplace (constant coefficient)
 # add_subdirectory(laplace)
 add_subdirectory(simple)
+add_subdirectory(hello)
 
 
 

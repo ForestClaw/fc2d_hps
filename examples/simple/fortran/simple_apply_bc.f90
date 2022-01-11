@@ -19,7 +19,7 @@
 !! where h = dx or h = dy, is non-zero.
 !!
 
-subroutine laplace_fort_apply_bc(blockno, mx, my,mbc,mfields,xlower,ylower, &
+subroutine simple_fort_apply_bc(blockno, mx, my,mbc,mfields,xlower,ylower, &
     dx,dy,t,intersects_bc,bctype,rhs,g_bc,cons_check,flux_sum)
 
     implicit none
@@ -86,7 +86,7 @@ subroutine laplace_fort_apply_bc(blockno, mx, my,mbc,mfields,xlower,ylower, &
                 dI = (a/2.d0 - b/h)  !! Needed for cons check
                 d = (a/2.d0 + b/h)  
                 if (d .eq. 0) then
-                    write(6,*) 'laplace_fort_apply_bc : ill-defined BCs'
+                    write(6,*) 'simple_fort_apply_bc : ill-defined BCs'
                     stop
                 endif
 
@@ -199,5 +199,5 @@ subroutine laplace_fort_apply_bc(blockno, mx, my,mbc,mfields,xlower,ylower, &
 
     end do
 
-end subroutine laplace_fort_apply_bc
+end subroutine simple_fort_apply_bc
 

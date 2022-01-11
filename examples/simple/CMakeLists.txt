@@ -1,27 +1,29 @@
-add_library(laplace_f OBJECT
+add_library(simple_f OBJECT
   fclaw2d_clawpatch_user_exceeds_th.f90
   hsmooth.f90 
-  fortran/laplace_setprob.f90 
-  fortran/laplace_fort_rhs.f90 
-  fortran/laplace_compute_error.f 
-  fortran/laplace_qexact.f90 
-  fortran/laplace_apply_bc.f90 
-  fortran/laplace_eval_bc.f90 
-  fortran/laplace_output.f90
+  fortran/simple_setprob.f90 
+  fortran/simple_fort_rhs.f90 
+  fortran/simple_compute_error.f 
+  fortran/simple_qexact.f90 
+  fortran/simple_apply_bc.f90 
+  fortran/simple_eval_bc.f90 
+  fortran/simple_output.f90
 )
 
-add_executable(laplace 
-  laplace.cpp 
-  laplace_user.cpp 
-  laplace_options.c 
-  laplace_diagnostics.c 
-  $<TARGET_OBJECTS:laplace_f>
+add_executable(simple 
+  main.cpp 
+  simple_user.cpp 
+  simple_options.c 
+  simple_diagnostics.c 
+  $<TARGET_OBJECTS:simple_f>
 )
 
-target_include_directories(laplace PRIVATE 
+target_include_directories(simple PRIVATE 
   ${CMAKE_CURRENT_SOURCE_DIR} 
 )
 
-target_link_libraries(laplace PRIVATE 
+target_link_libraries(simple PRIVATE 
   FORESTCLAW::HPS
 )
+
+configure_file(fclaw_options.ini fclaw_options.ini)

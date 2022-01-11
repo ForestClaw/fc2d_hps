@@ -1,4 +1,4 @@
-subroutine laplace_fort_header_ascii(matname1,matname2, time,mfields,maux,ngrids)
+subroutine simple_fort_header_ascii(matname1,matname2, time,mfields,maux,ngrids)
     implicit none
 
     integer :: mfields,ngrids, maux
@@ -27,9 +27,9 @@ subroutine laplace_fort_header_ascii(matname1,matname2, time,mfields,maux,ngrids
     open(unit=matunit1,file=matname1,status='replace')
     close(matunit1)
 
-end subroutine laplace_fort_header_ascii
+end subroutine simple_fort_header_ascii
 
-subroutine laplace_fort_output_ascii(matname1, & 
+subroutine simple_fort_output_ascii(matname1, & 
          mx,my,mfields,mbc, xlower,ylower, dx,dy,  & 
          rhs,soln,error,patch_num,level,blockno,mpirank)
 
@@ -90,4 +90,4 @@ subroutine laplace_fort_output_ascii(matname1, &
 
     close(matunit1)
 
-end subroutine laplace_fort_output_ascii
+end subroutine simple_fort_output_ascii

@@ -23,49 +23,60 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef LAPLACE_DIAGNOSTICS_H
-#define LAPLACE_DIAGNOSTICS_H
+#ifndef SIMPLE_OPTIONS_H
+#define SIMPLE_OPTIONS_H
 
 #include <fclaw2d_include_all.h>
-
-#include <fc2d_hps.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-typedef struct {
-    double* local_error;  /* meqn x 3 array of errors on a patch */
-    double* global_error; /* meqn x 3 array of errors after gather */
-    double *mass0;  /* Mass at initial time */
-    double *mass;
-    double area;
-    double *rhs;       /* Sum of rhs hand side */
-    double *boundary;  /* sum around boundary */
-    double *c_kahan;  
-} laplace_error_info_t;
+/* ------------------------------------- Options ---------------------------------------*/
 
-/* --------------------------- Problem dependent functions -----------------------------*/
+typedef struct simple_options
+{
+    /* Put any user options here */
+    int example;
 
-void laplace_diagnostics_initialize(fclaw2d_global_t *glob, void **acc_patch);
+    double alpha;
+    double x0;
+    double y0; 
+
+    double a; 
+    double b;
+
+    double eps_disk;
+    
+    int m_polar;    // number of polar flowers
+
+    double *x0_polar;
+    const char* x0_polar_string;
+
+    double *y0_polar;
+    const char* y0_polar_string;
+
+    double *r0_polar;
+    const char* r0_polar_string;
+
+    double *r1_polar;
+    const char* r1_polar_string;
+
+    int *n_polar;
+    const char* n_polar_string;
+
+    int is_registered;
+
+} simple_options_t;
 
 
-void laplace_diagnostics_reset(fclaw2d_global_t *glob, void* patch_acc);
+simple_options_t* simple_options_register (fclaw_app_t * app,
+                                           const char *configfile);
 
-void laplace_diagnostics_compute(fclaw2d_global_t* glob,
-                                           void* patch_acc);
+void simple_options_store(fclaw2d_global_t* glob, simple_options_t* user);
 
-void laplace_diagnostics_gather(fclaw2d_global_t *glob, void* patch_acc,
-                               int init_flag);
-
-void laplace_diagnostics_finalize(fclaw2d_global_t *glob, void** patch_acc);
-
-void laplace_compute_diagnostics(fclaw2d_domain_t *domain,
-                                fclaw2d_patch_t *patch,
-                                int blockno,
-                                int patchno,
-                                void* user);
+const simple_options_t* simple_get_options(fclaw2d_global_t* glob);
 
 
 #ifdef __cplusplus
