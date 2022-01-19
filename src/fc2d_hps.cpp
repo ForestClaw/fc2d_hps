@@ -66,29 +66,47 @@ void hps_rhs(fclaw2d_global_t *glob,
                     &xlower,&ylower,&dx,&dy,rhs);
 }
 
-/* ------------------------------------- Fake solution -------------------------------- */
-
 void visit_print(fc2d_hps_patch& patch) {
     patch.print_info();
 }
+
+// static fc2d_hps_quadtree<fc2d_hps_patch> quadtree;
+// patch_tree quadtree;
 
 static
 void hps_solve(fclaw2d_global_t *glob)
 {
     fclaw_global_essentialf("----- Begin HPS solver -----\n");
 
+    /**
+     * Ideas:
+     *  static variables
+     *  check scope of quadtree
+     */
+
+    // Create HPS-ForestClaw interface (currently does nothing but store static member)
+    // static fc2d_hps_interface interface; 
+    fc2d_hps_create_quadtree_from_domain(glob);
+
     // Setup HPS method
-    fc2d_hps_setup(glob);
+    // fc2d_hps_setup(glob, interface);
+    // auto quadtree_ptr = static_cast<fc2d_hps_quadtree<fc2d_hps_patch>*>(glob->user);
+    // quadtree_ptr->traverse_inorder(visit_print);
 
     // HPS build stage
     fc2d_hps_build(glob);
+    // printf("HERE\n");
+    // quadtree.traverse(visit_print);
 
     // Upwards pass for non-homogeneous RHS and BCs
-    fc2d_hps_physical_bc(glob);
+    // fc2d_hps_physical_bc(glob);
     fc2d_hps_upwards(glob);
 
     // HPS solve stage
     fc2d_hps_solve(glob);
+
+    // Copy data from leaf patches into clawpatches
+    fc2d_hps_clawpatch_data_move(glob);
 
     fclaw_global_essentialf("----- End of HPS solver -----\n");
 }

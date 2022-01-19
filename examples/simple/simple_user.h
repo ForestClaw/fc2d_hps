@@ -41,6 +41,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fc2d_hps_options.h>
 #include <fc2d_hps_output_ascii.h>
 
+/* HPS headers */
+// #include <fc2d_hps_patch.hpp>
+// #include <fc2d_hps_quadtree.hpp>
+// #include <fc2d_hps_interface.hpp>
+
 /* Application headers */
 #include "simple_options.h"
 

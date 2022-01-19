@@ -14,7 +14,7 @@ fc2d_hps_patch::fc2d_hps_patch(fc2d_hps_patchgrid patch_grid, int ID, int level,
 
 void fc2d_hps_patch::print_info() {
 	printf("---------- PATCH INFO ----------\n");
-	printf("  ID           = %i\n", this->ID);
+	// printf("  ID           = %i\n", this->ID);
 	printf("  level        = %i\n", this->level);
 	printf("  is_leaf      = %i\n", this->is_leaf);
 	printf("  N_cells_leaf = %i\n", this->N_cells_leaf);

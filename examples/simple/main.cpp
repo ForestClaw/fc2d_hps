@@ -102,6 +102,9 @@ void run_program(fclaw2d_global_t* glob)
     fclaw2d_finalize(glob);
 }
 
+// Set static quadtree in interface
+// fc2d_hps_quadtree<fc2d_hps_patch> fc2d_hps_interface::tree = fc2d_hps_create_quadtree_from_domain(glob);
+
 int
 main (int argc, char **argv)
 {

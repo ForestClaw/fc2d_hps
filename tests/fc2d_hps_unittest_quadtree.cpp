@@ -121,7 +121,7 @@ void visit1(int& data) {
 	return;
 }
 
-TEST(QuadTree, traverse) {
+TEST(QuadTree, traverse_inorder) {
 	int root = 0;
 	fc2d_hps_quadtree<int> tree(root);
 
@@ -132,7 +132,21 @@ TEST(QuadTree, traverse) {
 	tree.grow(tree.root->children[FC2D_HPS_QUADTREE_LOWER_LEFT], children_data2);
 	tree.grow(tree.root->children[FC2D_HPS_QUADTREE_UPPER_RIGHT], children_data3);
 
-	tree.traverse(visit1);
+	tree.traverse_inorder(visit1);
+}
+
+TEST(QuadTree, traverse_preorder) {
+	int root = 0;
+	fc2d_hps_quadtree<int> tree(root);
+
+	int children_data1[FC2D_HPS_NUMBER_CHILDREN] = {1, 2, 3, 4};
+	int children_data2[FC2D_HPS_NUMBER_CHILDREN] = {5, 6, 7, 8};
+	int children_data3[FC2D_HPS_NUMBER_CHILDREN] = {9, 10, 11, 12};
+	tree.grow(tree.root, children_data1);
+	tree.grow(tree.root->children[FC2D_HPS_QUADTREE_LOWER_LEFT], children_data2);
+	tree.grow(tree.root->children[FC2D_HPS_QUADTREE_UPPER_RIGHT], children_data3);
+
+	tree.traverse_preorder(visit1);
 }
 
 void visit2(int& data, int& data0, int& data1, int& data2, int& data3) {
@@ -156,8 +170,6 @@ TEST(QuadTree, merge) {
 	 * 				1  	 2 	 3 	  4 
 	 * 			 / | | \        / | | \
 	 *           5 6 7 8       9 10 11 12
-	 *                      /  |  |  \
-	 *                     13 14 15 16 
 	 * and then merge by adding the leaf values.
 	 * 
 	 * The result at the root should be (5 + 6 + 7 + 8) + 1 + 2 + 3 + (9 + 10 + 11 + 12) + 4 = 78.
@@ -179,6 +191,65 @@ TEST(QuadTree, merge) {
 	EXPECT_EQ(tree.root->data, 78);
 	EXPECT_EQ(tree.root->children[FC2D_HPS_QUADTREE_LOWER_LEFT]->data, 27);
 	EXPECT_EQ(tree.root->children[FC2D_HPS_QUADTREE_UPPER_RIGHT]->data, 46);
+}
+
+void visit3(int& data, int& data0, int& data1, int& data2, int& data3) {
+	std::cout << "on input:  "
+		<< "data  = " << data  << ", "
+		<< "data0 = " << data0 << ", "
+		<< "data1 = " << data1 << ", "
+		<< "data2 = " << data2 << ", "
+		<< "data3 = " << data3 << ", "
+	<< std:: endl;
+
+	data0 = data / 2;
+	data1 = data / 2;
+	data2 = data / 2;
+	data3 = data / 2;
+
+	std::cout << "on return: "
+		<< "data  = " << data  << ", "
+		<< "data0 = " << data0 << ", "
+		<< "data1 = " << data1 << ", "
+		<< "data2 = " << data2 << ", "
+		<< "data3 = " << data3 << ", "
+	<< std:: endl;
+
+	return;
+}
+
+TEST(QuadTree, split) {
+	/**
+	 * Let's make a tree that looks like this:
+	 * 					   8
+	 * 				/	 |	 |	 \	 
+	 * 				4  	 4 	 4 	  4 
+	 * 			 / | | \        / | | \
+	 *           2 2 2 2        2 2 2 2
+	 *                      /  |  |  \
+	 *                      1  1  1  1 
+	 * by building the tree structure and then spliting the data down the tree by
+	 * taking the data at the parent and dividing by 2.
+	 */
+	int root = 8;
+	fc2d_hps_quadtree<int> tree(root);
+
+	int children_data1[FC2D_HPS_NUMBER_CHILDREN] = {0, 0, 0, 0};
+	int children_data2[FC2D_HPS_NUMBER_CHILDREN] = {0, 0, 0, 0};
+	int children_data3[FC2D_HPS_NUMBER_CHILDREN] = {0, 0, 0, 0};
+	int children_data4[FC2D_HPS_NUMBER_CHILDREN] = {0, 0, 0, 0};
+	tree.grow(tree.root, children_data1);
+	tree.grow(tree.root->children[FC2D_HPS_QUADTREE_LOWER_LEFT], children_data2);
+	tree.grow(tree.root->children[FC2D_HPS_QUADTREE_UPPER_RIGHT], children_data3);
+	tree.grow(tree.root->children[FC2D_HPS_QUADTREE_UPPER_RIGHT]->children[FC2D_HPS_QUADTREE_LOWER_LEFT], children_data4);
+
+	tree.split(visit3);
+
+	EXPECT_EQ(tree.root->data, 8);
+	EXPECT_EQ(tree.root->children[FC2D_HPS_QUADTREE_LOWER_LEFT]->data, 4);
+	EXPECT_EQ(tree.root->children[FC2D_HPS_QUADTREE_UPPER_RIGHT]->data, 4);
+	EXPECT_EQ(tree.root->children[FC2D_HPS_QUADTREE_UPPER_RIGHT]->children[FC2D_HPS_QUADTREE_LOWER_LEFT]->data, 2);
+	EXPECT_EQ(tree.root->children[FC2D_HPS_QUADTREE_UPPER_RIGHT]->children[FC2D_HPS_QUADTREE_LOWER_LEFT]->children[FC2D_HPS_QUADTREE_LOWER_LEFT]->data, 1);
 }
 
 bool bigger1(int& data) {
@@ -210,7 +281,7 @@ TEST(QuadTree, build) {
 	int root = 0;
 	fc2d_hps_quadtree<int> tree(root);
 	tree.build(bigger1, init1);
-	tree.traverse(visit1);
+	tree.traverse_inorder(visit1);
 
 	EXPECT_EQ(tree.root->data, 0);
 	for (int i = 0; i < FC2D_HPS_NUMBER_CHILDREN; i++) {
@@ -219,5 +290,27 @@ TEST(QuadTree, build) {
 			EXPECT_EQ(tree.root->children[i]->children[j]->data, 2);
 		}
 	}
-
 }
+
+// TEST(QuadTree, trim) {
+// 	/**
+// 	 * Build a small tree and then trim. Check for memory leaks.
+// 	 */
+
+// 	int root = 0;
+// 	fc2d_hps_quadtree<int> tree(root);
+	
+// 	int children_data[FC2D_HPS_NUMBER_CHILDREN] = {1, 2, 3, 4};
+// 	tree.grow(tree.root, children_data);
+
+// 	EXPECT_EQ(tree.root->data, 0);
+// 	EXPECT_EQ(tree.root->children[0]->data, 1);
+// 	EXPECT_EQ(tree.root->children[1]->data, 2);
+// 	EXPECT_EQ(tree.root->children[2]->data, 3);
+// 	EXPECT_EQ(tree.root->children[3]->data, 4);
+
+// 	EXPECT_EQ(tree.root->children[0]->parent, tree.root);
+// 	EXPECT_EQ(tree.root->children[1]->parent, tree.root);
+// 	EXPECT_EQ(tree.root->children[2]->parent, tree.root);
+// 	EXPECT_EQ(tree.root->children[3]->parent, tree.root);
+// }

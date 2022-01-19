@@ -153,7 +153,7 @@ void split_1to4(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
     //    Top split
     std::cout << "[split_1to4]  begin horizontal split 2" << std::endl;
     split_horizontal(beta_prime, child2, child3);
-
+    printf("HERE\n");
     return;
 
 }

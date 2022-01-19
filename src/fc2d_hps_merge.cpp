@@ -11,7 +11,7 @@ std::vector<int> fill_range(int start, int end) {
 fc2d_hps_matrix<double> merge_X(fc2d_hps_matrix<double>& T_33_alpha, fc2d_hps_matrix<double>& T_33_beta) {
 	// X_inv = T_33_alpha - T_33_beta
 
-	std::cout << "[merge_X]  building X_tau" << std::endl;
+	// std::cout << "[merge_X]  building X_tau" << std::endl;
 	return T_33_alpha - T_33_beta;
 
 }
@@ -20,7 +20,7 @@ fc2d_hps_matrix<double> merge_S(fc2d_hps_matrix<double>& X_tau, fc2d_hps_matrix<
 	// S = X_tau * [-T_31_alpha | T_32_beta] <-- Linear solve as X_tau is inverted
 
 	// Form RHS
-	std::cout << "[merge_S]  building S_tau" << std::endl;
+	// std::cout << "[merge_S]  building S_tau" << std::endl;
 	fc2d_hps_matrix<double> RHS(T_31_alpha.rows, T_31_alpha.cols + T_32_beta.cols);
 	T_31_alpha.negate();
 	RHS.intract(0, 0, T_31_alpha);
@@ -34,7 +34,7 @@ fc2d_hps_matrix<double> merge_T(fc2d_hps_matrix<double>& S_tau, fc2d_hps_matrix<
 	// T = [ [T_11_alpha, 0], [0, T_22_beta] ] + [ [T_13_alpha], [T_23_beta] ] * S_tau
 
 	// Form left_term matrix
-	std::cout << "[merge_T]  building T_tau" << std::endl;
+	// std::cout << "[merge_T]  building T_tau" << std::endl;
 	fc2d_hps_matrix<double> left_term(T_11_alpha.rows + T_22_beta.rows, T_11_alpha.cols + T_22_beta.cols, 0.0);
 	left_term.intract(0, 0, T_11_alpha);
 	left_term.intract(T_11_alpha.rows, T_11_alpha.cols, T_22_beta);
@@ -61,7 +61,7 @@ fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	int N_S_beta = beta.N_patch_side[SOUTH] * N_points_leaf_side;
 	int N_N_beta = beta.N_patch_side[NORTH] * N_points_leaf_side;
 
-	std::cout << "[merge_horizontal]  populating WESN index vectors" << std::endl;
+	// std::cout << "[merge_horizontal]  populating WESN index vectors" << std::endl;
 	std::vector<int> I_W_alpha = fill_range(0, N_W_alpha);
 	std::vector<int> I_E_alpha = fill_range(N_W_alpha, N_W_alpha + N_E_alpha);
 	std::vector<int> I_S_alpha = fill_range(N_W_alpha + N_E_alpha, N_W_alpha + N_E_alpha + N_S_alpha);
@@ -75,7 +75,7 @@ fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	std::vector<int> I_3_alpha(0);
 	std::vector<int> I_3_beta(0);
 
-	std::cout << "[merge_horizontal]  building I1, I2, I3, index vectors" << std::endl;
+	// std::cout << "[merge_horizontal]  building I1, I2, I3, index vectors" << std::endl;
 	I_1.insert(I_1.end(), I_W_alpha.begin(), I_W_alpha.end());
 	I_1.insert(I_1.end(), I_S_alpha.begin(), I_S_alpha.end());
 	I_1.insert(I_1.end(), I_N_alpha.begin(), I_N_alpha.end());
@@ -86,7 +86,7 @@ fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	I_3_beta.insert(I_3_beta.end(), I_W_beta.begin(), I_W_beta.end());
 
 	// Extract blocks
-	std::cout << "[merge_horizontal]  extracting blocks" << std::endl;
+	// std::cout << "[merge_horizontal]  extracting blocks" << std::endl;
 	fc2d_hps_matrix<double> T_11_alpha = alpha.T.from_index_set(I_1, I_1);
 	fc2d_hps_matrix<double> T_13_alpha = alpha.T.from_index_set(I_1, I_3_alpha);
 	fc2d_hps_matrix<double> T_31_alpha = alpha.T.from_index_set(I_3_alpha, I_1);
@@ -98,7 +98,7 @@ fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	fc2d_hps_matrix<double> T_33_beta = beta.T.from_index_set(I_3_beta, I_3_beta);
 
 	// Perform merge linear algebra
-	std::cout << "[merge_horizontal]  merging via linear algebra" << std::endl;
+	// std::cout << "[merge_horizontal]  merging via linear algebra" << std::endl;
 	fc2d_hps_matrix<double> X_tau;
 	fc2d_hps_matrix<double> S_tau;
 	fc2d_hps_matrix<double> T_tau;
@@ -122,7 +122,7 @@ fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	}
 
 	// Reorder matrices
-	std::cout << "[merge_horizontal]  reordering matrices" << std::endl;
+	// std::cout << "[merge_horizontal]  reordering matrices" << std::endl;
 	std::vector<int> pi_nochange = {0};
 	std::vector<int> pi_H = {0, 3, 1, 4, 2, 5};
 	std::vector<int> R_S_tau = {N_E_alpha};
@@ -134,7 +134,7 @@ fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	T_tau = T_tau.block_permute(pi_H, pi_H, R_T_tau, C_T_tau);
 
 	// Create new merged patch
-	std::cout << "[merge_horizontal]  creating merged patch" << std::endl;
+	// std::cout << "[merge_horizontal]  creating merged patch" << std::endl;
 	fc2d_hps_patchgrid merged_grid(alpha.grid.Nx + beta.grid.Nx, alpha.grid.Ny, alpha.grid.x_lower, beta.grid.x_upper, alpha.grid.y_lower, alpha.grid.y_upper);
 	fc2d_hps_patch merged;
 	merged.grid = merged_grid;
@@ -154,7 +154,7 @@ fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	// Set alpha to hold horizontal merge solution matrix
 	alpha.S_prime = S_tau;
 
-	std::cout << "[merge_horizontal]  returning..." << std::endl;
+	// std::cout << "[merge_horizontal]  returning..." << std::endl;
 	return merged;
 	
 }
@@ -172,7 +172,7 @@ fc2d_hps_patch merge_vertical(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	int N_S_beta = beta.N_patch_side[SOUTH] * N_points_leaf_side;
 	int N_N_beta = beta.N_patch_side[NORTH] * N_points_leaf_side;
 
-	std::cout << "[merge_vertical]  populating WESN index vectors" << std::endl;
+	// std::cout << "[merge_vertical]  populating WESN index vectors" << std::endl;
 	std::vector<int> I_W_alpha = fill_range(0, N_W_alpha);
 	std::vector<int> I_E_alpha = fill_range(N_W_alpha, N_W_alpha + N_E_alpha);
 	std::vector<int> I_S_alpha = fill_range(N_W_alpha + N_E_alpha, N_W_alpha + N_E_alpha + N_S_alpha);
@@ -186,7 +186,7 @@ fc2d_hps_patch merge_vertical(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	std::vector<int> I_3_alpha(0);
 	std::vector<int> I_3_beta(0);
 
-	std::cout << "[merge_vertical]  building I1, I2, I3, index vectors" << std::endl;
+	// std::cout << "[merge_vertical]  building I1, I2, I3, index vectors" << std::endl;
 	I_1.insert(I_1.end(), I_W_alpha.begin(), I_W_alpha.end());
 	I_1.insert(I_1.end(), I_E_alpha.begin(), I_E_alpha.end());
 	I_1.insert(I_1.end(), I_S_alpha.begin(), I_S_alpha.end());
@@ -224,7 +224,7 @@ fc2d_hps_patch merge_vertical(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	}
 
 	// Reorder to get back to WESN ordering
-	std::cout << "[merge_vertical]  reordering matrices" << std::endl;
+	// std::cout << "[merge_vertical]  reordering matrices" << std::endl;
 	std::vector<int> pi_nochange = {0};
 	std::vector<int> pi_V = {0, 3, 1, 4, 2, 5};
 	std::vector<int> R_S_tau = {N_N_alpha};
@@ -236,7 +236,7 @@ fc2d_hps_patch merge_vertical(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	T_tau = T_tau.block_permute(pi_V, pi_V, R_T_tau, C_T_tau);
 
 	// Create new merged patch
-	std::cout << "[merge_vertical]  creating merged patch" << std::endl;
+	// std::cout << "[merge_vertical]  creating merged patch" << std::endl;
 	fc2d_hps_patchgrid merged_grid(alpha.grid.Nx, alpha.grid.Ny + beta.grid.Ny, alpha.grid.x_lower, alpha.grid.x_upper, alpha.grid.y_lower, beta.grid.y_upper);
 	fc2d_hps_patch merged;
 	merged.grid = merged_grid;
@@ -253,7 +253,7 @@ fc2d_hps_patch merge_vertical(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	merged.S = S_tau;
 	merged.T = T_tau;
 	
-	std::cout << "[merge_vertical]  returning..." << std::endl;
+	// std::cout << "[merge_vertical]  returning..." << std::endl;
 	return merged;
 
 }
@@ -269,18 +269,18 @@ void merge_4to1(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
 	if (child3.T.size() == 0) { throw std::invalid_argument("[fc2d_hps_merge merge_4to1] `child3.T.size()` is 0; it shouldn't be..."); }
 
 	// Horizontal merge
-	std::cout << "[merge_4to1]  begin horizontal merge 1" << std::endl;
+	// std::cout << "[merge_4to1]  begin horizontal merge 1" << std::endl;
 	fc2d_hps_patch alpha_prime = merge_horizontal(child0, child1);
 
-	std::cout << "[merge_4to1]  begin horizontal merge 2" << std::endl;
+	// std::cout << "[merge_4to1]  begin horizontal merge 2" << std::endl;
 	fc2d_hps_patch beta_prime = merge_horizontal(child2, child3);
 
 	// Vertical merge
-	std::cout << "[merge_4to1]  begin vertical merge" << std::endl;
+	// std::cout << "[merge_4to1]  begin vertical merge" << std::endl;
 	fc2d_hps_patch tau = merge_vertical(alpha_prime, beta_prime);
 	
 	// Copy only necessary data to parent
-	std::cout << "[merge_4to1]  begin copy to parent" << std::endl;
+	// std::cout << "[merge_4to1]  begin copy to parent" << std::endl;
 	parent.level = tau.level;
 	parent.is_leaf = tau.is_leaf;
 	parent.N_patch_side = tau.N_patch_side;
@@ -290,6 +290,6 @@ void merge_4to1(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
 	parent.S = tau.S;
 	parent.X = tau.X;
 
-	std::cout << "[merge_4to1]  end 4-to-1 merge, returning..." << std::endl;
+	// std::cout << "[merge_4to1]  end 4-to-1 merge, returning..." << std::endl;
 
 }

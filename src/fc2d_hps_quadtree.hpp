@@ -44,7 +44,20 @@ public:
 		root(new fc2d_hps_quadnode(root_data)), height(1)
 			{}
 
-	~fc2d_hps_quadtree() {}
+	fc2d_hps_quadtree(const fc2d_hps_quadtree& to_copy) {
+		this->root = to_copy.root;
+		this->height = to_copy.height;
+	}
+
+	fc2d_hps_quadtree& operator=(const fc2d_hps_quadtree& rhs) {
+		return *this;
+	}
+
+	~fc2d_hps_quadtree() {
+		printf("QUADTREE DESTRUCTOR CALLED\n");
+		this->remove();
+		this->root = nullptr;
+	}
 
 	void build(std::function<bool(T&)> bigger, std::function<std::vector<T>(T&)> init) {
 		// Build a quadtree by calling `bigger` which returns true or false to determine if the tree gets bigger.
@@ -115,28 +128,44 @@ public:
 			// Point siblings' parent's children to null
 			siblings[i]->parent->children[i] = nullptr;
 
+			// Point siblings' parent to null
+			// siblings[i]->parent = nullptr;
+
 			// Update tree hieght
 			
 
 			// Delete siblings
 			delete siblings[i];
 		}
-		// Delete or point array of siblings...?
-
-
 	}
 
+	void remove() {
+		// Recursively trim the tree until removed
+		remove_(this->root);
+	}
 
-	void traverse(std::function<void(T&)> visit) {
+	void traverse_inorder(std::function<void(T&)> visit) {
 		// Traverse the tree by visiting all children prior to visiting node (Inorder traversal)
-		traverse_(this->root, visit);
+		traverse_inorder_(this->root, visit);
 		visit(this->root->data);
+	}
+
+	void traverse_preorder(std::function<void(T&)> visit) {
+		// Traverse the tree by visitiing all nodes with parents visited first (Preorder traversal)
+		// visit(this->root->data);
+		traverse_preorder_(this->root, visit);
 	}
 
 	void merge(std::function<void(T&, T&, T&, T&, T&)> visit) {
 		// Traverse the tree and merge all children up the tree
 		// `visit` function should !replace! the data in the parent with a merged version of the children data
 		merge_(this->root, visit);
+	}
+
+	void split(std::function<void(T&, T&, T&, T&, T&)> visit) {
+		// Traverse the tree in preorder and split all parents into children
+		// `visit` function should !replace! the data in the children with a split version of the parent data
+		split_(this->root, visit);
 	}
 
 	// TODO: Create delete function
@@ -167,11 +196,20 @@ private:
 		return true;
 	}
 
-	void traverse_(fc2d_hps_quadnode* node, std::function<void(T&)> visit) {
+	void traverse_inorder_(fc2d_hps_quadnode* node, std::function<void(T&)> visit) {
 		for (std::size_t i = 0; i < FC2D_HPS_NUMBER_CHILDREN; i++) {
 			if (node->children[i] != nullptr) {
-				traverse_(node->children[i], visit);
+				traverse_inorder_(node->children[i], visit);
 				visit(node->children[i]->data);
+			}
+		}
+	}
+
+	void traverse_preorder_(fc2d_hps_quadnode* node, std::function<void(T&)> visit) {
+		for (std::size_t i = 0; i < FC2D_HPS_NUMBER_CHILDREN; i++) {
+			if (node->children[i] != nullptr) {
+				visit(node->children[i]->data);
+				traverse_preorder_(node->children[i], visit);
 			}
 		}
 	}
@@ -193,6 +231,44 @@ private:
 				node->children[FC2D_HPS_QUADTREE_UPPER_LEFT]->data,
 				node->children[FC2D_HPS_QUADTREE_UPPER_RIGHT]->data
 			);
+		}
+	}
+
+	void split_(fc2d_hps_quadnode* node, std::function<void(T&, T&, T&, T&, T&)> visit) {
+		if (is_leaf_(node) == true) {
+			return;
+		}
+		else {
+			visit(
+				node->data,
+				node->children[FC2D_HPS_QUADTREE_LOWER_LEFT]->data,
+				node->children[FC2D_HPS_QUADTREE_LOWER_RIGHT]->data,
+				node->children[FC2D_HPS_QUADTREE_UPPER_LEFT]->data,
+				node->children[FC2D_HPS_QUADTREE_UPPER_RIGHT]->data
+			);
+			for (std::size_t i = 0; i < FC2D_HPS_NUMBER_CHILDREN; i++) {
+				split_(node->children[i], visit);
+			}
+		}
+	}
+
+	void remove_(fc2d_hps_quadnode* node) {
+		if (is_leaf_(node) == true) {
+			return;
+		}
+		else if (
+			is_leaf_(node->children[FC2D_HPS_QUADTREE_LOWER_LEFT]) == true &&
+			is_leaf_(node->children[FC2D_HPS_QUADTREE_LOWER_RIGHT]) == true &&
+			is_leaf_(node->children[FC2D_HPS_QUADTREE_UPPER_LEFT]) == true &&
+			is_leaf_(node->children[FC2D_HPS_QUADTREE_UPPER_RIGHT]) == true
+		) {
+			trim(node->children);
+			return;
+		}
+		else {
+			for (std::size_t i = 0; i < FC2D_HPS_NUMBER_CHILDREN; i++) {
+				remove_(node->children[i]);
+			}
 		}
 	}
 
