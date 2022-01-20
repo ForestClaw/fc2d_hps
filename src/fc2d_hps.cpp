@@ -220,14 +220,10 @@ void hps_compute_error(fclaw2d_global_t *glob,
         /* True solution */
         double *soln;
         fclaw2d_clawpatch_elliptic_soln_data(glob,patch,&soln,&mfields);
-        printf("soln: %p\n", soln);
-        printf("err: %p\n", err);
         double t = glob->curr_time;
-        printf("HERE\n");
         clawpatch_vt->fort_compute_patch_error(&blockno, &mx,&my,&mbc,
                                                &mfields,&dx,&dy,
                                                &xlower,&ylower, &t, rhs, err, soln);
-        printf("HERE\n");
         /* Accumulate sums and maximums needed to compute error norms */
 
         FCLAW_ASSERT(clawpatch_vt->fort_compute_error_norm != NULL);
