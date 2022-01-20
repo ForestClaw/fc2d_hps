@@ -48,6 +48,29 @@ fc2d_hps_matrix<double> merge_T(fc2d_hps_matrix<double>& S_tau, fc2d_hps_matrix<
 
 }
 
+fc2d_hps_vector<double> merge_w(fc2d_hps_matrix<double>& X_tau, fc2d_hps_vector<double>& h_3_alpha, fc2d_hps_vector<double>& h_3_beta) {
+	
+	// Compute w
+	fc2d_hps_vector<double> flux = h_3_beta - h_3_alpha;
+	return solve(X_tau, flux);
+
+}
+
+fc2d_hps_vector<double> merge_h(fc2d_hps_matrix<double>& X_tau, fc2d_hps_matrix<double>& T_13_alpha, fc2d_hps_matrix<double>& T_23_beta, fc2d_hps_vector<double>& h_3_alpha, fc2d_hps_vector<double>& h_3_beta) {
+	
+	// Build H
+	fc2d_hps_matrix<double> H(T_13_alpha.rows + T_23_beta.rows, T_13_alpha.cols);
+	H.intract(0, 0, T_13_alpha);
+	H.intract(T_13_alpha.rows, 0, T_23_beta);
+
+	// Apply X
+	fc2d_hps_vector<double> flux = h_3_beta - h_3_alpha;
+	fc2d_hps_vector<double> temp = solve(X_tau, flux);
+
+	return H * temp;
+
+}
+
 fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 
 	// Build index vectors
@@ -97,17 +120,24 @@ fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	fc2d_hps_matrix<double> T_32_beta = beta.T.from_index_set(I_3_beta, I_2);
 	fc2d_hps_matrix<double> T_33_beta = beta.T.from_index_set(I_3_beta, I_3_beta);
 
+	fc2d_hps_vector<double> h_3_alpha = alpha.h.extract(N_W_alpha, N_E_alpha);
+	fc2d_hps_vector<double> h_3_beta = beta.h.extract(0, N_W_beta);
+
 	// Perform merge linear algebra
 	// std::cout << "[merge_horizontal]  merging via linear algebra" << std::endl;
 	fc2d_hps_matrix<double> X_tau;
 	fc2d_hps_matrix<double> S_tau;
 	fc2d_hps_matrix<double> T_tau;
+	fc2d_hps_vector<double> w_tau;
+	fc2d_hps_vector<double> h_tau;
 	//    Begin cases
 	//    Uniform alpha and beta
 	if (alpha.N_patch_side[WEST] == beta.N_patch_side[EAST]) {
 		X_tau = merge_X(T_33_alpha, T_33_beta);
 		S_tau = merge_S(X_tau, T_31_alpha, T_32_beta);
 		T_tau = merge_T(S_tau, T_11_alpha, T_22_beta, T_13_alpha, T_23_beta);
+		w_tau = merge_w(X_tau, h_3_alpha, h_3_beta);
+		h_tau = merge_h(X_tau, T_13_alpha, T_23_beta, h_3_alpha, h_3_beta);
 	}
 	//    Alpha = fine, beta = coarse
 	else if (2 * alpha.N_patch_side[WEST] == beta.N_patch_side[EAST]) {
@@ -150,9 +180,12 @@ fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	merged.X = X_tau;
 	merged.S = S_tau;
 	merged.T = T_tau;
+	merged.w = w_tau;
+	merged.h = h_tau;
 
 	// Set alpha to hold horizontal merge solution matrix
 	alpha.S_prime = S_tau;
+	alpha.w_prime = w_tau;
 
 	// std::cout << "[merge_horizontal]  returning..." << std::endl;
 	return merged;
@@ -207,16 +240,23 @@ fc2d_hps_patch merge_vertical(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	fc2d_hps_matrix<double> T_32_beta = beta.T.from_index_set(I_3_beta, I_2);
 	fc2d_hps_matrix<double> T_33_beta = beta.T.from_index_set(I_3_beta, I_3_beta);
 
+	fc2d_hps_vector<double> h_3_alpha = alpha.h.extract(N_W_alpha + N_E_alpha + N_S_alpha, N_N_alpha);
+	fc2d_hps_vector<double> h_3_beta = beta.h.extract(N_W_beta + N_E_beta, N_S_beta);
+
 	// Perform merge linear algebra
 	fc2d_hps_matrix<double> X_tau;
 	fc2d_hps_matrix<double> S_tau;
 	fc2d_hps_matrix<double> T_tau;
+	fc2d_hps_vector<double> w_tau;
+	fc2d_hps_vector<double> h_tau;
 	//    Begin cases
 	//    Uniform alpha and beta
 	if (alpha.N_patch_side[NORTH] == beta.N_patch_side[SOUTH]) {
 		X_tau = merge_X(T_33_alpha, T_33_beta);
 		S_tau = merge_S(X_tau, T_31_alpha, T_32_beta);
 		T_tau = merge_T(S_tau, T_11_alpha, T_22_beta, T_13_alpha, T_23_beta);
+		w_tau = merge_w(X_tau, h_3_alpha, h_3_beta);
+		h_tau = merge_h(X_tau, T_13_alpha, T_23_beta, h_3_alpha, h_3_beta);
 	}
 	// @TODO: Put in other cases
 	else {
@@ -252,6 +292,8 @@ fc2d_hps_patch merge_vertical(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	merged.X = X_tau;
 	merged.S = S_tau;
 	merged.T = T_tau;
+	merged.w = w_tau;
+	merged.h = h_tau;
 	
 	// std::cout << "[merge_vertical]  returning..." << std::endl;
 	return merged;
@@ -289,6 +331,8 @@ void merge_4to1(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
 	parent.T = tau.T;
 	parent.S = tau.S;
 	parent.X = tau.X;
+	parent.w = tau.w;
+	parent.h = tau.h;
 
 	// std::cout << "[merge_4to1]  end 4-to-1 merge, returning..." << std::endl;
 

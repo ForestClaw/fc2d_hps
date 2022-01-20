@@ -44,6 +44,7 @@
 
 typedef fc2d_hps_quadtree<fc2d_hps_patch> patch_tree;
 extern patch_tree quadtree;
+extern int current_ID;
 
 // HPS Setup Routines
 bool build_from_p4est_callback_bigger(fc2d_hps_patch& patch);
@@ -54,7 +55,7 @@ void fc2d_hps_setup(struct fclaw2d_global* glob);
 
 // HPS Build Routines
 static void cb_merge(fclaw2d_global_t *glob, fclaw2d_patch_t *fine_patches, int blockno, int fine0_patchno, void *user);
-void visit_leaves_build_dtn(fc2d_hps_patch& patch);
+void visit_leaves(fc2d_hps_patch& patch);
 void visit_merge(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& beta, fc2d_hps_patch& gamma, fc2d_hps_patch& omega);
 void fc2d_hps_build(struct fclaw2d_global* glob);
 
@@ -68,6 +69,7 @@ void visit_patchsolver(fc2d_hps_patch& patch);
 void fc2d_hps_solve(struct fclaw2d_global* glob);
 
 // ForestClaw - HPS Interface Routines
+void visit_copy_data(fc2d_hps_patch& patch);
 void fc2d_hps_clawpatch_data_move(fclaw2d_global* glob);
 
 #endif /* !FC2D_HPS_SOLVE_HPP_ */

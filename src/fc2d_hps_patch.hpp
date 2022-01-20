@@ -42,6 +42,7 @@ public:
 	fc2d_hps_vector<double> g;			// Dirichlet Vector
 	fc2d_hps_vector<double> h;			// Neumann Vector
 	fc2d_hps_vector<double> w;			// Particular Solution Vector
+	fc2d_hps_vector<double> w_prime;	// Horizontal Particular Solution Vector
 
 	fc2d_hps_patch();
 	fc2d_hps_patch(fc2d_hps_patchgrid patch_grid, int ID, int level, bool is_leaf);

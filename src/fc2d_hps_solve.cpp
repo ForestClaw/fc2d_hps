@@ -25,12 +25,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "fc2d_hps_solve.hpp"
 
+// Global declarations
+patch_tree quadtree;
+int current_ID;
+
 /**================================================================================================
  * HPS Setup Routines
  *===============================================================================================*/
-patch_tree quadtree;
 void fc2d_hps_create_quadtree_from_domain(fclaw2d_global_t* glob) {
-// fc2d_hps_quadtree<fc2d_hps_patch> fc2d_hps_create_quadtree_from_domain(fclaw2d_global_t* glob) {
 
 	// Build topmost patch
     fclaw2d_clawpatch_options_t *clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
@@ -53,15 +55,9 @@ void fc2d_hps_create_quadtree_from_domain(fclaw2d_global_t* glob) {
 	// Create tree
     quadtree.root = new fc2d_hps_quadtree<fc2d_hps_patch>::fc2d_hps_quadnode(root_patch);
     quadtree.height = 1;
-    // quadtree
-	// fc2d_hps_quadtree<fc2d_hps_patch> tree(root_patch);
-    // quadtree.root = tree.root;
-    // quadtree.height = tree.height;
 
 	// Build tree
 	quadtree.build(build_from_p4est_callback_bigger, build_from_p4est_callback_init);
-	// return tree;
-
 }
 
 bool build_from_p4est_callback_bigger(fc2d_hps_patch& patch) {
@@ -149,12 +145,26 @@ void visit_print2(fc2d_hps_patch& patch) {
     patch.print_info();
 }
 
+void visit_set_ID(fc2d_hps_patch& patch) {
+    if (patch.is_leaf == true) {
+        patch.ID = current_ID++;
+    }
+    else {
+        patch.ID = -1;
+    }
+}
+
 /**
  * Given a glob, setup the HPS method by building the quadtree with `fc2d_hps_patch`s
  */
 void fc2d_hps_setup(struct fclaw2d_global* glob) {
 
     fclaw_global_essentialf("Begin HPS setup\n");
+    fc2d_hps_create_quadtree_from_domain(glob);
+
+    // Set patch IDs
+    current_ID = 0;
+    quadtree.traverse_inorder(visit_set_ID);
 
     // Build quadtree and store in glob's user
     // fc2d_hps_quadtree<fc2d_hps_patch>* quadtree_ptr = new fc2d_hps_quadtree<fc2d_hps_patch>;
@@ -185,14 +195,35 @@ void fc2d_hps_setup(struct fclaw2d_global* glob) {
 /**================================================================================================
  * HPS Build Routines
  *===============================================================================================*/
-void visit_leaves_build_dtn(fc2d_hps_patch& patch) {
-    // patch.print_info();
+void visit_leaves(fc2d_hps_patch& patch) {
+
     // TODO: Add level optimizations
     if (patch.is_leaf) {
-        // printf("=================================================\n");
+        // Create patch solver
         fc2d_hps_FISHPACK_solver FISHPACK_solver;
+
+        // Set DtN on leaf
         patch.T = FISHPACK_solver.build_dtn(patch.grid);
+
+        // Set particular solution
+        //    Get RHS data and set to f
+        fclaw2d_global_t* glob = (fclaw2d_global_t*) patch.user;
+        fclaw2d_domain_t* domain = glob->domain;
+        fclaw2d_patch_t* fc_patch = &(domain->blocks->patches[patch.ID]);
+        int mfields;
+        double* rhs;
+        fclaw2d_clawpatch_rhs_data(glob, fc_patch, &rhs, &mfields);
+        patch.f = fc2d_hps_vector<double>(rhs, rhs + patch.grid.Nx*patch.grid.Ny);
+
+        //    Compute and set particular solution
+        fc2d_hps_vector<double> g_zero(2*patch.grid.Nx + 2*patch.grid.Ny, 0);
+        patch.w = FISHPACK_solver.solve(patch.grid, g_zero, patch.f);
+
+        // Set Neumann data for particular solution
+        patch.h = FISHPACK_solver.dtn(patch.grid, g_zero, patch.f);
+
         // patch.print_info();
+
     }
     return;
 }
@@ -205,14 +236,8 @@ void fc2d_hps_build(fclaw2d_global_t *glob)
 {
     fclaw_global_essentialf("Begin HPS build\n");
 
-    // Get quadtree
-    // auto quadtree_ptr = static_cast<fc2d_hps_quadtree<fc2d_hps_patch>*>(glob->user);
-
     // Build DtN matrix on leaf patches
-    // printf("quadtree_ptr: %p\n", quadtree_ptr);
-    // printf("quadtree_ptr->root: %p\n", quadtree_ptr->root);
-    // printf("quadtree_ptr->root->children[0]: %p\n", quadtree_ptr->root->children[0]);
-    quadtree.traverse_inorder(visit_leaves_build_dtn);
+    quadtree.traverse_inorder(visit_leaves);
 
     // Merge DtN's up tree and build solution
     quadtree.merge(visit_merge);
@@ -230,13 +255,8 @@ void visit_upwards(fc2d_hps_patch& patch) {
 void fc2d_hps_upwards(fclaw2d_global_t* glob) {
     fclaw_global_essentialf("Begin HPS upwards pass\n");
 
-    // Get quadtree
-    // fc2d_hps_quadtree<fc2d_hps_patch>* quadtree = (fc2d_hps_quadtree<fc2d_hps_patch>*) glob->user;
-
     // Traverse inorder to set non-homogeneous RHS and BC data into solution vector
-    quadtree.traverse_inorder(visit_upwards);
-
-    fclaw_global_essentialf("!TODO!\n");
+    // quadtree.traverse_inorder(visit_upwards);
     fclaw_global_essentialf("End HPS upwards pass\n");
 }
 
@@ -251,13 +271,6 @@ void visit_split(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& bet
 
 void visit_patchsolver(fc2d_hps_patch& patch) {
     if (patch.is_leaf == true) {
-
-        // PLACE HOLDER, DELETE THIS
-        patch.f = fc2d_hps_vector<double>(patch.grid.Nx * patch.grid.Ny, 0);
-
-        patch.print_info();
-
-
         // Get patch solver
         // TODO: Put patch solver in glob...?
         fc2d_hps_FISHPACK_solver patch_solver;
@@ -272,19 +285,9 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
     // Get quadtree
     // fc2d_hps_quadtree<fc2d_hps_patch> quadtree = *(fc2d_hps_quadtree<fc2d_hps_patch>*) glob->user;
 
-    // Set top level Dirichlet boundary data
-    // @TODO
+    // Set top level Dirichlet boundary data (set to zero because ForestClaw handles it by moving it to RHS)
     int size_of_g = 2*quadtree.root->data.grid.Nx + 2*quadtree.root->data.grid.Ny;
     quadtree.root->data.g = fc2d_hps_vector<double>(size_of_g, 0);
-    // WORKING HERE!!
-    /**
-     * TODO:
-     * Get top level Dirichlet data
-     * Set RHS data for all leaf patches
-     * Error handles inside of patch solver to avoid the mistake I already made...
-     *   (g and f were not set...)
-     * Probably a lot more...
-     */
 
     // Traverse tree from root and apply solution operator or patch solver
     quadtree.split(visit_split);
@@ -353,9 +356,44 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
 /**================================================================================================
  * HPS Interface Routines
  *===============================================================================================*/
+void visit_copy_data(fc2d_hps_patch& patch) {
+    if (patch.is_leaf == true) {
+        fclaw2d_global_t* glob = (fclaw2d_global_t*) patch.user;
+        fclaw2d_domain_t* domain = glob->domain;
+        fclaw2d_patch_t* fc_patch = &(domain->blocks->patches[patch.ID]);
+
+        // Set pointer to solution data
+        int mbc;
+        int Nx, Ny;
+        double x_lower, y_lower, dx, dy;
+        double* q;
+        int meqn;
+        fclaw2d_clawpatch_grid_data(glob, fc_patch, &Nx, &Ny, &mbc, &x_lower, &y_lower, &dx, &dy);
+        fclaw2d_clawpatch_soln_data(glob, fc_patch, &q, &meqn);
+
+        // Copy u into solution data
+        int x_pts = patch.grid.Nx + 2*mbc;
+        int y_pts = patch.grid.Ny + 2*mbc;
+        for (int i = 0; i < x_pts; i++) {
+            for (int j = 0; j < y_pts; j++) {
+                int idx = j + i*x_pts;
+                if (i > mbc-1 && i < x_pts-mbc && j > mbc-1 && j < y_pts-mbc) {
+                    q[idx] = patch.u[idx];
+                }
+                else {
+                    q[idx] = 0;
+                }
+                // printf("i = %i, j = %i, idx = %i, mbc = %i, x_pts = %i, y_pts = %i, q[%i] = %f\n", i, j, idx, mbc, x_pts, y_pts, idx, q[idx]);
+            }
+        }
+    }
+}
+
 void fc2d_hps_clawpatch_data_move(fclaw2d_global* glob) {
     fclaw_global_essentialf("Begin move to ForestClaw data\n");
-    fclaw_global_essentialf("!TODO!\n");
+    // fclaw_global_essentialf("!TODO!\n");
+
+    quadtree.traverse_inorder(visit_copy_data);
     fclaw_global_essentialf("End move to ForestClaw data\n");
 }
 
