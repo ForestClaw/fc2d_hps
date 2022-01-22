@@ -79,7 +79,7 @@ void hps_solve(fclaw2d_global_t *glob)
     fclaw_global_essentialf("----- Begin HPS solver -----\n");
 
     // HPS setup stage
-    fc2d_hps_physical_bc(glob); // These could be done independently of each other
+    // fc2d_hps_physical_bc(glob); // These could be done independently of each other
     fc2d_hps_setup(glob);       // These could be done independently of each other
 
     // HPS build stage

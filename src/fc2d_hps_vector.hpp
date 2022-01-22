@@ -103,6 +103,52 @@ public:
 
 	}
 
+	fc2d_hps_vector<T> from_index_set(std::vector<int> I) {
+		if (I.size() > this->size()) {
+			throw std::invalid_argument("[fc2d_hps_vector<T>::from_index_set] Size of index `I` is greater than size of vector.");
+		}
+
+		fc2d_hps_vector<T> output(I.size());
+		for (std::size_t i = 0; i < I.size(); i++) {
+			if (I[i] > this->size() || I[i] < 0) {
+				throw std::invalid_argument("[fc2d_hps_vector<T>::from_index_set] Index in `I` is out of range.");
+			}
+			output[i] = this->operator[](I[i]);
+		}
+		return output;
+	}
+
+	fc2d_hps_vector<T> block_permute(std::vector<int> I, std::vector<int> S) {
+		/**
+		 * std::vector<int> I : Index set of permuted row indices for each block
+		 * std::vector<int> S : Vector containing size of each block
+		 */
+
+		// Error checks
+		std::size_t size_check = 0;
+		for (auto& s : S) size_check += s;
+		if (size_check != this->size()) {
+			throw std::invalid_argument("[fc2d_hps_vector<T>::block_permute] Sizes in `S` do not add up to size of `this`.");
+		}
+
+		std::vector<int> S_global(this->size());
+
+		// Build global index set
+		std::size_t I_counter = 0;
+		for (auto& i : I) {
+			// Get starting index for i-th block
+			std::size_t s = 0;
+			for (std::size_t ii = 0; ii < i; ii++) s += S[ii];
+
+			// Create increasing index set from starting index to ending index of i-th block and put into S_global
+			for (std::size_t iii = s; iii < (s + S[i]); iii++) {
+				S_global[I_counter++] = iii;
+			}
+		}
+
+		return this->from_index_set(S_global);
+	}
+
 };
 
 template<class T>

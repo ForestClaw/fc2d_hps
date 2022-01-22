@@ -81,12 +81,13 @@ void simple_link_solvers(fclaw2d_global_t *glob)
     /* HPS virtual table : Initialize RHS */
     fc2d_hps_vtable_t*  hps_vt = fc2d_hps_vt();
     hps_vt->fort_rhs = &SIMPLE_FORT_RHS;
+    // hps_vt->fort_qexact = &SIMPLE_FORT_QEXACT_COMPLETE; // why does this give linker errors?
 
     /* Clawpatch : Compute the error */
     fclaw2d_clawpatch_vtable_t *clawpatch_vt = fclaw2d_clawpatch_vt();
 
     /* Specialized for this example */
-    clawpatch_vt->fort_compute_patch_error = &SIMPLE_COMPUTE_ERROR; // @TODO: Why does this give an error?
+    clawpatch_vt->fort_compute_patch_error = &SIMPLE_COMPUTE_ERROR;
     clawpatch_vt->fort_user_exceeds_threshold = &USER_EXCEEDS_TH;
 
     /* BCs : Include inhomogeneous boundary conditions on the right hand side */

@@ -79,8 +79,9 @@ SUBROUTINE simple_qexact_complete(example,x,y,q,qlap,grad,flag)
         ! qx = 2*x
         ! qy = 2*y
         ! qlap = 4
-        q = x
-        qx = 1
+        ! q = sin((2*pi/3)*x) * sinh((2*pi/3)*y)
+        q = sin(2*pi*x) * sin(2*pi*y)
+        qx = 0
         qy = 0
         qlap = 0
     elseif (example .eq. 1) then

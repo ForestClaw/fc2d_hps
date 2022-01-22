@@ -51,6 +51,14 @@ typedef  struct fc2d_hps_vtable  fc2d_hps_vtable_t;
 
 /* --------------------------- Fortran defs solver functions -------------------------- */
 
+typedef void (*fc2d_hps_fort_qexact_t)(const int* example,
+                                       const double* x,
+                                       const double* y,
+                                       const double* q,
+                                       const double* qlap,
+                                       const double* grad,
+                                       const int* flag);
+
 typedef  void (*fc2d_hps_fort_rhs_t)(const int* blockno, 
                                      const int* mbc,
                                      const int* mx, const int* my,
@@ -103,16 +111,17 @@ struct fc2d_hps_vtable
     /* Solver that defines patch solver and calls Hps solver */
     fc2d_hps_patch_solver_t   patch_solver;  /* 'solver' is a keyword */
 
-	/* Fortran routines */
-	fc2d_hps_fort_rhs_t        fort_rhs;	
-	fc2d_hps_fort_beta_t       fort_beta;	
+    /* Fortran routines */
+    fc2d_hps_fort_rhs_t        fort_rhs;	
+    fc2d_hps_fort_beta_t       fort_beta;	
     fc2d_hps_fort_apply_bc_t   fort_apply_bc;
     fc2d_hps_fort_eval_bc_t    fort_eval_bc;
+    fc2d_hps_fort_qexact_t     fort_qexact;
 
     /* Allows us to output error and exact solution, along with computed solution */
     fc2d_hps_fort_output_t     fort_output;   
 
-	int is_set;
+	  int is_set;
 };
 
 void fc2d_hps_solver_initialize(void);

@@ -43,8 +43,8 @@
 #include "fc2d_hps_interface.hpp"
 
 typedef fc2d_hps_quadtree<fc2d_hps_patch> patch_tree;
-extern patch_tree quadtree;
-extern int current_ID;
+extern patch_tree quadtree; // use static
+extern int current_ID; // use static
 
 // HPS Setup Routines
 bool build_from_p4est_callback_bigger(fc2d_hps_patch& patch);

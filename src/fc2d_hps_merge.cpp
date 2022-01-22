@@ -120,8 +120,22 @@ fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	fc2d_hps_matrix<double> T_32_beta = beta.T.from_index_set(I_3_beta, I_2);
 	fc2d_hps_matrix<double> T_33_beta = beta.T.from_index_set(I_3_beta, I_3_beta);
 
-	fc2d_hps_vector<double> h_3_alpha = alpha.h.extract(N_W_alpha, N_E_alpha);
-	fc2d_hps_vector<double> h_3_beta = beta.h.extract(0, N_W_beta);
+	fc2d_hps_vector<double> h_3_alpha = alpha.h.from_index_set(I_3_alpha);
+	fc2d_hps_vector<double> h_3_beta = beta.h.from_index_set(I_3_beta);
+	// for (auto& i : alpha.h) printf("%f  \n", i);
+	// printf("\n");
+	// for (auto& i : beta.h) printf("%f  \n", i);
+	// printf("\n");
+	// for (auto& i : I_3_alpha) printf("%i  \n", i);
+	// printf("\n");
+	// for (auto& i : I_3_beta) printf("%i  \n", i);
+	// printf("\n");
+	// for (auto& i : h_3_alpha) printf("%f  \n", i);
+	// printf("\n");
+	// for (auto& i : h_3_beta) printf("%f  \n", i);
+	// printf("\n");
+	// printf("size of h_3_alpha: %i\n", h_3_alpha.size());
+	// printf("size of h_3_beta: %i\n", h_3_beta.size());
 
 	// Perform merge linear algebra
 	// std::cout << "[merge_horizontal]  merging via linear algebra" << std::endl;
@@ -153,15 +167,20 @@ fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 
 	// Reorder matrices
 	// std::cout << "[merge_horizontal]  reordering matrices" << std::endl;
+	//    Reorder S
 	std::vector<int> pi_nochange = {0};
 	std::vector<int> pi_H = {0, 3, 1, 4, 2, 5};
 	std::vector<int> R_S_tau = {N_E_alpha};
 	std::vector<int> C_S_tau = {N_W_alpha, N_S_alpha, N_N_alpha, N_E_beta, N_S_beta, N_N_beta};
 	S_tau = S_tau.block_permute(pi_nochange, pi_H, R_S_tau, C_S_tau);
 
+	//    Reorder T
 	std::vector<int> R_T_tau = {N_W_alpha, N_S_alpha, N_N_alpha, N_E_beta, N_S_beta, N_N_beta};
 	std::vector<int> C_T_tau = {N_W_alpha, N_S_alpha, N_N_alpha, N_E_beta, N_S_beta, N_N_beta};
 	T_tau = T_tau.block_permute(pi_H, pi_H, R_T_tau, C_T_tau);
+
+	//    Reorder h
+	h_tau = h_tau.block_permute(pi_H, C_S_tau);
 
 	// Create new merged patch
 	// std::cout << "[merge_horizontal]  creating merged patch" << std::endl;
@@ -240,8 +259,8 @@ fc2d_hps_patch merge_vertical(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	fc2d_hps_matrix<double> T_32_beta = beta.T.from_index_set(I_3_beta, I_2);
 	fc2d_hps_matrix<double> T_33_beta = beta.T.from_index_set(I_3_beta, I_3_beta);
 
-	fc2d_hps_vector<double> h_3_alpha = alpha.h.extract(N_W_alpha + N_E_alpha + N_S_alpha, N_N_alpha);
-	fc2d_hps_vector<double> h_3_beta = beta.h.extract(N_W_beta + N_E_beta, N_S_beta);
+	fc2d_hps_vector<double> h_3_alpha = alpha.h.from_index_set(I_3_alpha);
+	fc2d_hps_vector<double> h_3_beta = beta.h.from_index_set(I_3_beta);
 
 	// Perform merge linear algebra
 	fc2d_hps_matrix<double> X_tau;
@@ -274,6 +293,8 @@ fc2d_hps_patch merge_vertical(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	std::vector<int> R_T_tau = {N_W_alpha, N_E_alpha, N_S_alpha, N_W_beta, N_E_beta, N_N_beta};
 	std::vector<int> C_T_tau = {N_W_alpha, N_E_alpha, N_S_alpha, N_W_beta, N_E_beta, N_N_beta};
 	T_tau = T_tau.block_permute(pi_V, pi_V, R_T_tau, C_T_tau);
+
+	h_tau = h_tau.block_permute(pi_V, C_S_tau);
 
 	// Create new merged patch
 	// std::cout << "[merge_vertical]  creating merged patch" << std::endl;

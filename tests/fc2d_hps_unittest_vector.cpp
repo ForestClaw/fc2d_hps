@@ -70,6 +70,16 @@ TEST(Vector, intract) {
 	EXPECT_EQ(vec_double_true_intracted, vec_double);
 }
 
+TEST(Vector, from_index_set) {
+	fc2d_hps_vector<int> vec = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+	std::vector<int> I = {8, 6, 4, 2, 0};
+	fc2d_hps_vector<int> vec_test = vec.from_index_set(I);
+	fc2d_hps_vector<int> vec_expected = {8, 6, 4, 2, 0};
+	for (int i = 0; i < vec_test.size(); i++) {
+		EXPECT_EQ(vec_test[i], vec_expected[i]);
+	}
+}
+
 TEST(Vector, plus) {
 	fc2d_hps_vector<int> vec_int = {0, 1, 2, 3};
 	fc2d_hps_vector<int> vec_int2 = {0, 1, 2};

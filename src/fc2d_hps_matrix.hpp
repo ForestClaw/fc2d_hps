@@ -135,7 +135,7 @@ public:
 		std::size_t cols_check = 0;
 		for (auto& c : C) cols_check += c;
 		if (cols_check != this->cols) {
-			throw std::invalid_argument("[fc2d_hps_matrix<T>::block_permute] Rows in `R` do not add up to number of rows in `this`.");
+			throw std::invalid_argument("[fc2d_hps_matrix<T>::block_permute] Columns in `C` do not add up to number of columns in `this`.");
 		}
 
 		std::vector<int> I_global(this->rows);

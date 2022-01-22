@@ -29,7 +29,7 @@ TEST(FISHPACK, init) {
 TEST(FISHPACK, linear_solve) {
 
 	// Set up grid
-	int N_points_side = 16;
+	int N_points_side = 2048;
 	int Nx = N_points_side;
 	int Ny = N_points_side;
 	double x_lower = -1;
@@ -42,7 +42,7 @@ TEST(FISHPACK, linear_solve) {
 	fc2d_hps_patchgrid grid(Nx, Ny, x_lower, x_upper, y_lower, y_upper);
 
 	// Set up Poisson problem
-	fc2d_hps_poisson_problem poisson(LINEAR, x_lower, x_upper, y_lower, y_upper);
+	fc2d_hps_poisson_problem poisson(QUAD, x_lower, x_upper, y_lower, y_upper);
 	fc2d_hps_vector<double> f_data(N_unknowns);
 	fc2d_hps_vector<double> u_data(N_unknowns);
 	fc2d_hps_vector<double> g_west(Ny);
@@ -111,7 +111,9 @@ TEST(FISHPACK, linear_solve) {
 	for (int i = 0; i < Nx; i++) {
 		for (int j = 0; j < Ny; j++) {
 			printf("    x = %8.4f    y = %8.4f    u_FIHSPACK[%i, %i] = %8.4f    u_EXACT[%i, %i] = %8.4f\n", grid.point(XDIM, i), grid.point(YDIM, j), i, j, u_FISHPACK[j + i*Nx], i, j, u_data[j + i*Nx]);
-			EXPECT_NEAR(u_FISHPACK[j+i*Nx], u_data[j+i*Nx], 1e-14);
+			double diff = fabs(u_FISHPACK[j+i*Nx] - u_data[j+i*Nx]) * grid.dx;
+			EXPECT_LT(diff, 1e-6);
+			// EXPECT_NEAR(u_FISHPACK[j+i*Nx], u_data[j+i*Nx], 1e-4);
 		}
 	}
 

@@ -41,6 +41,12 @@ TEST(Merge, merge_4to1_convergence) {
         patch_gamma.T = FISHPACK_solver.build_dtn(patch_gamma.grid);
         patch_omega.T = FISHPACK_solver.build_dtn(patch_omega.grid);
 
+        //    Set h as zero (not testing this piece)
+        patch_alpha.h = fc2d_hps_vector<double>(2*grid_alpha.Nx + 2*grid_alpha.Ny, 0);
+        patch_beta.h = fc2d_hps_vector<double>(2*grid_beta.Nx + 2*grid_beta.Ny, 0);
+        patch_gamma.h = fc2d_hps_vector<double>(2*grid_gamma.Nx + 2*grid_gamma.Ny, 0);
+        patch_omega.h = fc2d_hps_vector<double>(2*grid_omega.Nx + 2*grid_omega.Ny, 0);
+
         // Compute parent patch
         std::cout << "  Performing 4-to-1 merge..." << std::endl;
         fc2d_hps_patch patch_tau_test;

@@ -26,7 +26,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fc2d_hps_solve.hpp"
 
 // Global declarations
-patch_tree quadtree;
+patch_tree quadtree; // use static...?
 int current_ID;
 
 /**================================================================================================
@@ -278,6 +278,12 @@ void visit_patchsolver(fc2d_hps_patch& patch) {
     }
 }
 
+double qexact(double x, double y) {
+    double b = (2.0/3.0) * M_PI;
+    // return sin(b*x) * sinh(b*y);
+    return sin(2*M_PI*x) * sin(2*M_PI*y);
+}
+
 void fc2d_hps_solve(fclaw2d_global_t* glob) {
     
     fclaw_global_essentialf("Begin HPS solve\n");
@@ -286,8 +292,27 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
     // fc2d_hps_quadtree<fc2d_hps_patch> quadtree = *(fc2d_hps_quadtree<fc2d_hps_patch>*) glob->user;
 
     // Set top level Dirichlet boundary data (set to zero because ForestClaw handles it by moving it to RHS)
+    // @TODO: Change this to set actual boundary conditions from glob
     int size_of_g = 2*quadtree.root->data.grid.Nx + 2*quadtree.root->data.grid.Ny;
-    quadtree.root->data.g = fc2d_hps_vector<double>(size_of_g, 0);
+    quadtree.root->data.g = fc2d_hps_vector<double>(size_of_g);
+    fc2d_hps_vector<double> g_west(quadtree.root->data.grid.Ny);
+    fc2d_hps_vector<double> g_east(quadtree.root->data.grid.Ny);
+    fc2d_hps_vector<double> g_south(quadtree.root->data.grid.Nx);
+    fc2d_hps_vector<double> g_north(quadtree.root->data.grid.Nx);
+    for (int j = 0; j < quadtree.root->data.grid.Ny; j++) {
+        double y = quadtree.root->data.grid.point(YDIM, j);
+        g_west[j] = qexact(quadtree.root->data.grid.x_lower, y);
+        g_east[j] = qexact(quadtree.root->data.grid.x_upper, y);
+    }
+    for (int i = 0; i < quadtree.root->data.grid.Nx; i++) {
+        double x = quadtree.root->data.grid.point(XDIM, i);
+        g_south[i] = qexact(x, quadtree.root->data.grid.y_lower);
+        g_north[i] = qexact(x, quadtree.root->data.grid.y_upper);
+    }
+    quadtree.root->data.g.intract(0*quadtree.root->data.grid.Nx, g_west);
+    quadtree.root->data.g.intract(1*quadtree.root->data.grid.Nx, g_east);
+    quadtree.root->data.g.intract(2*quadtree.root->data.grid.Nx, g_south);
+    quadtree.root->data.g.intract(3*quadtree.root->data.grid.Nx, g_north);
 
     // Traverse tree from root and apply solution operator or patch solver
     quadtree.split(visit_split);
@@ -358,9 +383,16 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
  *===============================================================================================*/
 void visit_copy_data(fc2d_hps_patch& patch) {
     if (patch.is_leaf == true) {
+
+        int ID = 0;
+        if (patch.ID == 0) ID = 0;
+        else if (patch.ID == 1) ID = 2;
+        else if (patch.ID == 2) ID = 1;
+        else ID = 3;
+
         fclaw2d_global_t* glob = (fclaw2d_global_t*) patch.user;
         fclaw2d_domain_t* domain = glob->domain;
-        fclaw2d_patch_t* fc_patch = &(domain->blocks->patches[patch.ID]);
+        fclaw2d_patch_t* fc_patch = &(domain->blocks->patches[ID]);
 
         // Set pointer to solution data
         int mbc;
@@ -376,7 +408,7 @@ void visit_copy_data(fc2d_hps_patch& patch) {
         int y_pts = patch.grid.Ny + 2*mbc;
         for (int i = 0; i < x_pts; i++) {
             for (int j = 0; j < y_pts; j++) {
-                int idx = j + i*x_pts;
+                int idx = j + i*y_pts;
                 if (i > mbc-1 && i < x_pts-mbc && j > mbc-1 && j < y_pts-mbc) {
                     q[idx] = patch.u[idx];
                 }
