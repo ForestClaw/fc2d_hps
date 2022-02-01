@@ -79,11 +79,14 @@ SUBROUTINE simple_qexact_complete(example,x,y,q,qlap,grad,flag)
         ! qx = 2*x
         ! qy = 2*y
         ! qlap = 4
-        ! q = sin((2*pi/3)*x) * sinh((2*pi/3)*y)
-        q = sin(2*pi*x) * sin(2*pi*y)
-        qx = 0
-        qy = 0
-        qlap = 0
+        ! q = x**2 + y
+        ! qx = 2*x
+        ! qy = 1
+        ! qlap = 2
+        q = sin((2.d0/3.d0)*pi*x) * sinh((2.d0/3.d0)*pi*y)
+        qx = (2.d0/3.d0)*pi*cos((2.d0/3.d0)*pi*x) * sinh((2.d0/3.d0)*pi*y)
+        qy = (2.d0/3.d0)*pi*cosh((2.d0/3.d0)*pi*y) * sin((2.d0/3.d0)*pi*x)
+        qlap = 0.d0
     elseif (example .eq. 1) then
         !! example in polar coordinates (r)
         r2 = (x-x0)**2 + (y-y0)**2

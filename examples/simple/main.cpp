@@ -99,11 +99,9 @@ void run_program(fclaw2d_global_t* glob)
     /* ---------------------------------------------------------------
        Finalize
        --------------------------------------------------------------- */
+    printf("HERE!\n");
     fclaw2d_finalize(glob);
 }
-
-// Set static quadtree in interface
-// fc2d_hps_quadtree<fc2d_hps_patch> fc2d_hps_interface::tree = fc2d_hps_create_quadtree_from_domain(glob);
 
 int
 main (int argc, char **argv)
@@ -157,13 +155,14 @@ main (int argc, char **argv)
         fclaw2d_clawpatch_options_store (glob, clawpatch_opt);
         fc2d_hps_options_store (glob, hps_opt);
         simple_options_store (glob, user_opt);
-
+        fclaw_global_essentialf("Running program\n");
         run_program(glob);
-
+        fclaw_global_essentialf("Finished!\n");
         fclaw2d_global_destroy(glob);        
     }
-    
+    fclaw_global_essentialf("Destroying app\n");
     fclaw_app_destroy (app);
+    printf("Returning...\n");
 
     return 0;
 }
