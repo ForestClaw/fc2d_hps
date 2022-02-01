@@ -117,3 +117,28 @@ double fc2d_hps_poisson_problem::dudy(double x, double y) {
 			throw std::invalid_argument("[fc2d_hps_poisson_problem::u] Invalid problem_ID");
 	}
 }
+
+PoissonProblem::PoissonProblem(double x_lower, double x_upper, double y_lower, double y_upper) :
+	x_lower(x_lower), x_upper(x_upper), y_lower(y_lower), y_upper(y_upper)
+		{}
+
+ConstantLaplaceProblem::ConstantLaplaceProblem(double C, double x_lower, double x_upper, double y_lower, double y_upper) :
+	PoissonProblem(x_lower, x_upper, y_lower, y_upper), C(C)
+		{}
+
+double ConstantLaplaceProblem::u(double x, double y) {
+	return this->C;
+}
+
+double ConstantLaplaceProblem::f(double x, double y) {
+	return 0.0;
+}
+
+double ConstantLaplaceProblem::dudx(double x, double y) {
+	return 0.0;
+}
+
+double ConstantLaplaceProblem::dudy(double x, double y) {
+	return 0.0;
+}
+

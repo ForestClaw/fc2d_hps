@@ -139,15 +139,28 @@ void split_1to4(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
     fc2d_hps_patch alpha_prime;
     fc2d_hps_patch beta_prime;
 
+    // printf("alpha_prime before split_vertical\n");
+    // alpha_prime.print_info();
+
     //    Perform split
     // std::cout << "[split_1to4]  begin vertical split" << std::endl;
     split_vertical(parent, alpha_prime, beta_prime);
+    // NOTE: g and grid for alpha_prime and beta_prime are set inside split_vertical
+
+    // printf("alpha_prime after split_vertical\n");
+    // alpha_prime.print_info();
 
     //    Assign alpha_prime and beta_prime the solution matrices
     alpha_prime.S = child0.S_prime;
     alpha_prime.w = child0.w_prime;
+
     beta_prime.S = child2.S_prime;
     beta_prime.w = child2.w_prime;
+
+    // printf("alpha_prime after S and w assignment\n");
+    // alpha_prime.print_info();
+
+    // for (auto& i : alpha_prime.w) printf("%f\n", i);
 
     // Horizontal split
     //    Bottom split

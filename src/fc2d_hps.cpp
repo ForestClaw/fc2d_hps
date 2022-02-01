@@ -207,7 +207,7 @@ void hps_compute_error(fclaw2d_global_t *glob,
 
         double *area = fclaw2d_clawpatch_get_area(glob,patch);  /* Might be null */
 
-        /* Computing =olution is stored in the RHS; true solution is stored in soln */
+        /* Computing solution is stored in the RHS; true solution is stored in soln */
         int mfields;
 
         /* Computed solution */

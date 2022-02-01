@@ -280,8 +280,7 @@ void visit_patchsolver(fc2d_hps_patch& patch) {
 
 double qexact(double x, double y) {
     double b = (2.0/3.0) * M_PI;
-    // return sin(b*x) * sinh(b*y);
-    return sin(2*M_PI*x) * sin(2*M_PI*y);
+    return sin(b*x) * sinh(b*y);
 }
 
 void fc2d_hps_solve(fclaw2d_global_t* glob) {
@@ -294,7 +293,7 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
     // Set top level Dirichlet boundary data (set to zero because ForestClaw handles it by moving it to RHS)
     // @TODO: Change this to set actual boundary conditions from glob
     int size_of_g = 2*quadtree.root->data.grid.Nx + 2*quadtree.root->data.grid.Ny;
-    quadtree.root->data.g = fc2d_hps_vector<double>(size_of_g);
+    quadtree.root->data.g = fc2d_hps_vector<double>(size_of_g, 0);
     fc2d_hps_vector<double> g_west(quadtree.root->data.grid.Ny);
     fc2d_hps_vector<double> g_east(quadtree.root->data.grid.Ny);
     fc2d_hps_vector<double> g_south(quadtree.root->data.grid.Nx);
@@ -320,61 +319,6 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
     // Iterate over leaf nodes and apply patch solver
     quadtree.traverse_inorder(visit_patchsolver);
 
-    // const fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
-    // fclaw2d_domain_t* domain = glob->domain;
-    
-    // /* Apply non-homogeneous boundary conditions to any patches on the boundary */
-    // if (fclaw_opt->maxlevel == 0) {
-    //     fc2d_hps_physical_bc(glob);
-
-    //     fclaw2d_patch_t* patch = &(domain->blocks->patches[0]);
-
-    //     fc2d_hps_patchgrid grid;
-    //     int mbc;
-    //     fclaw2d_clawpatch_grid_data(glob, patch, &(grid.Nx), &(grid.Ny), &mbc, &(grid.x_lower), &(grid.y_lower), &(grid.dx), &(grid.dy));
-    //     grid.x_upper = grid.x_lower + grid.dx*grid.Nx;
-    //     grid.y_upper = grid.y_lower + grid.dy*grid.Ny;
-
-    //     fc2d_hps_vector<double> g(4*grid.Nx, 0); // Pass in a bunch of zeros
-
-    //     fc2d_hps_vector<double> f(grid.Nx * grid.Ny);
-    //     int mfields;
-    //     double* rhs;
-    //     fclaw2d_clawpatch_rhs_data(glob, patch, &rhs, &mfields);
-    //     for (int i = 0; i < (grid.Nx*grid.Ny); i++) {
-    //         f[i] = rhs[i];
-
-    //         printf("rhs[%i] = %16.8e\n", i, rhs[i]);
-    //     }
-
-    //     fc2d_hps_FISHPACK_solver solver;
-    //     fc2d_hps_vector<double> u = solver.solve(grid, g, f);
-
-    //     double* q;
-    //     int meqn;
-    //     fclaw2d_clawpatch_soln_data(glob, patch, &q, &meqn);
-    //     printf("%p", q);
-
-    //     int x_pts = grid.Nx + 2*mbc;
-    //     int y_pts = grid.Ny + 2*mbc;
-    //     for (int i = 0; i < x_pts; i++) {
-    //         for (int j = 0; j < y_pts; j++) {
-    //             if (i > 1 && i < x_pts-1 && j > 1 && j < y_pts-1) {
-    //                 q[j + i*grid.Nx] = u[j + i*grid.Nx];
-    //                 // rhs[j + i*grid.Nx] = u[j + i*grid.Nx];
-    //             }
-    //             else {
-    //                 q[j + i*grid.Nx] = 0;
-    //                 // rhs[j + i*grid.Nx] = 0;
-    //             }
-    //             printf("q[%i, %i] = %16.8e\n", i, j, q[j + i*grid.Nx]);
-    //         }
-    //     }
-    //     for (int i = 0; i < (grid.Nx*grid.Ny); i++) {
-    //         // q[i] = u[i];
-    //     }
-    // }
-
     fclaw_global_essentialf("End HPS solve\n");
 }
 
@@ -384,24 +328,22 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
 void visit_copy_data(fc2d_hps_patch& patch) {
     if (patch.is_leaf == true) {
 
-        int ID = 0;
-        if (patch.ID == 0) ID = 0;
-        else if (patch.ID == 1) ID = 2;
-        else if (patch.ID == 2) ID = 1;
-        else ID = 3;
-
         fclaw2d_global_t* glob = (fclaw2d_global_t*) patch.user;
         fclaw2d_domain_t* domain = glob->domain;
-        fclaw2d_patch_t* fc_patch = &(domain->blocks->patches[ID]);
+        fclaw2d_patch_t* fc_patch = &(domain->blocks->patches[patch.ID]);
 
         // Set pointer to solution data
         int mbc;
         int Nx, Ny;
         double x_lower, y_lower, dx, dy;
         double* q;
-        int meqn;
+        int meqn, mfields;
+        double* rhs;
         fclaw2d_clawpatch_grid_data(glob, fc_patch, &Nx, &Ny, &mbc, &x_lower, &y_lower, &dx, &dy);
         fclaw2d_clawpatch_soln_data(glob, fc_patch, &q, &meqn);
+        fclaw2d_clawpatch_rhs_data(glob, fc_patch, &rhs, &mfields);
+
+        // @TODO: Work on memcpy
 
         // Copy u into solution data
         int x_pts = patch.grid.Nx + 2*mbc;
@@ -409,15 +351,21 @@ void visit_copy_data(fc2d_hps_patch& patch) {
         for (int i = 0; i < x_pts; i++) {
             for (int j = 0; j < y_pts; j++) {
                 int idx = j + i*y_pts;
+                int idx_T = i + j*x_pts;
                 if (i > mbc-1 && i < x_pts-mbc && j > mbc-1 && j < y_pts-mbc) {
-                    q[idx] = patch.u[idx];
+                    q[idx_T] = patch.u[idx];
+                    rhs[idx_T] = patch.u[idx];
                 }
                 else {
-                    q[idx] = 0;
+                    q[idx_T] = 0;
+                    rhs[idx_T] = 0;
                 }
                 // printf("i = %i, j = %i, idx = %i, mbc = %i, x_pts = %i, y_pts = %i, q[%i] = %f\n", i, j, idx, mbc, x_pts, y_pts, idx, q[idx]);
             }
         }
+
+        // Output patches
+        // patch.to_vtk("patch_" + std::to_string(patch.ID), "", "wuf");
     }
 }
 
@@ -426,48 +374,6 @@ void fc2d_hps_clawpatch_data_move(fclaw2d_global* glob) {
     // fclaw_global_essentialf("!TODO!\n");
 
     quadtree.traverse_inorder(visit_copy_data);
+    // hps_patch_quadtree_to_vtk(quadtree, "hps_patches");
     fclaw_global_essentialf("End move to ForestClaw data\n");
 }
-
-/**
-//  * Callback function for a 4-to-1 merge
-//  */
-// static
-// void cb_merge(fclaw2d_domain_t *domain, fclaw2d_patch_t *fine_patches, int blockno, int fine0_patchno, void *user) {
-
-//     std::cout << "[fc2d_hps_solve.cpp::cb_merge]  In callback merge" << std::endl;
-//     fclaw2d_global_iterate_t* g = (fclaw2d_global_iterate_t*) user;
-//     // fc2d_hps_patch& tau = (fc2d_hps_patch*) glob->user;
-
-//     // Create four fc2d_hps_patchs from fclaw2d_patch_t*
-//     std::vector<fc2d_hps_patchgrid> grids(4); // @TODO: Redo to not have to build grids
-//     std::vector<fc2d_hps_patch> patches(4);
-//     for (int i = 0; i < 4; i++) {
-//         // Populate grid info
-//         int mbc;
-//         fclaw2d_clawpatch_grid_data(g->glob, &(fine_patches[i]), &(grids[i].Nx), &(grids[i].Ny), &mbc, &(grids[i].x_lower), &(grids[i].y_lower), &(grids[i].dx), &(grids[i].dy));
-//         grids[i].x_upper = grids[i].x_lower + grids[i].dx*grids[i].Nx;
-//         grids[i].y_upper = grids[i].y_lower + grids[i].dy*grids[i].Ny;
-
-//         // Create patches
-//         patches[i].grid = grids[i];
-//         patches[i].ID = blockno + i;
-//         // @TODO: Get current level
-//         patches[i].is_leaf = true;
-//         patches[i].N_patch_side[WEST] = 1;
-//         patches[i].N_patch_side[EAST] = 1;
-//         patches[i].N_patch_side[SOUTH] = 1;
-//         patches[i].N_patch_side[NORTH] = 1;
-//     }
-
-//     // Build DtNs for all patches
-//     fc2d_hps_FISHPACK_solver FISHPACK_solver;
-//     fc2d_hps_matrix<double> T = FISHPACK_solver.build_dtn(patches[0].grid);
-//     for (int i = 0; i < 4; i++) {
-//         patches[i].T = T;
-//     }
-
-//     // // Merge 4-to-1
-//     // merge_4to1(tau, patches[0], patches[1], patches[2], patches[3]);
-    
-// }
