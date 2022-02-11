@@ -27,3 +27,4 @@ target_link_libraries(simple PRIVATE
 )
 
 configure_file(fclaw_options.ini fclaw_options.ini)
+configure_file(scripts/run_timing.py run_timing.py)

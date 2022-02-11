@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 #include <fclaw2d_include_all.h>
-#include <fc2d_hps.h>
-#include <fc2d_hps_vector.hpp>
-#include <fc2d_hps_matrix.hpp>
+#include <HPS/fc2d_hps.hpp>
+#include <Structures/fc2d_hps_vector.hpp>
+#include <Structures/fc2d_hps_matrix.hpp>
 
 TEST(Matrix, init) {
 	int n_rows = 3;
@@ -565,4 +565,20 @@ TEST(Matrix, mat_solve) {
 			EXPECT_NEAR(X_true(i,j), X(i,j), 1e-14);
 		}
 	}
+}
+
+TEST(Matrix, mmio) {
+	int n_vars = 3;
+	std::vector<double> data = {
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 10
+	};
+	fc2d_hps_matrix<double> A(n_vars, n_vars, data);
+
+	std::string filename = "test_mmio.mmio";
+    std::FILE* file = fopen(filename.c_str(), "w");
+	A.write_to_mmio(file, DataType::real, "%16.8e");
+    fclose(file);
+
 }

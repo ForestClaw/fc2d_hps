@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
 #include <fclaw2d_include_all.h>
-#include <fc2d_hps.h>
-#include <fc2d_hps_vector.hpp>
-#include <fc2d_hps_matrix.hpp>
-#include <fc2d_hps_merge.hpp>
-#include <fc2d_hps_patchsolver.hpp>
+#include <HPS/fc2d_hps.hpp>
+#include <Structures/fc2d_hps_vector.hpp>
+#include <Structures/fc2d_hps_matrix.hpp>
+#include <Structures/fc2d_hps_patchsolver.hpp>
+#include <Methods/fc2d_hps_merge.hpp>
 
 TEST(Merge, merge_4to1_convergence) {
 

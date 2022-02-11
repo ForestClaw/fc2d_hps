@@ -90,7 +90,7 @@ void run_program(fclaw2d_global_t* glob)
     fclaw2d_elliptic_solve(glob);
 
     /* Compute error, compute conservation */
-    fclaw2d_diagnostics_gather(glob, init_flag);                
+    fclaw2d_diagnostics_gather(glob, init_flag);
 
     /* Output solution */
     Frame = 1;
@@ -99,7 +99,7 @@ void run_program(fclaw2d_global_t* glob)
     /* ---------------------------------------------------------------
        Finalize
        --------------------------------------------------------------- */
-    printf("HERE!\n");
+    // printf("HERE!\n");
     fclaw2d_finalize(glob);
 }
 
@@ -155,14 +155,14 @@ main (int argc, char **argv)
         fclaw2d_clawpatch_options_store (glob, clawpatch_opt);
         fc2d_hps_options_store (glob, hps_opt);
         simple_options_store (glob, user_opt);
-        fclaw_global_essentialf("Running program\n");
+        // fclaw_global_essentialf("Running program\n");
         run_program(glob);
-        fclaw_global_essentialf("Finished!\n");
+        // fclaw_global_essentialf("Finished!\n");
         fclaw2d_global_destroy(glob);        
     }
-    fclaw_global_essentialf("Destroying app\n");
+    // fclaw_global_essentialf("Destroying app\n");
     fclaw_app_destroy (app);
-    printf("Returning...\n");
+    // printf("Returning...\n");
 
     return 0;
 }

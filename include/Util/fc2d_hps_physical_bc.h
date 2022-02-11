@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019-2021 Carsten Burstedde, Donna Calhoun, Damyn Chipman
+Copyright (c) 2012-2021 Carsten Burstedde, Donna Calhoun, Damyn Chipman
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -23,49 +23,37 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef SIMPLE_DIAGNOSTICS_H
-#define SIMPLE_DIAGNOSTICS_H
+#ifndef FC2D_HPS_PHYSICAL_BC_H
+#define FC2D_HPS_PHYSICAL_BC_H
 
-#include <fclaw2d_include_all.h>
+#include <fclaw2d_elliptic_solver.h>
+#include <fclaw2d_global.h>
+#include <fclaw2d_domain.h>
+#include <fclaw2d_patch.h>
+#include <fclaw2d_clawpatch.h>
+#include <fclaw2d_physical_bc.h>
 
 #include <HPS/fc2d_hps.hpp>
+#include <Util/fc2d_hps_options.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-typedef struct {
-    double* local_error;  /* meqn x 3 array of errors on a patch */
-    double* global_error; /* meqn x 3 array of errors after gather */
-    double *mass0;  /* Mass at initial time */
-    double *mass;
-    double area;
-    double *rhs;       /* Sum of rhs hand side */
-    double *boundary;  /* sum around boundary */
-    double *c_kahan;  
-} simple_error_info_t;
-
-/* --------------------------- Problem dependent functions -----------------------------*/
-
-void simple_diagnostics_initialize(fclaw2d_global_t *glob, void **acc_patch);
+struct fclaw2d_global;
+struct fclaw2d_domain;
+struct fclaw2d_patch;
 
 
-void simple_diagnostics_reset(fclaw2d_global_t *glob, void* patch_acc);
+typedef struct fc2d_hps_time_info
+{
+    double t;
+} fc2d_hps_time_info_t;
 
-void simple_diagnostics_compute(fclaw2d_global_t* glob,
-                                           void* patch_acc);
 
-void simple_diagnostics_gather(fclaw2d_global_t *glob, void* patch_acc,
-                               int init_flag);
-
-void simple_diagnostics_finalize(fclaw2d_global_t *glob, void** patch_acc);
-
-void simple_compute_diagnostics(fclaw2d_domain_t *domain,
-                                fclaw2d_patch_t *patch,
-                                int blockno,
-                                int patchno,
-                                void* user);
+/* Inhomogeneous boundary conditions */
+void fc2d_hps_physical_bc(struct fclaw2d_global *glob);
 
 
 #ifdef __cplusplus

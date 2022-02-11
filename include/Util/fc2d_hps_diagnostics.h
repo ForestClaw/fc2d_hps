@@ -23,10 +23,16 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef SIMPLE_DIAGNOSTICS_H
-#define SIMPLE_DIAGNOSTICS_H
+#ifndef FC2D_HPS_DIAGNOSTICS_H
+#define FC2D_HPS_DIAGNOSTICS_H
 
 #include <fclaw2d_include_all.h>
+#include <fclaw2d_clawpatch.h>
+#include <fclaw2d_clawpatch_options.h>
+#include <fclaw2d_global.h>
+#include <fclaw2d_options.h>
+#include <fclaw2d_domain.h>
+#include <fclaw2d_diagnostics.h>
 
 #include <HPS/fc2d_hps.hpp>
 
@@ -44,24 +50,24 @@ typedef struct {
     double *rhs;       /* Sum of rhs hand side */
     double *boundary;  /* sum around boundary */
     double *c_kahan;  
-} simple_error_info_t;
+} fc2d_hps_error_info_t;
 
 /* --------------------------- Problem dependent functions -----------------------------*/
 
-void simple_diagnostics_initialize(fclaw2d_global_t *glob, void **acc_patch);
+void fc2d_hps_diagnostics_initialize(fclaw2d_global_t *glob, void **acc_patch);
 
 
-void simple_diagnostics_reset(fclaw2d_global_t *glob, void* patch_acc);
+void fc2d_hps_diagnostics_reset(fclaw2d_global_t *glob, void* patch_acc);
 
-void simple_diagnostics_compute(fclaw2d_global_t* glob,
+void fc2d_hps_diagnostics_compute(fclaw2d_global_t* glob,
                                            void* patch_acc);
 
-void simple_diagnostics_gather(fclaw2d_global_t *glob, void* patch_acc,
+void fc2d_hps_diagnostics_gather(fclaw2d_global_t *glob, void* patch_acc,
                                int init_flag);
 
-void simple_diagnostics_finalize(fclaw2d_global_t *glob, void** patch_acc);
+void fc2d_hps_diagnostics_finalize(fclaw2d_global_t *glob, void** patch_acc);
 
-void simple_compute_diagnostics(fclaw2d_domain_t *domain,
+void fc2d_hps_compute_diagnostics(fclaw2d_domain_t *domain,
                                 fclaw2d_patch_t *patch,
                                 int blockno,
                                 int patchno,

@@ -37,9 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fclaw2d_clawpatch_options.h>
 #include <fclaw2d_clawpatch.h>
 
-#include <fc2d_hps.h>
-#include <fc2d_hps_options.h>
-#include <fc2d_hps_output_ascii.h>
+#include <HPS/fc2d_hps.hpp>
+#include <Util/fc2d_hps_options.h>
+#include <Util/fc2d_hps_output_ascii.h>
 
 /* HPS headers */
 // #include <fc2d_hps_patch.hpp>

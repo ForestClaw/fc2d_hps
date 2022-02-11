@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 #include <fclaw2d_include_all.h>
-#include <fc2d_hps.h>
-#include <fc2d_hps_patchgrid.hpp>
-#include <fc2d_hps_vector.hpp>
+#include <HPS/fc2d_hps.hpp>
+#include <Structures/fc2d_hps_patchgrid.hpp>
+#include <Structures/fc2d_hps_vector.hpp>
 
 TEST(PatchGrid, init) {
 	int Nx = 4;

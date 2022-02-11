@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include <fclaw2d_include_all.h>
-#include <fc2d_hps.h>
-#include <fc2d_hps_quadtree.hpp>
+#include <HPS/fc2d_hps.hpp>
+#include <Structures/fc2d_hps_quadtree.hpp>
 
 TEST(QuadTree, init) {
 	int root = 4;

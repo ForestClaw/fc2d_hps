@@ -20,6 +20,7 @@ foreach(file ${tests})
 		gtest_main
 		fishpack90
 		lapack
+		mmio
 	)
 	gtest_discover_tests(
 		"${name}_tests"

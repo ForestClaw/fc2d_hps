@@ -3,13 +3,13 @@
 #include <algorithm>
 #include <string>
 #include <fclaw2d_include_all.h>
-#include <fc2d_hps.h>
-#include <fc2d_hps_vector.hpp>
-#include <fc2d_hps_matrix.hpp>
-#include <fc2d_hps_merge.hpp>
-#include <fc2d_hps_split.hpp>
-#include <fc2d_hps_patchsolver.hpp>
-#include <fc2d_hps_poissonproblem.hpp>
+#include <HPS/fc2d_hps.hpp>
+#include <Structures/fc2d_hps_vector.hpp>
+#include <Structures/fc2d_hps_matrix.hpp>
+#include <Structures/fc2d_hps_patchsolver.hpp>
+#include <Structures/fc2d_hps_poissonproblem.hpp>
+#include <Methods/fc2d_hps_merge.hpp>
+#include <Methods/fc2d_hps_split.hpp>
 
 TEST(Solve, solve_1to4_convergence) {
 

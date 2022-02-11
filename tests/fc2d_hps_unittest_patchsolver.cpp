@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
 #include <fclaw2d_include_all.h>
-#include <fc2d_hps_patchsolver.hpp>
-#include <fc2d_hps_poissonproblem.hpp>
-#include <fc2d_hps_patchgrid.hpp>
-#include <fc2d_hps_vector.hpp>
-#include <fc2d_hps_matrix.hpp>
+#include <Structures/fc2d_hps_patchsolver.hpp>
+#include <Structures/fc2d_hps_poissonproblem.hpp>
+#include <Structures/fc2d_hps_patchgrid.hpp>
+#include <Structures/fc2d_hps_vector.hpp>
+#include <Structures/fc2d_hps_matrix.hpp>
 
 TEST(PatchSolver, init) {
 

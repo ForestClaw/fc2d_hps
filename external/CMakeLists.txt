@@ -1,1 +1,2 @@
 add_subdirectory(fishpack90)
+add_subdirectory(mmio)

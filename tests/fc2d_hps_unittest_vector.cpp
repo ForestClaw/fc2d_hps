@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include <fclaw2d_include_all.h>
-#include <fc2d_hps.h>
-#include <fc2d_hps_vector.hpp>
+#include <HPS/fc2d_hps.hpp>
+#include <Structures/fc2d_hps_vector.hpp>
 
 TEST(Vector, init) {
 	fc2d_hps_vector<int> vec = {0, 1, 2, 3};
