@@ -13,23 +13,19 @@ void visit_leaves(fc2d_hps_patch& patch) {
 
         // Set DtN on leaf
         // @TODO: Implement caching of T for each level
-        // if (hps_opt->cache_T) {
+        if (hps_opt->cache_T) {
 
-        //     // printf("size of cache: %i\n", T_cache.capacity());
+            // printf("size of cache: %i\n", T_cache.capacity());
 
-        //     if (T_cache[patch.level].rows == 0 && T_cache[patch.level].cols == 0) {
-        //         // T for patch level is not set; build from patch solver
-        //         T_cache[patch.level] = FISHPACK_solver.build_dtn(patch.grid);
-        //         // printf("size of cache[%i] = %i, %i\n", patch.level, T_cache[patch.level].rows, T_cache[patch.level].cols);
-        //     }
-        //     // patch.T = FISHPACK_solver.build_dtn(patch.grid);
-        //     patch.T = T_cache[patch.level];
-
-        //     // patch.print_info();
-        // }
-        // else {
+            if (T_cache[patch.level].rows == 0 && T_cache[patch.level].cols == 0) {
+                // T for patch level is not set; build from patch solver
+                T_cache[patch.level] = FISHPACK_solver.build_dtn(patch.grid);
+            }
+            patch.T = T_cache[patch.level];
+        }
+        else {
             patch.T = FISHPACK_solver.build_dtn(patch.grid);
-        // }
+        }
 
         // @TODO: Add to upwards pass stage of HPS method
         // if (hps_opt->nonhomogeneous_rhs) {
