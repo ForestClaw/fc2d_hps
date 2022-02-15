@@ -70,8 +70,25 @@ fc2d_hps_vector<double> merge_h(fc2d_hps_matrix<double>& X_tau, fc2d_hps_matrix<
 	fc2d_hps_vector<double> flux = h_3_beta - h_3_alpha;
 	fc2d_hps_vector<double> temp = solve(X_tau, flux);
 
-	return H * temp;
+	// Multiply by H
+	fc2d_hps_vector<double> h = H * temp;
 
+	return h;
+
+}
+
+fc2d_hps_vector<double> merge_h2(fc2d_hps_matrix<double>& T_13_alpha, fc2d_hps_matrix<double>& T_23_beta, fc2d_hps_vector<double>& w_tau, fc2d_hps_vector<double>& h_1_alpha, fc2d_hps_vector<double>& h_2_beta) {
+	fc2d_hps_matrix<double> H(T_13_alpha.rows + T_23_beta.rows, T_13_alpha.cols);
+	H.intract(0, 0, T_13_alpha);
+	H.intract(T_13_alpha.rows, 0, T_23_beta);
+	fc2d_hps_vector<double> h = H * w_tau;
+
+	fc2d_hps_vector<double> temp(h_1_alpha.size() + h_2_beta.size());
+	temp.intract(0, h_1_alpha);
+	temp.intract(h_1_alpha.size(), h_2_beta);
+	h = h + temp;
+
+	return h;
 }
 
 fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
@@ -123,6 +140,8 @@ fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	fc2d_hps_matrix<double> T_32_beta = beta.T.from_index_set(I_3_beta, I_2);
 	fc2d_hps_matrix<double> T_33_beta = beta.T.from_index_set(I_3_beta, I_3_beta);
 
+	fc2d_hps_vector<double> h_1_alpha = alpha.h.from_index_set(I_1);
+	fc2d_hps_vector<double> h_2_beta = beta.h.from_index_set(I_2);
 	fc2d_hps_vector<double> h_3_alpha = alpha.h.from_index_set(I_3_alpha);
 	fc2d_hps_vector<double> h_3_beta = beta.h.from_index_set(I_3_beta);
 
@@ -140,7 +159,8 @@ fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 		S_tau = merge_S(X_tau, T_31_alpha, T_32_beta);
 		T_tau = merge_T(S_tau, T_11_alpha, T_22_beta, T_13_alpha, T_23_beta);
 		w_tau = merge_w(X_tau, h_3_alpha, h_3_beta);
-		h_tau = merge_h(X_tau, T_13_alpha, T_23_beta, h_3_alpha, h_3_beta);
+		// h_tau = merge_h(X_tau, T_13_alpha, T_23_beta, h_3_alpha, h_3_beta);
+		h_tau = merge_h2(T_13_alpha, T_23_beta, w_tau, h_1_alpha, h_2_beta);
 	}
 	//    Alpha = fine, beta = coarse
 	else if (2 * alpha.N_patch_side[WEST] == beta.N_patch_side[EAST]) {
@@ -248,6 +268,8 @@ fc2d_hps_patch merge_vertical(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	fc2d_hps_matrix<double> T_32_beta = beta.T.from_index_set(I_3_beta, I_2);
 	fc2d_hps_matrix<double> T_33_beta = beta.T.from_index_set(I_3_beta, I_3_beta);
 
+	fc2d_hps_vector<double> h_1_alpha = alpha.h.from_index_set(I_1);
+	fc2d_hps_vector<double> h_2_beta = beta.h.from_index_set(I_2);
 	fc2d_hps_vector<double> h_3_alpha = alpha.h.from_index_set(I_3_alpha);
 	fc2d_hps_vector<double> h_3_beta = beta.h.from_index_set(I_3_beta);
 
@@ -264,7 +286,8 @@ fc2d_hps_patch merge_vertical(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 		S_tau = merge_S(X_tau, T_31_alpha, T_32_beta);
 		T_tau = merge_T(S_tau, T_11_alpha, T_22_beta, T_13_alpha, T_23_beta);
 		w_tau = merge_w(X_tau, h_3_alpha, h_3_beta);
-		h_tau = merge_h(X_tau, T_13_alpha, T_23_beta, h_3_alpha, h_3_beta);
+		// h_tau = merge_h(X_tau, T_13_alpha, T_23_beta, h_3_alpha, h_3_beta);
+		h_tau = merge_h2(T_13_alpha, T_23_beta, w_tau, h_1_alpha, h_2_beta);
 	}
 	// @TODO: Put in other cases
 	else {

@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <HPS/fc2d_hps.hpp>
 #include <Util/fc2d_hps_options.h>
 #include <Util/fc2d_hps_output_ascii.h>
+// #include <Structures/fc2d_hps_patchsolver.hpp>
 
 /* HPS headers */
 // #include <fc2d_hps_patch.hpp>

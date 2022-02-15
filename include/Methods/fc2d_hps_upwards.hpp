@@ -8,6 +8,7 @@ extern patch_tree quadtree; // use static
 extern int current_ID; // use static
 extern std::vector<fc2d_hps_matrix<double>> T_cache;
 
+void visit_set_particular_data_leaves(fc2d_hps_patch& patch);
 void visit_upwards(fc2d_hps_patch& patch);
 void fc2d_hps_upwards(struct fclaw2d_global* glob);
 

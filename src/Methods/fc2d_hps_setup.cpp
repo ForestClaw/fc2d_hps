@@ -2,7 +2,7 @@
 
 patch_tree quadtree;
 int current_ID;
-std::vector<fc2d_hps_matrix<double>> T_cache;
+// std::vector<fc2d_hps_matrix<double>> T_cache;
 
 void fc2d_hps_create_quadtree_from_domain(fclaw2d_global_t* glob) {
 
@@ -113,10 +113,6 @@ std::vector<fc2d_hps_patch> build_from_p4est_callback_init(fc2d_hps_patch& paren
 	return children;
 }
 
-void visit_print2(fc2d_hps_patch& patch) {
-    patch.print_info();
-}
-
 void visit_set_ID(fc2d_hps_patch& patch) {
     if (patch.is_leaf == true) {
         patch.ID = current_ID++;
@@ -132,24 +128,24 @@ void visit_set_ID(fc2d_hps_patch& patch) {
 void fc2d_hps_setup(struct fclaw2d_global* glob) {
 
     fclaw_global_essentialf("Begin HPS setup\n");
+
+    // Get HPS options
+    fc2d_hps_options_t* hps_opt = fc2d_hps_get_options(glob);
+
     fc2d_hps_create_quadtree_from_domain(glob);
 
     // Set patch IDs
     current_ID = 0;
     quadtree.traverse_inorder(visit_set_ID);
 
-    // Set up DtN cache
-    printf("setting up cache...\n");
-    printf("quadtree.height = %i\n", quadtree.height);
-    T_cache.reserve(quadtree.height);
-    for (int i = 0; i < quadtree.height; i++) {
-        T_cache[i] = fc2d_hps_matrix<double>(0,0);
-    }
-    // for (auto& T : T_cache) T = fc2d_hps_matrix<double>(0, 0);
+    // // Set up DtN cache
+    // if (hps_opt->cache_T) {
+    //     T_cache.reserve(quadtree.height);
+    //     for (int i = 0; i < quadtree.height; i++) {
+    //         T_cache[i] = fc2d_hps_matrix<double>(0,0);
+    //     }
 
-    // T_cache_set.reserve(quadtree.height);
-
-    printf("size of cache: %i\n", T_cache.size());
+    // }
 
     fclaw_global_essentialf("End HPS setup\n");
 

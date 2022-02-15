@@ -295,9 +295,31 @@ void visit_patchsolver(fc2d_hps_patch& patch) {
     }
 }
 
+// double qexact(double x, double y) {
+//     double b = (2.0/3.0) * M_PI;
+//     return sin(b*x) * sinh(b*y);
+// }
+
+// double qx(double x, double y) {
+//     double b = (2.0/3.0) * M_PI;
+//     return b*cos(b*x)*sinh(b*y);
+// }
+
+// double qy(double x, double y) {
+//     double b = (2.0/3.0) * M_PI;
+//     return b*cosh(b*y)*sin(b*x);
+// }
+
 double qexact(double x, double y) {
-    double b = (2.0/3.0) * M_PI;
-    return sin(b*x) * sinh(b*y);
+    return pow(x, 2) + pow(y, 2);
+}
+
+double qx(double x, double y) {
+    return 2*x;
+}
+
+double qy(double x, double y) {
+    return 2*y;
 }
 
 void fc2d_hps_solve(fclaw2d_global_t* glob) {
@@ -329,6 +351,51 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
     quadtree.root->data.g.intract(1*quadtree.root->data.grid.Nx, g_east);
     quadtree.root->data.g.intract(2*quadtree.root->data.grid.Nx, g_south);
     quadtree.root->data.g.intract(3*quadtree.root->data.grid.Nx, g_north);
+
+    // Check top level for accurate Neumann data
+    // fc2d_hps_patch root_patch = quadtree.root->data;
+    // fc2d_hps_matrix<double> T = root_patch.T;
+    // fc2d_hps_vector<double> g = root_patch.g;
+    // fc2d_hps_vector<double> h = root_patch.h;
+    // fc2d_hps_vector<double> v = T * g;
+    // v = v + h;
+
+    // int N = quadtree.root->data.grid.Nx;
+    // for (int j = 0; j < N; j++) {
+    //     double x = quadtree.root->data.grid.x_lower;
+    //     double y = quadtree.root->data.grid.point(YDIM, j);
+    //     double v_exact = qx(x, y);
+    //     double v_west = v[j];
+    //     double diff = v_exact - v_west;
+    //     printf("x = %11.4e  y = %11.4e  v_exact = %11.4e  v_west = %11.4e  diff = %11.4e\n", x, y, v_exact, v_west, diff);
+    // }
+    // printf("==============================================================================================\n");
+    // for (int j = 0; j < N; j++) {
+    //     double x = quadtree.root->data.grid.x_upper;
+    //     double y = quadtree.root->data.grid.point(YDIM, j);
+    //     double v_exact = qx(x, y);
+    //     double v_east = v[j + N];
+    //     double diff = v_exact - v_east;
+    //     printf("x = %11.4e  y = %11.4e  v_exact = %11.4e  v_east = %11.4e  diff = %11.4e\n", x, y, v_exact, v_east, diff);
+    // }
+    // printf("==============================================================================================\n");
+    // for (int i = 0; i < N; i++) {
+    //     double x = quadtree.root->data.grid.point(XDIM, i);
+    //     double y = quadtree.root->data.grid.y_lower;
+    //     double v_exact = qy(x, y);
+    //     double v_south = v[i + 2*N];
+    //     double diff = v_exact - v_south;
+    //     printf("x = %11.4e  y = %11.4e  v_exact = %11.4e  v_south = %11.4e  diff = %11.4e\n", x, y, v_exact, v_south, diff);
+    // }
+    // printf("==============================================================================================\n");
+    // for (int i = 0; i < N; i++) {
+    //     double x = quadtree.root->data.grid.point(XDIM, i);
+    //     double y = quadtree.root->data.grid.y_upper;
+    //     double v_exact = qy(x, y);
+    //     double v_north = v[i + 3*N];
+    //     double diff = v_exact - v_north;
+    //     printf("x = %11.4e  y = %11.4e  v_exact = %11.4e  v_north = %11.4e  diff = %11.4e\n", x, y, v_exact, v_north, diff);
+    // }
 
     // Traverse tree from root and apply solution operator or patch solver
     quadtree.split(visit_split);

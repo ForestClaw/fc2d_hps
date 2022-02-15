@@ -16,85 +16,29 @@ class SimpleResults:
         self.n_cells = 0
         self.dofs = 0
 
-    def to_string(self):
-        res = ''
-        res += 'L1_error = {}\n'.format(self.L1_error)
-
-        return res
-
-def writeFileContents(
-    user_example=0,
-    clawpatch_mx=4,
-    clawpatch_my=4,
-    options_minlevel=1,
-    options_maxlevel=1
-):
-
-    contents = ''
-    contents += '[user]\n'
-    contents += '    example = {}\n'.format(user_example)
-    contents += '[hps]\n'
-    contents += '    boundary_conditions = 1 1 1 1    \n'
-    contents += '    operator-type = laplace  \n'
-    contents += '    patch_solver = fishpack   \n'
-    contents += '    ascii-out = T\n'
-    contents += '    vtk-out = T\n'
-    contents += '[clawpatch]\n'
-    contents += '    mx = {}		  \n'.format(clawpatch_mx)
-    contents += '    my = {}           \n'.format(clawpatch_my)
-    contents += '    mbc = 0         \n'
-    contents += '    refinement-criteria = value\n'
-    contents += '    meqn = 1             \n'
-    contents += '    rhs-fields = 1       \n'
-    contents += '[Options]\n'
-    contents += '    minlevel = {}         \n'.format(options_minlevel)
-    contents += '    maxlevel = {}         \n'.format(options_maxlevel)
-    contents += '    regrid_interval = -1  \n'
-    contents += '    refine_threshold = 1e-2\n'
-    contents += '    coarsen_threshold = 2.5e-3\n'
-    contents += '    smooth-refine = T\n'
-    contents += '    smooth-level = 6\n'
-    contents += '    verbosity = production\n'
-    contents += '    output = T\n'
-    contents += '    tikz-out = F\n'
-    contents += '    tikz-figsize = 8 8\n'
-    contents += '    tikz-plot-prefix = \'plot\'\n'
-    contents += '    tikz-plot-suffix = \'png\'\n'
-    contents += '    conservation-check = F\n'
-    contents += '    compute-error = T\n'
-    contents += '    trapfpe = T                 \n'
-    contents += '    mpi_debug = F               \n'
-    contents += '    run-user-diagnostics = F\n'
-    contents += '    report-timing=T\n'
-    contents += '    report-timing-verbosity = all\n'
-    contents += '    manifold = F         \n'
-    contents += '    ax = -1\n'
-    contents += '    bx = 1\n'
-    contents += '    ay = -1\n'
-    contents += '    by = 1\n'
-    contents += '    mi = 1\n'
-    contents += '    mj = 1\n'
-
-    return contents
-
 def runSimple(n_levels, n_cells, output_filename='simple_run_output.txt'):
 
     # Write ForestClaw input file
-    contents = writeFileContents(
-        clawpatch_mx=n_cells,
-        clawpatch_my=n_cells,
-        options_minlevel=n_levels,
-        options_maxlevel=n_levels
-    )
+    # contents = writeFileContents(
+    #     clawpatch_mx=n_cells,
+    #     clawpatch_my=n_cells,
+    #     options_minlevel=n_levels,
+    #     options_maxlevel=n_levels
+    # )
 
-    os.remove('fclaw_options.ini')
-    with open('fclaw_options.ini', 'w') as file:
-        file.write(contents)
+    # os.remove('fclaw_options.ini')
+    # with open('fclaw_options.ini', 'w') as file:
+    #     file.write(contents)
 
     # Run executable with input file
     commands = [
         './simple',
-        'fclaw_options.ini'
+        'fclaw_options.ini',
+        '--report-timing-verbosity', 'all',
+        '--clawpatch:mx', str(n_cells),
+        '--clawpatch:my', str(n_cells),
+        '--minlevel', str(n_levels),
+        '--maxlevel', str(n_levels)
     ]
     with open(output_filename, 'w') as out_file:
         subprocess.run(commands, stdout=out_file)
@@ -156,10 +100,10 @@ def computeDOFs(n_levels, n_cells):
 def main():
 
     # Variables
-    number_of_levels = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
-    number_of_cells = np.array([4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
-    # number_of_levels = np.arange(1, 3)
-    # number_of_cells = 2**np.arange(2, 6)
+    # number_of_levels = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    # number_of_cells = np.array([4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
+    number_of_levels = np.arange(1, 3)
+    number_of_cells = 2**np.arange(2, 6)
     output_filename = 'simple_run_output.txt'
     max_dofs = 2**22 # About 4 million DOFs
 
@@ -181,7 +125,10 @@ def main():
         'copy_time'
     ]
 
-    os.remove('timing_and_error.csv')
+    try:
+        os.remove('timing_and_error.csv')
+    except FileNotFoundError:
+        pass
     for n in number_of_levels:
         for m in number_of_cells:
             dofs = computeDOFs(n, m)

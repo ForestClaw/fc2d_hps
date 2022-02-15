@@ -87,6 +87,7 @@ void hps_solve(fclaw2d_global_t *glob)
         fclaw2d_timer_start(&glob->timers[FCLAW2D_TIMER_EXTRA1]);
     }
 
+    // fc2d_hps_physical_bc(glob);
     fc2d_hps_setup(glob);
 
     if (hps_opt->time_setup) {
