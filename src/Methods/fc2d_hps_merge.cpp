@@ -287,7 +287,7 @@ fc2d_hps_patch merge_vertical(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 		T_tau = merge_T(S_tau, T_11_alpha, T_22_beta, T_13_alpha, T_23_beta);
 		w_tau = merge_w(X_tau, h_3_alpha, h_3_beta);
 		// h_tau = merge_h(X_tau, T_13_alpha, T_23_beta, h_3_alpha, h_3_beta);
-		h_tau = merge_h2(T_13_alpha, T_23_beta, w_tau, h_1_alpha, h_2_beta);
+		h_tau = merge_h2(T_13_alpha, T_23_beta, w_tau);
 	}
 	// @TODO: Put in other cases
 	else {
