@@ -79,12 +79,12 @@ void run_program(fclaw2d_global_t* glob)
 
     /* Compute sum of RHS; reset error accumulators */
     int init_flag = 1;  
-    fclaw2d_diagnostics_gather(glob,init_flag);
+    // fclaw2d_diagnostics_gather(glob,init_flag);
     init_flag = 0;
 
     /* Output rhs */
     int Frame = 0;
-    fclaw2d_output_frame(glob,Frame);
+    // fclaw2d_output_frame(glob,Frame);
  
     /* Solve the elliptic problem */
     fclaw2d_elliptic_solve(glob);
@@ -92,14 +92,20 @@ void run_program(fclaw2d_global_t* glob)
     /* Compute error, compute conservation */
     fclaw2d_diagnostics_gather(glob, init_flag);
 
+    /* Reset to time FISHPACK */
+    // init_flag = 1;
+    // fclaw2d_diagnostics_gather(glob, init_flag);
+
+    /* Run FISHPACK */
+
+
     /* Output solution */
-    Frame = 1;
+    Frame = 0;
     fclaw2d_output_frame(glob,Frame);
 
     /* ---------------------------------------------------------------
        Finalize
        --------------------------------------------------------------- */
-    // printf("HERE!\n");
     fclaw2d_finalize(glob);
 }
 
@@ -157,12 +163,12 @@ main (int argc, char **argv)
         simple_options_store (glob, user_opt);
         // fclaw_global_essentialf("Running program\n");
         run_program(glob);
-        // fclaw_global_essentialf("Finished!\n");
+        fclaw_global_essentialf("Finished!\n");
         fclaw2d_global_destroy(glob);        
     }
-    // fclaw_global_essentialf("Destroying app\n");
+    fclaw_global_essentialf("Destroying app\n");
     fclaw_app_destroy (app);
-    // printf("Returning...\n");
+    printf("Returning...\n");
 
     return 0;
 }
