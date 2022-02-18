@@ -310,18 +310,6 @@ void visit_patchsolver(fc2d_hps_patch& patch) {
 //     return b*cosh(b*y)*sin(b*x);
 // }
 
-double qexact(double x, double y) {
-    return pow(x, 2) + pow(y, 2);
-}
-
-double qx(double x, double y) {
-    return 2*x;
-}
-
-double qy(double x, double y) {
-    return 2*y;
-}
-
 void fc2d_hps_solve(fclaw2d_global_t* glob) {
     
     fclaw_global_essentialf("Begin HPS solve\n");
@@ -331,6 +319,10 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
 
     // Set top level Dirichlet boundary data (set to zero because ForestClaw handles it by moving it to RHS)
     // @TODO: Change this to set actual boundary conditions from glob
+    fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
+    fc2d_hps_options_t* hps_opt = fc2d_hps_get_options(glob);
+    fc2d_hps_vtable_t* hps_vt = fc2d_hps_vt();
+
     int size_of_g = 2*quadtree.root->data.grid.Nx + 2*quadtree.root->data.grid.Ny;
     quadtree.root->data.g = fc2d_hps_vector<double>(size_of_g, 0);
     fc2d_hps_vector<double> g_west(quadtree.root->data.grid.Ny);
@@ -339,13 +331,13 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
     fc2d_hps_vector<double> g_north(quadtree.root->data.grid.Nx);
     for (int j = 0; j < quadtree.root->data.grid.Ny; j++) {
         double y = quadtree.root->data.grid.point(YDIM, j);
-        g_west[j] = qexact(quadtree.root->data.grid.x_lower, y);
-        g_east[j] = qexact(quadtree.root->data.grid.x_upper, y);
+        g_west[j] = hps_vt->fort_eval_bc(&hps_opt->boundary_conditions[0], &glob->curr_time, &quadtree.root->data.grid.x_lower, &y);
+        g_east[j] = hps_vt->fort_eval_bc(&hps_opt->boundary_conditions[1], &glob->curr_time, &quadtree.root->data.grid.x_upper, &y);
     }
     for (int i = 0; i < quadtree.root->data.grid.Nx; i++) {
         double x = quadtree.root->data.grid.point(XDIM, i);
-        g_south[i] = qexact(x, quadtree.root->data.grid.y_lower);
-        g_north[i] = qexact(x, quadtree.root->data.grid.y_upper);
+        g_south[i] = hps_vt->fort_eval_bc(&hps_opt->boundary_conditions[2], &glob->curr_time, &x, &quadtree.root->data.grid.y_lower);
+        g_north[i] = hps_vt->fort_eval_bc(&hps_opt->boundary_conditions[3], &glob->curr_time, &x, &quadtree.root->data.grid.y_upper);
     }
     quadtree.root->data.g.intract(0*quadtree.root->data.grid.Nx, g_west);
     quadtree.root->data.g.intract(1*quadtree.root->data.grid.Nx, g_east);
@@ -404,6 +396,82 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
     quadtree.traverse_inorder(visit_patchsolver);
 
     fclaw_global_essentialf("End HPS solve\n");
+}
+
+void fc2d_hps_fishpack_solve(fclaw2d_global_t* glob) {
+
+    // Get stuff from glob
+    fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
+    fclaw2d_clawpatch_options_t* clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
+    fc2d_hps_options_t* hps_opt = fc2d_hps_get_options(glob);
+    fc2d_hps_vtable_t* hps_vt = fc2d_hps_vt();
+
+    FCLAW_ASSERT(fclaw_opt->minlevel == 0 && fclaw_opt->maxlevel = 0);
+
+    // Build grid
+    int Nx = clawpatch_opt->mx;
+	int Ny = clawpatch_opt->my;
+	double x_lower = fclaw_opt->ax;
+	double x_upper = fclaw_opt->bx;
+	double y_lower = fclaw_opt->ay;
+	double y_upper = fclaw_opt->by;
+	fc2d_hps_patchgrid grid(Nx, Ny, x_lower, x_upper, y_lower, y_upper);
+
+    // Get Dirichlet data
+    int size_of_g = 2*grid.Nx + 2*grid.Ny;
+    fc2d_hps_vector<double> g = fc2d_hps_vector<double>(size_of_g, 0);
+    fc2d_hps_vector<double> g_west(grid.Ny);
+    fc2d_hps_vector<double> g_east(grid.Ny);
+    fc2d_hps_vector<double> g_south(grid.Nx);
+    fc2d_hps_vector<double> g_north(grid.Nx);
+    for (int j = 0; j < grid.Ny; j++) {
+        double y = grid.point(YDIM, j);
+        g_west[j] = hps_vt->fort_eval_bc(&hps_opt->boundary_conditions[0], &glob->curr_time, &grid.x_lower, &y);
+        g_east[j] = hps_vt->fort_eval_bc(&hps_opt->boundary_conditions[1], &glob->curr_time, &grid.x_upper, &y);
+    }
+    for (int i = 0; i < grid.Nx; i++) {
+        double x = grid.point(XDIM, i);
+        g_south[i] = hps_vt->fort_eval_bc(&hps_opt->boundary_conditions[2], &glob->curr_time, &x, &grid.y_lower);
+        g_north[i] = hps_vt->fort_eval_bc(&hps_opt->boundary_conditions[3], &glob->curr_time, &x, &grid.y_upper);
+    }
+    g.intract(0*grid.Nx, g_west);
+    g.intract(1*grid.Nx, g_east);
+    g.intract(2*grid.Nx, g_south);
+    g.intract(3*grid.Nx, g_north);
+
+    // Get RHS data
+    fclaw2d_patch_t* fc_patch = &(glob->domain->blocks->patches[0]);
+    int mfields;
+    double* rhs;
+    fclaw2d_clawpatch_rhs_data(glob, fc_patch, &rhs, &mfields);
+    fc2d_hps_vector<double> f(grid.Nx * grid.Ny);
+    for (int i = 0; i < grid.Nx; i++) {
+        for (int j = 0; j < grid.Ny; j++) {
+            int idx = j + i*grid.Ny;
+            int idx_T = i + j*grid.Nx;
+            f[idx] = rhs[idx_T];
+        }
+    }
+
+    // Create patch solver
+    fc2d_hps_FISHPACK_solver patch_solver;
+
+    // Solve with FISHPACK
+    fc2d_hps_vector<double> u_FISHPACK = patch_solver.solve(grid, g, f);
+
+    // Move into RHS of ForestClaw data
+    int meqn;
+    double* q;
+    fclaw2d_clawpatch_soln_data(glob, fc_patch, &q, &meqn);
+    for (int i = 0; i < grid.Nx; i++) {
+        for (int j = 0; j < grid.Ny; j++) {
+            int idx = j + i*grid.Ny;
+            int idx_T = i + j*grid.Nx;
+            q[idx_T] = u_FISHPACK[idx];
+            rhs[idx_T] = u_FISHPACK[idx];
+        }
+    }
+
 }
 
 /**================================================================================================

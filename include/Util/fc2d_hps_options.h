@@ -86,6 +86,9 @@ struct fc2d_hps_options
     /* Homogeneous vs. non-homogeneous */
     int nonhomogeneous_rhs;
 
+    // Patch solver short-circuit
+    int only_patch_solver;
+
     int operator_type;  /* laplace, varpoisson, etc ... */
     sc_keyvalue_t *kv_operator_type;
 

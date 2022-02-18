@@ -79,60 +79,68 @@ void hps_solve(fclaw2d_global_t *glob)
 
     // Get options
     fc2d_hps_options* hps_opt = fc2d_hps_get_options(glob);
+    fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
 
-    fclaw_global_essentialf("----- Begin HPS solver -----\n");
-
-    // ----- HPS setup stage -----
-    if (hps_opt->time_setup) {
-        fclaw2d_timer_start(&glob->timers[FCLAW2D_TIMER_EXTRA1]);
+    if (hps_opt->only_patch_solver) {
+        // Short circuit to just use FISHPACK
+        fc2d_hps_fishpack_solve(glob);
     }
+    else {
+        fclaw_global_essentialf("----- Begin HPS solver -----\n");
 
-    // fc2d_hps_physical_bc(glob);
-    fc2d_hps_setup(glob);
-
-    if (hps_opt->time_setup) {
-        fclaw2d_timer_stop(&glob->timers[FCLAW2D_TIMER_EXTRA1]);
-    }
-
-    // ----- HPS build stage -----
-    if (hps_opt->time_build) {
-        fclaw2d_timer_start(&glob->timers[FCLAW2D_TIMER_EXTRA2]);
-    }
-    
-    fc2d_hps_build(glob);
-    
-    if (hps_opt->time_build) {
-        fclaw2d_timer_stop(&glob->timers[FCLAW2D_TIMER_EXTRA2]);
-    }
-
-    // ----- HPS upwards stage -----
-    if (hps_opt->nonhomogeneous_rhs) {
-        if (hps_opt->time_upwards) {
-            fclaw2d_timer_start(&glob->timers[FCLAW2D_TIMER_EXTRA3]);
+        // ----- HPS setup stage -----
+        if (fclaw_opt->report_timing && hps_opt->time_setup) {
+            fclaw2d_timer_start(&glob->timers[FCLAW2D_TIMER_EXTRA1]);
         }
 
-        fc2d_hps_upwards(glob);
+        // fc2d_hps_physical_bc(glob);
+        fc2d_hps_setup(glob);
+
+        if (fclaw_opt->report_timing && hps_opt->time_setup) {
+            fclaw2d_timer_stop(&glob->timers[FCLAW2D_TIMER_EXTRA1]);
+        }
+
+        // ----- HPS build stage -----
+        if (fclaw_opt->report_timing && hps_opt->time_build) {
+            fclaw2d_timer_start(&glob->timers[FCLAW2D_TIMER_EXTRA2]);
+        }
         
-        if (hps_opt->time_upwards) {
-            fclaw2d_timer_stop(&glob->timers[FCLAW2D_TIMER_EXTRA3]);
+        fc2d_hps_build(glob);
+        
+        if (fclaw_opt->report_timing && hps_opt->time_build) {
+            fclaw2d_timer_stop(&glob->timers[FCLAW2D_TIMER_EXTRA2]);
         }
+
+        // ----- HPS upwards stage -----
+        if (hps_opt->nonhomogeneous_rhs) {
+            if (fclaw_opt->report_timing && hps_opt->time_upwards) {
+                fclaw2d_timer_start(&glob->timers[FCLAW2D_TIMER_EXTRA3]);
+            }
+
+            fc2d_hps_upwards(glob);
+            
+            if (fclaw_opt->report_timing && hps_opt->time_upwards) {
+                fclaw2d_timer_stop(&glob->timers[FCLAW2D_TIMER_EXTRA3]);
+            }
+        }
+
+        // ----- HPS solve stage -----
+        if (fclaw_opt->report_timing && hps_opt->time_solve) {
+            fclaw2d_timer_start(&glob->timers[FCLAW2D_TIMER_EXTRA4]);
+        }
+
+        fc2d_hps_solve(glob);
+        
+        if (fclaw_opt->report_timing && hps_opt->time_solve) {
+            fclaw2d_timer_stop(&glob->timers[FCLAW2D_TIMER_EXTRA4]);
+        }
+
+        // ----- HPS copy stage -----
+        fc2d_hps_clawpatch_data_move(glob);
+
+        fclaw_global_essentialf("----- End of HPS solver -----\n");
     }
 
-    // ----- HPS solve stage -----
-    if (hps_opt->time_solve) {
-        fclaw2d_timer_start(&glob->timers[FCLAW2D_TIMER_EXTRA4]);
-    }
-
-    fc2d_hps_solve(glob);
-    
-    if (hps_opt->time_solve) {
-        fclaw2d_timer_stop(&glob->timers[FCLAW2D_TIMER_EXTRA4]);
-    }
-
-    // ----- HPS copy stage -----
-    fc2d_hps_clawpatch_data_move(glob);
-
-    fclaw_global_essentialf("----- End of HPS solver -----\n");
 }
 
 

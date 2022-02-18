@@ -36,11 +36,6 @@
 #include <fclaw2d_clawpatch_output_ascii.h> 
 #include <fclaw2d_clawpatch_output_vtk.h>
 
-/* Include headers for other HPS routines */
-// #include "fc2d_hps_vector.hpp"
-// #include "fc2d_hps_matrix.hpp"
-// #include "fc2d_hps_merge.hpp"
-
 #ifdef __cplusplus
 extern "C"
 {

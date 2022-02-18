@@ -67,6 +67,9 @@ hps_register (fc2d_hps_options_t* hps_opt, sc_options_t * opt)
     sc_options_add_bool(opt, 0, "nonhomogeneous_rhs", &hps_opt->nonhomogeneous_rhs, 0,
                             "Flag for non-homogeneous RHS; determines if upwards pass is done [F]");
 
+    sc_options_add_bool(opt, 0, "only_patch_solver", &hps_opt->only_patch_solver, 0,
+                            "Option to bypass HPS method and just use the patch solver [F]");
+
 
     /* Set operator type (laplace, varpoisson, heat, ...) */
     sc_keyvalue_t *kv_op = hps_opt->kv_operator_type = sc_keyvalue_new ();

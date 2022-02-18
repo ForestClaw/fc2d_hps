@@ -55,8 +55,8 @@ public:
 
 	~fc2d_hps_quadtree() {
 		// printf("QUADTREE DESTRUCTOR CALLED\n");
-		this->remove();
-		this->root = nullptr;
+		// this->remove();
+		// this->root = nullptr;
 	}
 
 	void build(std::function<bool(T&)> bigger, std::function<std::vector<T>(T&)> init) {

@@ -2,7 +2,7 @@
 
 patch_tree quadtree;
 int current_ID;
-std::vector<fc2d_hps_matrix<double>> T_cache;
+std::vector<fc2d_hps_matrix<double>> T_cache(25);
 
 void fc2d_hps_create_quadtree_from_domain(fclaw2d_global_t* glob) {
 
@@ -140,7 +140,7 @@ void fc2d_hps_setup(struct fclaw2d_global* glob) {
 
     // Set up DtN cache
     if (hps_opt->cache_T) {
-        T_cache.reserve(quadtree.height);
+        T_cache.reserve(quadtree.height+1);
         for (int i = 0; i < quadtree.height; i++) {
             T_cache[i] = fc2d_hps_matrix<double>(0,0);
         }
