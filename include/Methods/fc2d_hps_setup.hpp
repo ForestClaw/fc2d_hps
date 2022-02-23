@@ -3,6 +3,9 @@
 
 #include <iostream>
 
+#include <p4est_wrap.h>
+#include <p4est_iterate.h>
+
 #include "fclaw2d_global.h"
 #include "fclaw2d_patch.h"
 #include "fclaw2d_physical_bc.h"
@@ -18,13 +21,9 @@
 
 // Globals
 typedef fc2d_hps_quadtree<fc2d_hps_patch> patch_tree;
-extern patch_tree quadtree; // use static
-extern int current_ID; // use static
 
-bool build_from_p4est_callback_bigger(fc2d_hps_patch& patch);
-std::vector<fc2d_hps_patch> build_from_p4est_callback_init(fc2d_hps_patch& parent);
-// fc2d_hps_quadtree<fc2d_hps_patch> fc2d_hps_create_quadtree_from_domain(fclaw2d_global_t* glob);
-void fc2d_hps_create_quadtree_from_domain(fclaw2d_global_t* glob);
+fc2d_hps_patch init_fn(fc2d_hps_quadtree<fc2d_hps_patch>* quadtree, int level, int idx, void* user);
+void visit_set_ID(fc2d_hps_patch& patch);
 void fc2d_hps_setup(struct fclaw2d_global* glob);
 
 #endif // FC2D_HPS_SETUP_HPP_

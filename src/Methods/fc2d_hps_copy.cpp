@@ -35,25 +35,20 @@ void visit_copy_data(fc2d_hps_patch& patch) {
                     q[idx_T] = 0;
                     rhs[idx_T] = 0;
                 }
-                // printf("i = %i, j = %i, idx = %i, mbc = %i, x_pts = %i, y_pts = %i, q[%i] = %f\n", i, j, idx, mbc, x_pts, y_pts, idx, q[idx]);
             }
         }
-
-        // Output patches
-        // patch.to_vtk("patch_" + std::to_string(patch.ID), "", "wuf");
     }
 
-    // std::string T_filename = "T_level_" + std::to_string(patch.level) + ".mmio";
-    // std::FILE* T_file = fopen(T_filename.c_str(), "w");
-    // patch.T.write_to_mmio(T_file, DataType::real, "%16.8e");
-    // fclose(T_file);
 }
 
 void fc2d_hps_clawpatch_data_move(fclaw2d_global* glob) {
     fclaw_global_essentialf("Begin move to ForestClaw data\n");
-    // fclaw_global_essentialf("!TODO!\n");
 
-    quadtree.traverse_inorder(visit_copy_data);
-    // hps_patch_quadtree_to_vtk(quadtree, "hps_patches");
+    // Get quadtree
+    fc2d_hps_quadtree<fc2d_hps_patch>* quadtree = fc2d_hps_quadtree<fc2d_hps_patch>::get_instance();
+
+    // Copy data to ForestClaw
+    quadtree->traverse(visit_copy_data);
+    
     fclaw_global_essentialf("End move to ForestClaw data\n");
 }
