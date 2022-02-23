@@ -34,7 +34,14 @@ endif()
 # ----------------------------------
 if(TARGET FORESTCLAW::HPS)
 
-    include(hps.cmake)
+    # Hello world program
+    add_subdirectory(hello)
+
+    # Simple
+    add_subdirectory(simple)
+
+    # Poisson's equation (timing and error testing)
+    add_subdirectory(poisson)
 
 endif()
 

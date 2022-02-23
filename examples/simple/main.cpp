@@ -24,6 +24,7 @@
 */
 
 #include "simple_user.h"
+#include <Structures/fc2d_hps_quadtree.hpp>
 #include <iostream>
 
 static
@@ -49,6 +50,25 @@ fclaw2d_domain_t* create_domain(sc_MPI_Comm mpicomm, fclaw_options_t* fclaw_opt)
     fclaw2d_domain_list_levels(domain, FCLAW_VERBOSITY_ESSENTIAL);
     fclaw2d_domain_list_neighbors(domain, FCLAW_VERBOSITY_DEBUG);  
     return domain;
+}
+
+double init_fn(p4est_t* p4est, void* user) {
+    return 1.0;
+}
+
+void merge_fn(double& p, double& c0, double& c1, double& c2, double& c3) {
+    p = c0 + c1 + c2 + c3;
+}
+
+void split_fn(double& p, double& c0, double& c1, double& c2, double& c3) {
+    c0 = p / 4;
+    c1 = p / 4;
+    c2 = p / 4;
+    c3 = p / 4;
+}
+
+void visit_print(double& d) {
+    printf("node data: d = %f\n", d);
 }
 
 static

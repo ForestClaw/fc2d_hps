@@ -1,8 +1,8 @@
 #include <iostream>
 
 #include <fclaw2d_include_all.h>
-#include <fc2d_hps.h>
-#include <fc2d_hps_options.h>
+#include <HPS/fc2d_hps.hpp>
+#include <Util/fc2d_hps_options.h>
 
 int main(int argc, char* argv[]) {
 
