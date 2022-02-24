@@ -88,7 +88,6 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
 
     // Traverse tree from root and apply solution operator or patch solver
     quadtree->split(visit_split);
-    printf("HERE\n");
 
     // Iterate over leaf nodes and apply patch solver
     quadtree->traverse(visit_patchsolver);

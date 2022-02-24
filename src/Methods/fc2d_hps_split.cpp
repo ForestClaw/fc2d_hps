@@ -3,7 +3,6 @@
 void split_vertical(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 
     // Get options
-    printf("split_vertical\n");
     fclaw2d_global_t* glob = (fclaw2d_global_t*) tau.user;
     fc2d_hps_options_t* hps_opt = fc2d_hps_get_options(glob);
 
@@ -72,7 +71,6 @@ void split_vertical(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& 
 void split_horizontal(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 
     // Get options
-    printf("split_horizontal\n");
     fclaw2d_global_t* glob = (fclaw2d_global_t*) tau.user;
     fc2d_hps_options_t* hps_opt = fc2d_hps_get_options(glob);
     
@@ -153,7 +151,6 @@ void split_1to4(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
     fc2d_hps_patch alpha_prime;
     fc2d_hps_patch beta_prime;
 
-    // printf("alpha_prime before split_vertical\n");
     // alpha_prime.print_info();
 
     //    Perform split
@@ -161,7 +158,6 @@ void split_1to4(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
     split_vertical(parent, alpha_prime, beta_prime);
     // NOTE: g and grid for alpha_prime and beta_prime are set inside split_vertical
 
-    // printf("alpha_prime after split_vertical\n");
     // alpha_prime.print_info();
 
     //    Assign alpha_prime and beta_prime the solution matrices
@@ -173,10 +169,8 @@ void split_1to4(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
     beta_prime.w = child2.w_prime;
     beta_prime.user = child2.user;
 
-    // printf("alpha_prime after S and w assignment\n");
     // alpha_prime.print_info();
 
-    // for (auto& i : alpha_prime.w) printf("%f\n", i);
 
     // Horizontal split
     //    Bottom split
