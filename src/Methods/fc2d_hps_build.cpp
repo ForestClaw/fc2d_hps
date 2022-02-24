@@ -1,6 +1,6 @@
 #include "Methods/fc2d_hps_build.hpp"
 
-void visit_leaves(fc2d_hps_patch& patch) {
+void visit_build_dtn(fc2d_hps_patch& patch) {
 
     // TODO: Add level optimizations
     if (patch.is_leaf) {
@@ -28,28 +28,28 @@ void visit_leaves(fc2d_hps_patch& patch) {
         // if (hps_opt->nonhomogeneous_rhs) {
         // Set particular solution
         //    Get RHS data and set to f
-        fclaw2d_domain_t* domain = glob->domain;
-        fclaw2d_patch_t* fc_patch = &(domain->blocks->patches[patch.ID]);
-        int mfields, meqn;
-        double* rhs;
-        double* q;
-        fclaw2d_clawpatch_rhs_data(glob, fc_patch, &rhs, &mfields);
-        fclaw2d_clawpatch_soln_data(glob, fc_patch, &q, &meqn);
-        patch.f = fc2d_hps_vector<double>(patch.grid.Nx * patch.grid.Ny);
-        for (int i = 0; i < patch.grid.Nx; i++) {
-            for (int j = 0; j < patch.grid.Ny; j++) {
-                int idx = j + i*patch.grid.Ny;
-                int idx_T = i + j*patch.grid.Nx;
-                patch.f[idx] = rhs[idx_T];
-            }
-        }
-
-        //    Compute and set particular solution
-        fc2d_hps_vector<double> g_zero(2*patch.grid.Nx + 2*patch.grid.Ny, 0);
-
-        // Set Neumann data for particular solution
-        patch.h = FISHPACK_solver.dtn(patch.grid, g_zero, patch.f);
+        // fclaw2d_domain_t* domain = glob->domain;
+        // fclaw2d_patch_t* fc_patch = &(domain->blocks->patches[patch.ID]);
+        // int mfields, meqn;
+        // double* rhs;
+        // double* q;
+        // fclaw2d_clawpatch_rhs_data(glob, fc_patch, &rhs, &mfields);
+        // fclaw2d_clawpatch_soln_data(glob, fc_patch, &q, &meqn);
+        // patch.f = fc2d_hps_vector<double>(patch.grid.Nx * patch.grid.Ny);
+        // for (int i = 0; i < patch.grid.Nx; i++) {
+        //     for (int j = 0; j < patch.grid.Ny; j++) {
+        //         int idx = j + i*patch.grid.Ny;
+        //         int idx_T = i + j*patch.grid.Nx;
+        //         patch.f[idx] = rhs[idx_T];
+        //     }
         // }
+
+        // //    Compute and set particular solution
+        // fc2d_hps_vector<double> g_zero(2*patch.grid.Nx + 2*patch.grid.Ny, 0);
+
+        // // Set Neumann data for particular solution
+        // patch.h = FISHPACK_solver.dtn(patch.grid, g_zero, patch.f);
+        // // }
 
     }
     return;
@@ -67,7 +67,7 @@ void fc2d_hps_build(fclaw2d_global_t *glob)
     fc2d_hps_quadtree<fc2d_hps_patch>* quadtree = fc2d_hps_quadtree<fc2d_hps_patch>::get_instance();
 
     // Build DtN matrix on leaf patches
-    quadtree->traverse(visit_leaves);
+    quadtree->traverse(visit_build_dtn);
 
     // Merge DtN's up tree and build solution
     quadtree->merge(visit_merge);

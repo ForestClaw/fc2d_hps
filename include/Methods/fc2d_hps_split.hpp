@@ -3,6 +3,7 @@
 #pragma once
 
 #include <Structures/fc2d_hps_patch.hpp>
+#include "fc2d_hps_methods.hpp"
 
 void split_vertical(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& beta);
 void split_horizonal(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& beta);

@@ -36,9 +36,18 @@ void visit_split(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& bet
 
 void visit_patchsolver(fc2d_hps_patch& patch) {
     if (patch.is_leaf == true) {
+
+        // Get options
+        fclaw2d_global_t* glob = (fclaw2d_global_t*) patch.user;
+        fc2d_hps_options_t* hps_opt = fc2d_hps_get_options(glob);
+
         // Get patch solver
         // TODO: Put patch solver in glob...?
         fc2d_hps_FISHPACK_solver patch_solver;
+
+        if (hps_opt->nonhomogeneous_rhs == 0) {
+            patch.f = fc2d_hps_vector<double>(patch.grid.Nx * patch.grid.Ny, 0);
+        }
         patch.u = patch_solver.solve(patch.grid, patch.g, patch.f);
     }
 }
@@ -79,6 +88,7 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
 
     // Traverse tree from root and apply solution operator or patch solver
     quadtree->split(visit_split);
+    printf("HERE\n");
 
     // Iterate over leaf nodes and apply patch solver
     quadtree->traverse(visit_patchsolver);

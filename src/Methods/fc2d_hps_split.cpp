@@ -2,6 +2,11 @@
 
 void split_vertical(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 
+    // Get options
+    printf("split_vertical\n");
+    fclaw2d_global_t* glob = (fclaw2d_global_t*) tau.user;
+    fc2d_hps_options_t* hps_opt = fc2d_hps_get_options(glob);
+
     // Create child grids
     // std::cout << "[split_vertical]  creating child grids" << std::endl;
     fc2d_hps_patchgrid grid_alpha(tau.grid.Nx, tau.grid.Ny/2, tau.grid.x_lower, tau.grid.x_upper, tau.grid.y_lower, (tau.grid.y_lower + tau.grid.y_upper)/2);
@@ -12,7 +17,9 @@ void split_vertical(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& 
     // Apply solution operator to get interior data
     // std::cout << "[split_vertical]  applying solution operator" << std::endl;
     fc2d_hps_vector<double> u_tau = tau.S * tau.g;
-    u_tau = u_tau + tau.w;
+    if (hps_opt->nonhomogeneous_rhs) {
+        u_tau = u_tau + tau.w;
+    }
 
     // Set child patch data
     //    Extract WESN components of tau.g
@@ -64,6 +71,11 @@ void split_vertical(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& 
 
 void split_horizontal(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 
+    // Get options
+    printf("split_horizontal\n");
+    fclaw2d_global_t* glob = (fclaw2d_global_t*) tau.user;
+    fc2d_hps_options_t* hps_opt = fc2d_hps_get_options(glob);
+    
     // Create child grids
     // std::cout << "[split_horizontal]  creating child grids" << std::endl;
     fc2d_hps_patchgrid grid_alpha(tau.grid.Nx/2, tau.grid.Ny, tau.grid.x_lower, (tau.grid.x_lower + tau.grid.x_upper)/2, tau.grid.y_lower, tau.grid.y_upper);
@@ -74,7 +86,9 @@ void split_horizontal(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch
     // Apply solution operator to get interior data
     // std::cout << "[split_horizontal]  applying solution operator" << std::endl;
     fc2d_hps_vector<double> u_tau = tau.S * tau.g;
-    u_tau = u_tau + tau.w;
+    if (hps_opt->nonhomogeneous_rhs) {
+        u_tau = u_tau + tau.w;
+    }
 
     // Set child patch data
     //    Extract WESN components of tau.g
@@ -153,9 +167,11 @@ void split_1to4(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
     //    Assign alpha_prime and beta_prime the solution matrices
     alpha_prime.S = child0.S_prime;
     alpha_prime.w = child0.w_prime;
+    alpha_prime.user = child0.user;
 
     beta_prime.S = child2.S_prime;
     beta_prime.w = child2.w_prime;
+    beta_prime.user = child2.user;
 
     // printf("alpha_prime after S and w assignment\n");
     // alpha_prime.print_info();

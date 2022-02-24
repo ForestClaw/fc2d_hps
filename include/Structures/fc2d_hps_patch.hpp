@@ -37,6 +37,7 @@ public:
 
 	// Data matrices
 	fc2d_hps_matrix<double> T;			// DtN Matrix
+	fc2d_hps_matrix<double> T_prime;	// Horizontal Merge DtN Matrix
 	fc2d_hps_matrix<double> S;			// Solution Matrix
 	fc2d_hps_matrix<double> S_prime;	// Horizontal Merge Solution Matrix
 	fc2d_hps_matrix<double> X;			// Body Load Matrix
