@@ -56,6 +56,7 @@ void visit_build_dtn(fc2d_hps_patch& patch) {
 }
 
 void visit_merge(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& beta, fc2d_hps_patch& gamma, fc2d_hps_patch& omega) {
+    // printf("4to1 merge: alpha = %i, beta = %i, gamma = %i, omega = %i\n", alpha.ID, beta.ID, gamma.ID, omega.ID);
     merge_4to1(tau, alpha, beta, gamma, omega);
 }
 

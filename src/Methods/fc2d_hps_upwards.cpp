@@ -8,6 +8,18 @@ fc2d_hps_vector<double> merge_w(fc2d_hps_matrix<double>& X_tau, fc2d_hps_vector<
 
 }
 
+fc2d_hps_vector<double> merge_w_alpha_refined(fc2d_hps_matrix<double>& X_tau, fc2d_hps_vector<double>& h_3_alpha, fc2d_hps_vector<double>& h_3_beta, fc2d_hps_matrix<double>& L21) {
+    fc2d_hps_vector<double> temp = L21 * h_3_alpha;
+    temp = h_3_beta - temp;
+    return solve(X_tau, temp);
+}
+
+fc2d_hps_vector<double> merge_w_beta_refined(fc2d_hps_matrix<double>& X_tau, fc2d_hps_vector<double>& h_3_alpha, fc2d_hps_vector<double>& h_3_beta, fc2d_hps_matrix<double>& L21) {
+    fc2d_hps_vector<double> temp = L21 * h_3_beta;
+    temp = temp - h_3_alpha;
+    return solve(X_tau, temp);
+}
+
 fc2d_hps_vector<double> merge_h(fc2d_hps_matrix<double>& T_13_alpha, fc2d_hps_matrix<double>& T_23_beta, fc2d_hps_vector<double>& w_tau, fc2d_hps_vector<double>& h_1_alpha, fc2d_hps_vector<double>& h_2_beta) {
 	fc2d_hps_matrix<double> H(T_13_alpha.rows + T_23_beta.rows, T_13_alpha.cols);
 	H.intract(0, 0, T_13_alpha);
@@ -20,6 +32,36 @@ fc2d_hps_vector<double> merge_h(fc2d_hps_matrix<double>& T_13_alpha, fc2d_hps_ma
 	h = h + temp;
 
 	return h;
+}
+
+fc2d_hps_vector<double> merge_h_alpha_refined(fc2d_hps_matrix<double>& T_13_alpha, fc2d_hps_matrix<double>& T_23_beta, fc2d_hps_vector<double>& w_tau, fc2d_hps_vector<double>& h_1_alpha, fc2d_hps_vector<double>& h_2_beta, fc2d_hps_matrix<double>& L12) {
+    fc2d_hps_matrix<double> temp = T_13_alpha * L12;
+    fc2d_hps_matrix<double> H(temp.rows + T_23_beta.rows, temp.cols);
+    H.intract(0, 0, temp);
+    H.intract(temp.rows, 0, T_23_beta);
+    fc2d_hps_vector<double> h = H * w_tau;
+
+    fc2d_hps_vector<double> temp2(h_1_alpha.size() + h_2_beta.size());
+	temp2.intract(0, h_1_alpha);
+	temp2.intract(h_1_alpha.size(), h_2_beta);
+	h = h + temp2;
+
+    return h;
+}
+
+fc2d_hps_vector<double> merge_h_beta_refined(fc2d_hps_matrix<double>& T_13_alpha, fc2d_hps_matrix<double>& T_23_beta, fc2d_hps_vector<double>& w_tau, fc2d_hps_vector<double>& h_1_alpha, fc2d_hps_vector<double>& h_2_beta, fc2d_hps_matrix<double>& L12) {
+    fc2d_hps_matrix<double> temp = T_23_beta * L12;
+    fc2d_hps_matrix<double> H(T_13_alpha.rows + temp.rows, T_13_alpha.cols);
+    H.intract(0, 0, T_13_alpha);
+    H.intract(T_13_alpha.rows, 0, temp);
+    fc2d_hps_vector<double> h = H * w_tau;
+
+    fc2d_hps_vector<double> temp2(h_1_alpha.size() + h_2_beta.size());
+	temp2.intract(0, h_1_alpha);
+	temp2.intract(h_1_alpha.size(), h_2_beta);
+	h = h + temp2;
+
+    return h;
 }
 
 fc2d_hps_patch merge_horizontal_upwards(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
