@@ -246,6 +246,35 @@ void visit_set_particular_data_leaves(fc2d_hps_patch& patch) {
     }
 }
 
+void coarsen_patch_upwards(fc2d_hps_patch& fine_patch) {
+
+	// Build L21
+	int N = fine_patch.N_cells_leaf;
+	fc2d_hps_matrix<double> L21_west = build_L21(N*fine_patch.coarsened->N_patch_side[WEST], N*fine_patch.N_patch_side[WEST]);
+	fc2d_hps_matrix<double> L21_east = build_L21(N*fine_patch.coarsened->N_patch_side[EAST], N*fine_patch.N_patch_side[EAST]);
+	fc2d_hps_matrix<double> L21_south = build_L21(N*fine_patch.coarsened->N_patch_side[SOUTH], N*fine_patch.N_patch_side[SOUTH]);
+	fc2d_hps_matrix<double> L21_north = build_L21(N*fine_patch.coarsened->N_patch_side[NORTH], N*fine_patch.N_patch_side[NORTH]);
+	std::vector<fc2d_hps_matrix<double>> L21_diagonals = {L21_west, L21_east, L21_south, L21_north};
+	fc2d_hps_matrix<double> L21_patch = block_diag(L21_diagonals);
+
+	// Build L12
+	fc2d_hps_matrix<double> L12_west = build_L12(N*fine_patch.N_patch_side[WEST], N*fine_patch.coarsened->N_patch_side[WEST]);
+	fc2d_hps_matrix<double> L12_east = build_L12(N*fine_patch.N_patch_side[EAST], N*fine_patch.coarsened->N_patch_side[EAST]);
+	fc2d_hps_matrix<double> L12_south = build_L12(N*fine_patch.N_patch_side[SOUTH], N*fine_patch.coarsened->N_patch_side[SOUTH]);
+	fc2d_hps_matrix<double> L12_north = build_L12(N*fine_patch.N_patch_side[NORTH], N*fine_patch.coarsened->N_patch_side[NORTH]);
+	std::vector<fc2d_hps_matrix<double>> L12_diagonals = {L12_west, L12_east, L12_south, L12_north};
+	fc2d_hps_matrix<double> L12_patch = block_diag(L12_diagonals);
+
+	// Particular Neumann data
+	// printf("HERE1\n");
+	fine_patch.coarsened->h = L21_patch * fine_patch.h;
+
+	// Particular solution data
+	// printf("HERE2\n");
+	fine_patch.coarsened->w = L21_west * fine_patch.w;
+
+}
+
 void merge_4to1_upwards(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& child1, fc2d_hps_patch& child2, fc2d_hps_patch& child3) {
 
     // Forward declarations
@@ -253,15 +282,47 @@ void merge_4to1_upwards(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps
 	fc2d_hps_patch beta_prime;
 	fc2d_hps_patch tau;
 
-	// Horizontal merge
-	alpha_prime = merge_horizontal_upwards(child0, child1);
-    alpha_prime.T = child0.T_prime;
+	// Check for adaptivity
+	std::vector<int> tags = tag_patch_coarsen(parent, child0, child1, child2, child3);
+	// printf("TAGS UPWARDS: ");
+	// for (auto& t : tags) printf("%i ", t);
+	// printf("\n");
+	if (tags[0]) coarsen_patch_upwards(child0);
+	if (tags[1]) coarsen_patch_upwards(child1);
+	if (tags[2]) coarsen_patch_upwards(child2);
+	if (tags[3]) coarsen_patch_upwards(child3);
 
-	beta_prime = merge_horizontal_upwards(child2, child3);
-    beta_prime.T = child2.T_prime;
+	// Get patches to merge
+	fc2d_hps_patch* alpha;
+	fc2d_hps_patch* beta;
+	fc2d_hps_patch* gamma;
+	fc2d_hps_patch* omega;
+
+	if (tags[0]) alpha = child0.coarsened;
+	else alpha = &child0;
+
+	if (tags[1]) beta = child1.coarsened;
+	else beta = &child1;
+	
+	if (tags[2]) gamma = child2.coarsened;
+	else gamma = &child2;
+
+	if (tags[3]) omega = child3.coarsened;
+	else omega = &child3;
+
+	// Horizontal merge
+	// printf("HERE3\n");
+	alpha_prime = merge_horizontal_upwards(*alpha, *beta);
+    alpha_prime.T = alpha->T_prime;
+
+	// printf("HERE4\n");
+	beta_prime = merge_horizontal_upwards(*gamma, *omega);
+    beta_prime.T = gamma->T_prime;
 
 	// Vertical merge
+	// printf("HERE5\n");
 	tau = merge_vertical_upwards(alpha_prime, beta_prime);
+	// printf("HERE6\n");
 	
 	// Copy only necessary data to parent
     parent.w = tau.w;

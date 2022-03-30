@@ -55,6 +55,12 @@ public:
 	fc2d_hps_vector<double> w;			// Particular Solution Vector
 	fc2d_hps_vector<double> w_prime;	// Horizontal Particular Solution Vector
 
+	// Pointers to finer and coarser versions of itself
+	fc2d_hps_patch* finer;				// Finer version of itself
+	fc2d_hps_patch* coarsened;			// Coarser version of itself
+	bool has_coarsened;					// Flag for if patch has coarsened version of itself
+	bool has_finer;						// Flag for it patch has finer version of itself
+
 	fc2d_hps_patch();
 	fc2d_hps_patch(fc2d_hps_patchgrid patch_grid, int ID, int level, bool is_leaf);
 

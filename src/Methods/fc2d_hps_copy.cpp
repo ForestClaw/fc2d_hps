@@ -3,6 +3,8 @@
 void visit_copy_data(fc2d_hps_patch& patch) {
     if (patch.is_leaf == true) {
 
+        // patch.print_info();
+
         fclaw2d_global_t* glob = (fclaw2d_global_t*) patch.user;
         fclaw2d_domain_t* domain = glob->domain;
         fclaw2d_patch_t* fc_patch = &(domain->blocks->patches[patch.ID]);
@@ -35,6 +37,9 @@ void visit_copy_data(fc2d_hps_patch& patch) {
                     q[idx_T] = 0;
                     rhs[idx_T] = 0;
                 }
+                // q[idx_T] = (double) patch.ID;
+                // rhs[idx_T] = (double) patch.ID;
+                // q[idx_T] = (double) patch.level;
             }
         }
     }
@@ -48,7 +53,7 @@ void fc2d_hps_clawpatch_data_move(fclaw2d_global* glob) {
     fc2d_hps_quadtree<fc2d_hps_patch>* quadtree = fc2d_hps_quadtree<fc2d_hps_patch>::get_instance();
 
     // Copy data to ForestClaw
-    quadtree->traverse(visit_copy_data);
+    quadtree->traverse_postorder(visit_copy_data);
     
     fclaw_global_essentialf("End move to ForestClaw data\n");
 }

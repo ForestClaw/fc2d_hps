@@ -107,6 +107,16 @@ public:
 
 	}
 
+	void traverse_postorder(std::function<void(T&)> visit) {
+
+		for (int l = this->global_indices.size()-1; l > 0; l--) {
+			for (int i = 0; i < this->global_indices[l].size(); i++) {
+				visit(this->data[global_indices[l][i]]);
+			}
+		}
+
+	}
+
 	void merge(std::function<void(T&, T&, T&, T&, T&)> visit) {
 
 		for (int l = this->global_indices.size()-1; l > 0; l--) {

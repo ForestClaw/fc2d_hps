@@ -30,6 +30,7 @@ extern std::vector<fc2d_hps_matrix<double>> T_cache;
 
 void visit_split(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& beta, fc2d_hps_patch& gamma, fc2d_hps_patch& omega) {
     if (tau.is_leaf == false) {
+        // printf("splitting...\n");
         split_1to4(tau, alpha, beta, gamma, omega);
     }
 }

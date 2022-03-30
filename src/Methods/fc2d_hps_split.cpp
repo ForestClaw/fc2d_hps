@@ -15,8 +15,10 @@ void split_vertical(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& 
 
     // Apply solution operator to get interior data
     // std::cout << "[split_vertical]  applying solution operator" << std::endl;
+    // printf("HERE1\n");
     fc2d_hps_vector<double> u_tau = tau.S * tau.g;
     if (hps_opt->nonhomogeneous_rhs) {
+        // printf("HERE1a\n");
         u_tau = u_tau + tau.w;
     }
 
@@ -83,8 +85,10 @@ void split_horizontal(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch
 
     // Apply solution operator to get interior data
     // std::cout << "[split_horizontal]  applying solution operator" << std::endl;
+    // printf("HERE2\n");
     fc2d_hps_vector<double> u_tau = tau.S * tau.g;
     if (hps_opt->nonhomogeneous_rhs) {
+        // printf("HERE2a\n");
         u_tau = u_tau + tau.w;
     }
 
@@ -136,17 +140,76 @@ void split_horizontal(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch
 
 }
 
+void uncoarsen_patch(fc2d_hps_patch& patch) {
+
+    // Get options
+    fclaw2d_global_t* glob = (fclaw2d_global_t*) patch.user;
+    fc2d_hps_options_t* hps_opt = fc2d_hps_get_options(glob);
+
+    // Build L21
+	int N = patch.N_cells_leaf;
+	fc2d_hps_matrix<double> L21_west = build_L21(N*patch.coarsened->N_patch_side[WEST], N*patch.N_patch_side[WEST]);
+	fc2d_hps_matrix<double> L21_east = build_L21(N*patch.coarsened->N_patch_side[EAST], N*patch.N_patch_side[EAST]);
+	fc2d_hps_matrix<double> L21_south = build_L21(N*patch.coarsened->N_patch_side[SOUTH], N*patch.N_patch_side[SOUTH]);
+	fc2d_hps_matrix<double> L21_north = build_L21(N*patch.coarsened->N_patch_side[NORTH], N*patch.N_patch_side[NORTH]);
+	std::vector<fc2d_hps_matrix<double>> L21_diagonals = {L21_west, L21_east, L21_south, L21_north};
+	fc2d_hps_matrix<double> L21_patch = block_diag(L21_diagonals);
+
+	// Build L12
+	fc2d_hps_matrix<double> L12_west = build_L12(N*patch.N_patch_side[WEST], N*patch.coarsened->N_patch_side[WEST]);
+	fc2d_hps_matrix<double> L12_east = build_L12(N*patch.N_patch_side[EAST], N*patch.coarsened->N_patch_side[EAST]);
+	fc2d_hps_matrix<double> L12_south = build_L12(N*patch.N_patch_side[SOUTH], N*patch.coarsened->N_patch_side[SOUTH]);
+	fc2d_hps_matrix<double> L12_north = build_L12(N*patch.N_patch_side[NORTH], N*patch.coarsened->N_patch_side[NORTH]);
+	std::vector<fc2d_hps_matrix<double>> L12_diagonals = {L12_west, L12_east, L12_south, L12_north};
+	fc2d_hps_matrix<double> L12_patch = block_diag(L12_diagonals);
+
+    // Interpolate data down to original patch
+    // printf("uncoarsening patch\n");
+    patch.g = L12_patch * patch.coarsened->g;
+    if (hps_opt->nonhomogeneous_rhs) {
+        // printf("w:\n");
+        patch.w = L12_south * patch.coarsened->w;
+    }
+
+    // patch.print_info();
+    // patch.coarsened->print_info();
+
+    return;
+
+}
+
 void split_1to4(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& child1, fc2d_hps_patch& child2, fc2d_hps_patch& child3) {
 
     // Assumptions on entry
-    if (parent.S.rows == 0 || parent.S.cols == 0) {
-        throw std::invalid_argument("[fc2d_hps_split::split_1to4] `parent` patch solution matrix `S` does not have data.");
-    }
-    if (parent.g.size() == 0) {
-        throw std::invalid_argument("[fc2d_hps_split::split_1to4] `parent` patch does not have Dirichelt data set.");
-    }
+    // if (parent.S.rows == 0 || parent.S.cols == 0) {
+    //     throw std::invalid_argument("[fc2d_hps_split::split_1to4] `parent` patch solution matrix `S` does not have data.");
+    // }
+    // if (parent.g.size() == 0) {
+    //     throw std::invalid_argument("[fc2d_hps_split::split_1to4] `parent` patch does not have Dirichelt data set.");
+    // }
+
+    // parent.print_info();
+    // child0.print_info();
+    // child1.print_info();
+    // child2.print_info();
+    // child3.print_info();
+
+    // Check for coarsened versions, uncoarsen if exists
+    if (parent.has_coarsened) uncoarsen_patch(parent);
 
     // Vertical split
+    // Create patches to merge (either original or coarsened)
+    fc2d_hps_patch* alpha;
+    fc2d_hps_patch* beta;
+    fc2d_hps_patch* gamma;
+    fc2d_hps_patch* omega;
+
+    // Set based on if patch has coarsened data
+    child0.has_coarsened ? alpha = child0.coarsened : alpha = &child0;
+    child1.has_coarsened ? beta = child1.coarsened : beta = &child1;
+    child2.has_coarsened ? gamma = child2.coarsened : gamma = &child2;
+    child3.has_coarsened ? omega = child3.coarsened : omega = &child3;
+
     //    Create patches for rectangular pieces
     fc2d_hps_patch alpha_prime;
     fc2d_hps_patch beta_prime;
@@ -158,28 +221,29 @@ void split_1to4(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
     split_vertical(parent, alpha_prime, beta_prime);
     // NOTE: g and grid for alpha_prime and beta_prime are set inside split_vertical
 
-    // alpha_prime.print_info();
 
     //    Assign alpha_prime and beta_prime the solution matrices
-    alpha_prime.S = child0.S_prime;
-    alpha_prime.w = child0.w_prime;
-    alpha_prime.user = child0.user;
+    alpha_prime.S = alpha->S_prime;
+    alpha_prime.w = alpha->w_prime;
+    alpha_prime.user = alpha->user;
 
-    beta_prime.S = child2.S_prime;
-    beta_prime.w = child2.w_prime;
-    beta_prime.user = child2.user;
+    beta_prime.S = gamma->S_prime;
+    beta_prime.w = gamma->w_prime;
+    beta_prime.user = gamma->user;
 
+    // alpha_prime.print_info();
+    // beta_prime.print_info();
     // alpha_prime.print_info();
 
 
     // Horizontal split
     //    Bottom split
     // std::cout << "[split_1to4]  begin horizontal split 1" << std::endl;
-    split_horizontal(alpha_prime, child0, child1);
+    split_horizontal(alpha_prime, *alpha, *beta);
     
     //    Top split
     // std::cout << "[split_1to4]  begin horizontal split 2" << std::endl;
-    split_horizontal(beta_prime, child2, child3);
+    split_horizontal(beta_prime, *gamma, *omega);
     return;
 
 }

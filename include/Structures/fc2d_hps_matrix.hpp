@@ -462,4 +462,27 @@ fc2d_hps_matrix<T> solve(fc2d_hps_matrix<T>& A, fc2d_hps_matrix<T>& B) {
     return X.transpose();
 }
 
+template<class T>
+fc2d_hps_matrix<T> block_diag(std::vector<fc2d_hps_matrix<T>> diag) {
+	
+	int nrows_total = 0;
+	int ncols_total = 0;
+	for (auto& d : diag) {
+		nrows_total += d.rows;
+		ncols_total += d.cols;
+	}
+
+	fc2d_hps_matrix<T> out(nrows_total, ncols_total);
+
+	int row_index = 0;
+	int col_index = 0;
+	for (auto& d : diag) {
+		out.intract(row_index, col_index, d);
+		row_index += d.rows;
+		col_index += d.cols;
+	}
+	
+	return out;
+}
+
 #endif // FC2D_HPS_MATRIX_HPP
