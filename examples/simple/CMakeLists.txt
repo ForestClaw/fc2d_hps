@@ -19,11 +19,12 @@ add_executable(simple
 )
 
 target_include_directories(simple PRIVATE 
-  ${CMAKE_CURRENT_SOURCE_DIR} 
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
 )
 
 target_link_libraries(simple PRIVATE 
-  FORESTCLAW::HPS
+  forestclaw clawpatch hps
 )
 
 configure_file(fclaw_options.ini fclaw_options.ini)
