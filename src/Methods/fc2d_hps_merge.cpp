@@ -305,6 +305,12 @@ fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	// 	// throw std::logic_error("[fc2d_hps_merge::merge_horizontal] Not implemented!");
 	// }
 	else {
+		printf("[in merge_horizontal]\n");
+		alpha.print_info();
+		beta.print_info();
+		printf("alpha.N_patch_side = [%i, %i, %i, %i]\n", alpha.N_patch_side[WEST], alpha.N_patch_side[EAST], alpha.N_patch_side[SOUTH], alpha.N_patch_side
+		[NORTH]);
+		printf("beta.N_patch_side = [%i, %i, %i, %i]\n", beta.N_patch_side[WEST], beta.N_patch_side[EAST], beta.N_patch_side[SOUTH], beta.N_patch_side[NORTH]);
 		throw std::invalid_argument("[fc2d_hps_merge::merge_horizontal] Size mismatch between alpha and beta.");
 	}
 
@@ -441,6 +447,12 @@ fc2d_hps_patch merge_vertical(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 	}
 	// @TODO: Put in other cases
 	else {
+		printf("[in merge_vertical]\n");
+		alpha.print_info();
+		beta.print_info();
+		printf("alpha.N_patch_side = [%i, %i, %i, %i]\n", alpha.N_patch_side[WEST], alpha.N_patch_side[EAST], alpha.N_patch_side[SOUTH], alpha.N_patch_side
+		[NORTH]);
+		printf("beta.N_patch_side = [%i, %i, %i, %i]\n", beta.N_patch_side[WEST], beta.N_patch_side[EAST], beta.N_patch_side[SOUTH], beta.N_patch_side[NORTH]);
 		throw std::invalid_argument("[fc2d_hps_merge::merge_vertical] Size mismatch between alpha and beta.");
 	}
 
@@ -490,6 +502,9 @@ fc2d_hps_patch merge_vertical(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 std::vector<int> tag_patch_coarsen(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& child1, fc2d_hps_patch& child2, fc2d_hps_patch& child3) {
 
 	std::vector<int> tags = {0, 0, 0, 0};
+	
+
+
 	if (child0.N_patch_side[EAST] > child1.N_patch_side[WEST] || child0.N_patch_side[NORTH] > child2.N_patch_side[SOUTH] || child0.N_patch_side[EAST] > child3.N_patch_side[WEST]) {
 		tags[0] = 1;
 	}
@@ -518,6 +533,10 @@ void coarsen_patch(fc2d_hps_patch& fine_patch) {\
 	fine_patch.coarsened->N_patch_side[EAST] = fine_patch.N_patch_side[EAST] / 2;
 	fine_patch.coarsened->N_patch_side[SOUTH] = fine_patch.N_patch_side[SOUTH] / 2;
 	fine_patch.coarsened->N_patch_side[NORTH] = fine_patch.N_patch_side[NORTH] / 2;
+	// fine_patch.coarsened->N_patch_side[WEST] = fine_patch.N_patch_side[WEST];
+	// fine_patch.coarsened->N_patch_side[EAST] = fine_patch.N_patch_side[EAST];
+	// fine_patch.coarsened->N_patch_side[SOUTH] = fine_patch.N_patch_side[SOUTH];
+	// fine_patch.coarsened->N_patch_side[NORTH] = fine_patch.N_patch_side[NORTH];
 	fine_patch.coarsened->grid = fc2d_hps_patchgrid(fine_patch.grid.Nx/2, fine_patch.grid.Ny/2, fine_patch.grid.x_lower, fine_patch.grid.x_upper, fine_patch.grid.y_lower, fine_patch.grid.y_upper);
 	fine_patch.coarsened->user = fine_patch.user;
 
@@ -550,6 +569,7 @@ void coarsen_patch(fc2d_hps_patch& fine_patch) {\
 
 	// Set flag
 	fine_patch.has_coarsened = true;
+	fine_patch.coarsened->has_coarsened = false;
 
 	// fine_patch.print_info();
 	// fine_patch.coarsened->print_info();
@@ -585,42 +605,88 @@ void merge_4to1(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
 	// }
 
 	// Check for adaptivity
-	fc2d_hps_patch* alpha;
-	fc2d_hps_patch* beta;
-	fc2d_hps_patch* gamma;
-	fc2d_hps_patch* omega;
+	fc2d_hps_patch* alpha = &child0;
+	fc2d_hps_patch* beta = &child1;
+	fc2d_hps_patch* gamma = &child2;
+	fc2d_hps_patch* omega = &child3;
 	std::vector<int> tags = tag_patch_coarsen(parent, child0, child1, child2, child3);
-	if (tags[0]) {
-		coarsen_patch(child0);
-		alpha = child0.coarsened;
-	}
-	else {
-		alpha = &child0;
+
+	if (child2.grid.x_lower == -1 && child2.grid.y_lower == 0 && child2.grid.x_upper == 0 && child2.grid.y_upper == 1) {
+		printf("parent:\n");
+		parent.print_info();
+		printf("child0:\n");
+		child0.print_info();
+		printf("child1:\n");
+		child1.print_info();
+		printf("child2:\n");
+		child2.print_info();
+		printf("child3:\n");
+		child3.print_info();
 	}
 
-	if (tags[1]) {
-		coarsen_patch(child1);
-		beta = child1.coarsened;
+	while (tags[0]-- > 0) {
+		coarsen_patch(*alpha);
+		alpha = alpha->coarsened;
 	}
-	else {
-		beta = &child1;
+	while (tags[1]-- > 0) {
+		coarsen_patch(*beta);
+		beta = beta->coarsened;
+	}
+	while (tags[2]-- > 0) {
+		coarsen_patch(*gamma);
+		gamma = gamma->coarsened;
+	}
+	while (tags[3]-- > 0) {
+		coarsen_patch(*omega);
+		omega = omega->coarsened;
 	}
 
-	if (tags[2]) {
-		coarsen_patch(child2);
-		gamma = child2.coarsened;
-	}
-	else {
-		gamma = &child2;
-	}
+	// if (tags[0]) {
+	// 	// alpha = child0.coarsened;
+	// 	coarsen_patch(child0);
+	// 	tags[0]--;
+	// 	while (tags[0] > 0) {
+	// 		coarsen_patch(*alpha);
+	// 		alpha = alpha->coarsened;
+	// 		tags[0]--;
+	// 	}
+	// }
+	// else {
+	// 	alpha = &child0;
+	// }
 
-	if (tags[3]) {
-		coarsen_patch(child3);
-		omega = child3.coarsened;
-	}
-	else {
-		omega = &child3;
-	}
+	// if (tags[1]) {
+	// 	// beta = child1.coarsened;
+	// 	while (tags[1]-- > 0) {
+	// 		coarsen_patch(*beta);
+	// 		beta = beta->coarsened;
+	// 	}
+	// }
+	// else {
+	// 	beta = &child1;
+	// }
+
+	// if (tags[2]) {
+	// 	// gamma = child2.coarsened;
+	// 	while (tags[2]-- > 0) {
+	// 		coarsen_patch(*gamma);
+	// 		gamma = gamma->coarsened;
+	// 	}
+	// }
+	// else {
+	// 	gamma = &child2;
+	// }
+
+	// if (tags[3]) {
+	// 	// omega = child3.coarsened;
+	// 	while (tags[3]-- > 0) {
+	// 		coarsen_patch(*omega);
+	// 		omega = omega->coarsened;
+	// 	}
+	// }
+	// else {
+	// 	omega = &child3;
+	// }
 
 	// Horizontal merge
 	// std::cout << "[merge_4to1]  begin horizontal merge 1" << std::endl;
