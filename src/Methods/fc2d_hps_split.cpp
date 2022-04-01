@@ -165,12 +165,8 @@ void uncoarsen_patch(fc2d_hps_patch& patch) {
 
     // Interpolate data down to original patch
     // printf("uncoarsening patch\n");
-    printf("HERE1\n");
-    printf("L12 = [%i, %i], g = [%i]\n", L12_patch.rows, L12_patch.cols, patch.coarsened->g.size());
     patch.g = L12_patch * patch.coarsened->g;
     if (hps_opt->nonhomogeneous_rhs) {
-        // printf("w:\n");
-        printf("HERE2\n");
         patch.w = L12_south * patch.coarsened->w;
     }
 
@@ -198,16 +194,14 @@ void split_1to4(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
     // child3.print_info();
 
     // Check for coarsened versions, uncoarsen if exists
-    if (parent.has_coarsened) {
-        if (parent.coarsened->has_coarsened) {
-            printf("HERE A\n");
-            parent.print_info();
-            parent.coarsened->print_info();
-            parent.coarsened->coarsened->print_info();
-            parent.coarsened->coarsened->g = parent.g;
-            uncoarsen_patch(*parent.coarsened);
-        }
-        uncoarsen_patch(parent);
+    fc2d_hps_patch* tau = &parent;
+    std::vector<fc2d_hps_patch*> patches_to_uncoarsen;
+    while (tau->has_coarsened) {
+        patches_to_uncoarsen.push_back(tau);
+        tau = tau->coarsened;
+    }
+    for (int i = patches_to_uncoarsen.size() - 1; i >= 0; i--) {
+        uncoarsen_patch(*patches_to_uncoarsen[i]);
     }
 
     // Vertical split
@@ -218,10 +212,50 @@ void split_1to4(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
     fc2d_hps_patch* omega;
 
     // Set based on if patch has coarsened data
-    child0.has_coarsened ? alpha = child0.coarsened : alpha = &child0;
-    child1.has_coarsened ? beta = child1.coarsened : beta = &child1;
-    child2.has_coarsened ? gamma = child2.coarsened : gamma = &child2;
-    child3.has_coarsened ? omega = child3.coarsened : omega = &child3;
+    if (child0.has_coarsened) {
+        alpha = child0.coarsened;
+        while (alpha->has_coarsened) {
+            alpha = alpha->coarsened;
+        }
+    }
+    else {
+        alpha = &child0;
+    }
+
+    if (child1.has_coarsened) {
+        beta = child1.coarsened;
+        while (beta->has_coarsened) {
+            beta = beta->coarsened;
+        }
+    }
+    else {
+        beta = &child1;
+    }
+
+    if (child2.has_coarsened) {
+        gamma = child2.coarsened;
+        while (gamma->has_coarsened) {
+            gamma = gamma->coarsened;
+        }
+    }
+    else {
+        gamma = &child2;
+    }
+
+    if (child3.has_coarsened) {
+        omega = child3.coarsened;
+        while (omega->has_coarsened) {
+            omega = omega->coarsened;
+        }
+    }
+    else {
+        omega = &child3;
+    }
+
+    // child0.has_coarsened ? alpha = child0.coarsened : alpha = &child0;
+    // child1.has_coarsened ? beta = child1.coarsened : beta = &child1;
+    // child2.has_coarsened ? gamma = child2.coarsened : gamma = &child2;
+    // child3.has_coarsened ? omega = child3.coarsened : omega = &child3;
 
     //    Create patches for rectangular pieces
     fc2d_hps_patch alpha_prime;
