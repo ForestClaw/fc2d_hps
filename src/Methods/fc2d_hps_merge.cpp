@@ -501,27 +501,79 @@ fc2d_hps_patch merge_vertical(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 
 std::vector<int> tag_patch_coarsen(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& child1, fc2d_hps_patch& child2, fc2d_hps_patch& child3) {
 
-	std::vector<int> tags = {0, 0, 0, 0};
+	// NOTE: This algorithm assumes coarsen_patch method (so that patches are {N_sides x N_sides}, where N_sides-1 indicates how many ancestors that patch has). This means that all patches have the same number of panel sides.
+	std::vector<fc2d_hps_patch> patches = {child0, child1, child2, child3};
+	std::vector<int> gens(4);
+	std::vector<int> tags(4);
+
+	for (int i = 0; i < 4; i++) gens[i] = (int) log2(patches[i].N_patch_side[EAST]);
 	
+	int min_gens = *std::min_element(gens.begin(), gens.end());
+
+	for (int i = 0; i < 4; i++) tags[i] = gens[i] - min_gens;
+
+	
+	// if (child0.level > child1.level || child0.level > child2.level || child0.level > child3.level) {
+	// 	std::vector<int> level_differences = {child0.level - child1.level, child0.level - child2.level, child0.level - child3.level};
+	// 	printf("child0 level_differences: ");
+	// 	for (auto& l : level_differences) printf("%i ");
+	// 	printf("\n");
+	// 	tags[0] = *std::max_element(level_differences.begin(), level_differences.end());
+	// }
+	// if (child1.level > child0.level || child1.level > child2.level || child1.level > child3.level) {
+	// 	std::vector<int> level_differences = {child1.level - child0.level, child1.level - child2.level, child1.level - child3.level};
+	// 	printf("child1 level_differences: ");
+	// 	for (auto& l : level_differences) printf("%i ");
+	// 	printf("\n");
+	// 	tags[1] = *std::max_element(level_differences.begin(), level_differences.end());
+	// }
+	// if (child2.level > child1.level || child2.level > child0.level || child2.level > child3.level) {
+	// 	std::vector<int> level_differences = {child2.level - child1.level, child2.level - child0.level, child2.level - child3.level};
+	// 	printf("child2 level_differences: ");
+	// 	for (auto& l : level_differences) printf("%i ");
+	// 	printf("\n");
+	// 	tags[2] = *std::max_element(level_differences.begin(), level_differences.end());
+	// }
+	// if (child3.level > child1.level || child3.level > child2.level || child3.level > child0.level) {
+	// 	std::vector<int> level_differences = {child3.level - child1.level, child3.level - child2.level, child3.level - child0.level};
+	// 	printf("child3 level_differences: ");
+	// 	for (auto& l : level_differences) printf("%i ");
+	// 	printf("\n");
+	// 	tags[3] = *std::max_element(level_differences.begin(), level_differences.end());
+	// }
 
 
-	if (child0.N_patch_side[EAST] > child1.N_patch_side[WEST] || child0.N_patch_side[NORTH] > child2.N_patch_side[SOUTH] || child0.N_patch_side[EAST] > child3.N_patch_side[WEST]) {
-		tags[0] = 1;
-	}
-	if (child1.N_patch_side[WEST] > child0.N_patch_side[EAST] || child1.N_patch_side[NORTH] > child3.N_patch_side[SOUTH] || child1.N_patch_side[WEST] > child2.N_patch_side[EAST]) {
-		tags[1] = 1;
-	}
-	if (child2.N_patch_side[EAST] > child3.N_patch_side[WEST] || child2.N_patch_side[SOUTH] > child0.N_patch_side[NORTH] || child2.N_patch_side[EAST] > child1.N_patch_side[WEST]) {
-		tags[2] = 1;
-	}
-	if (child3.N_patch_side[WEST] > child2.N_patch_side[EAST] || child3.N_patch_side[SOUTH] > child1.N_patch_side[NORTH] || child3.N_patch_side[WEST] > child0.N_patch_side[EAST]) {
-		tags[3] = 1;
-	}
+	// if (child0.N_patch_side[EAST] > child1.N_patch_side[WEST] ||
+	// 	child0.N_patch_side[NORTH] > child2.N_patch_side[SOUTH] ||
+	// 	child0.N_patch_side[EAST] > child3.N_patch_side[WEST] ||
+	// 	child0.N_patch_side[NORTH] > child3.N_patch_side[SOUTH]) {
+
+	// 		int N_generations = (int) log2(child0.N_patch_side[EAST]);
+	// 		tags[0] = 1;
+	// }
+	// if (child1.N_patch_side[WEST] > child0.N_patch_side[EAST] ||
+	// 	child1.N_patch_side[NORTH] > child3.N_patch_side[SOUTH] ||
+	// 	child1.N_patch_side[WEST] > child2.N_patch_side[EAST] ||
+	// 	child1.N_patch_side[NORTH] > child2.N_patch_side[SOUTH]) {
+	// 		tags[1] = 1;
+	// }
+	// if (child2.N_patch_side[EAST] > child3.N_patch_side[WEST] ||
+	// 	child2.N_patch_side[SOUTH] > child0.N_patch_side[NORTH] ||
+	// 	child2.N_patch_side[EAST] > child1.N_patch_side[WEST] ||
+	// 	child2.N_patch_side[SOUTH] > child1.N_patch_side[NORTH]) {
+	// 		tags[2] = 1;
+	// }
+	// if (child3.N_patch_side[WEST] > child2.N_patch_side[EAST] ||
+	// 	child3.N_patch_side[SOUTH] > child1.N_patch_side[NORTH] ||
+	// 	child3.N_patch_side[WEST] > child0.N_patch_side[EAST] ||
+	// 	child3.N_patch_side[SOUTH] > child0.N_patch_side[NORTH]) {
+	// 		tags[3] = 1;
+	// }
 	return tags;
 
 }
 
-void coarsen_patch(fc2d_hps_patch& fine_patch) {\
+void coarsen_patch(fc2d_hps_patch& fine_patch) {
 	// fine_patch.print_info();
 	// Copy metadata
 	fine_patch.coarsened = new fc2d_hps_patch;
@@ -610,19 +662,22 @@ void merge_4to1(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
 	fc2d_hps_patch* gamma = &child2;
 	fc2d_hps_patch* omega = &child3;
 	std::vector<int> tags = tag_patch_coarsen(parent, child0, child1, child2, child3);
+	// printf("TAGS: ");
+	// for (auto& t : tags) printf("%i ", t);
+	// printf("\n");
 
-	if (child2.grid.x_lower == -1 && child2.grid.y_lower == 0 && child2.grid.x_upper == 0 && child2.grid.y_upper == 1) {
-		printf("parent:\n");
-		parent.print_info();
-		printf("child0:\n");
-		child0.print_info();
-		printf("child1:\n");
-		child1.print_info();
-		printf("child2:\n");
-		child2.print_info();
-		printf("child3:\n");
-		child3.print_info();
-	}
+	// if (child2.grid.x_lower == -1 && child2.grid.y_lower == 0 && child2.grid.x_upper == 0 && child2.grid.y_upper == 1) {
+	// 	printf("parent:\n");
+	// 	parent.print_info();
+	// 	printf("child0:\n");
+	// 	child0.print_info();
+	// 	printf("child1:\n");
+	// 	child1.print_info();
+	// 	printf("child2:\n");
+	// 	child2.print_info();
+	// 	printf("child3:\n");
+	// 	child3.print_info();
+	// }
 
 	while (tags[0]-- > 0) {
 		coarsen_patch(*alpha);

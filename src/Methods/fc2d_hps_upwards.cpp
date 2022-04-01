@@ -283,32 +283,35 @@ void merge_4to1_upwards(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps
 	fc2d_hps_patch tau;
 
 	// Check for adaptivity
+	fc2d_hps_patch* alpha = &child0;
+	fc2d_hps_patch* beta = &child1;
+	fc2d_hps_patch* gamma = &child2;
+	fc2d_hps_patch* omega = &child3;
 	std::vector<int> tags = tag_patch_coarsen(parent, child0, child1, child2, child3);
 	// printf("TAGS UPWARDS: ");
 	// for (auto& t : tags) printf("%i ", t);
 	// printf("\n");
-	if (tags[0]) coarsen_patch_upwards(child0);
-	if (tags[1]) coarsen_patch_upwards(child1);
-	if (tags[2]) coarsen_patch_upwards(child2);
-	if (tags[3]) coarsen_patch_upwards(child3);
+	// if (tags[0]) coarsen_patch_upwards(child0);
+	// if (tags[1]) coarsen_patch_upwards(child1);
+	// if (tags[2]) coarsen_patch_upwards(child2);
+	// if (tags[3]) coarsen_patch_upwards(child3);
 
-	// Get patches to merge
-	fc2d_hps_patch* alpha;
-	fc2d_hps_patch* beta;
-	fc2d_hps_patch* gamma;
-	fc2d_hps_patch* omega;
-
-	if (tags[0]) alpha = child0.coarsened;
-	else alpha = &child0;
-
-	if (tags[1]) beta = child1.coarsened;
-	else beta = &child1;
-	
-	if (tags[2]) gamma = child2.coarsened;
-	else gamma = &child2;
-
-	if (tags[3]) omega = child3.coarsened;
-	else omega = &child3;
+	while (tags[0]-- > 0) {
+		coarsen_patch_upwards(*alpha);
+		alpha = alpha->coarsened;
+	}
+	while (tags[1]-- > 0) {
+		coarsen_patch_upwards(*beta);
+		beta = beta->coarsened;
+	}
+	while (tags[2]-- > 0) {
+		coarsen_patch_upwards(*gamma);
+		gamma = gamma->coarsened;
+	}
+	while (tags[3]-- > 0) {
+		coarsen_patch_upwards(*omega);
+		omega = omega->coarsened;
+	}
 
 	// Horizontal merge
 	// printf("HERE3\n");

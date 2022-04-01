@@ -3,6 +3,8 @@
 
 #include <numeric>
 #include <vector>
+#include <algorithm>
+#include <cmath>
 #include <fclaw2d_global.h>
 #include <Util/fc2d_hps_options.h>
 #include <Structures/fc2d_hps_vector.hpp>

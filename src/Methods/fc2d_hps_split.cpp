@@ -148,12 +148,12 @@ void uncoarsen_patch(fc2d_hps_patch& patch) {
 
     // Build L21
 	int N = patch.N_cells_leaf;
-	fc2d_hps_matrix<double> L21_west = build_L21(N*patch.coarsened->N_patch_side[WEST], N*patch.N_patch_side[WEST]);
-	fc2d_hps_matrix<double> L21_east = build_L21(N*patch.coarsened->N_patch_side[EAST], N*patch.N_patch_side[EAST]);
-	fc2d_hps_matrix<double> L21_south = build_L21(N*patch.coarsened->N_patch_side[SOUTH], N*patch.N_patch_side[SOUTH]);
-	fc2d_hps_matrix<double> L21_north = build_L21(N*patch.coarsened->N_patch_side[NORTH], N*patch.N_patch_side[NORTH]);
-	std::vector<fc2d_hps_matrix<double>> L21_diagonals = {L21_west, L21_east, L21_south, L21_north};
-	fc2d_hps_matrix<double> L21_patch = block_diag(L21_diagonals);
+	// fc2d_hps_matrix<double> L21_west = build_L21(N*patch.coarsened->N_patch_side[WEST], N*patch.N_patch_side[WEST]);
+	// fc2d_hps_matrix<double> L21_east = build_L21(N*patch.coarsened->N_patch_side[EAST], N*patch.N_patch_side[EAST]);
+	// fc2d_hps_matrix<double> L21_south = build_L21(N*patch.coarsened->N_patch_side[SOUTH], N*patch.N_patch_side[SOUTH]);
+	// fc2d_hps_matrix<double> L21_north = build_L21(N*patch.coarsened->N_patch_side[NORTH], N*patch.N_patch_side[NORTH]);
+	// std::vector<fc2d_hps_matrix<double>> L21_diagonals = {L21_west, L21_east, L21_south, L21_north};
+	// fc2d_hps_matrix<double> L21_patch = block_diag(L21_diagonals);
 
 	// Build L12
 	fc2d_hps_matrix<double> L12_west = build_L12(N*patch.N_patch_side[WEST], N*patch.coarsened->N_patch_side[WEST]);
@@ -165,9 +165,12 @@ void uncoarsen_patch(fc2d_hps_patch& patch) {
 
     // Interpolate data down to original patch
     // printf("uncoarsening patch\n");
+    printf("HERE1\n");
+    printf("L12 = [%i, %i], g = [%i]\n", L12_patch.rows, L12_patch.cols, patch.coarsened->g.size());
     patch.g = L12_patch * patch.coarsened->g;
     if (hps_opt->nonhomogeneous_rhs) {
         // printf("w:\n");
+        printf("HERE2\n");
         patch.w = L12_south * patch.coarsened->w;
     }
 
@@ -195,7 +198,17 @@ void split_1to4(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
     // child3.print_info();
 
     // Check for coarsened versions, uncoarsen if exists
-    if (parent.has_coarsened) uncoarsen_patch(parent);
+    if (parent.has_coarsened) {
+        if (parent.coarsened->has_coarsened) {
+            printf("HERE A\n");
+            parent.print_info();
+            parent.coarsened->print_info();
+            parent.coarsened->coarsened->print_info();
+            parent.coarsened->coarsened->g = parent.g;
+            uncoarsen_patch(*parent.coarsened);
+        }
+        uncoarsen_patch(parent);
+    }
 
     // Vertical split
     // Create patches to merge (either original or coarsened)
