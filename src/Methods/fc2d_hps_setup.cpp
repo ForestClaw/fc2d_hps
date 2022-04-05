@@ -121,6 +121,7 @@ void fc2d_hps_setup(struct fclaw2d_global* glob) {
     // Set patch IDs
     current_ID = 0;
     quadtree->traverse_postorder(visit_set_ID);
+	// quadtree->traverse(visit_set_ID);
 
     // Set up DtN cache
     if (hps_opt->cache_T) {

@@ -170,6 +170,8 @@ void uncoarsen_patch(fc2d_hps_patch& patch) {
         patch.w = L12_south * patch.coarsened->w;
     }
 
+    patch.has_coarsened = false;
+
     // patch.print_info();
     // patch.coarsened->print_info();
 
@@ -186,12 +188,6 @@ void split_1to4(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
     // if (parent.g.size() == 0) {
     //     throw std::invalid_argument("[fc2d_hps_split::split_1to4] `parent` patch does not have Dirichelt data set.");
     // }
-
-    // parent.print_info();
-    // child0.print_info();
-    // child1.print_info();
-    // child2.print_info();
-    // child3.print_info();
 
     // Check for coarsened versions, uncoarsen if exists
     fc2d_hps_patch* tau = &parent;

@@ -258,12 +258,12 @@ void coarsen_patch_upwards(fc2d_hps_patch& fine_patch) {
 	fc2d_hps_matrix<double> L21_patch = block_diag(L21_diagonals);
 
 	// Build L12
-	fc2d_hps_matrix<double> L12_west = build_L12(N*fine_patch.N_patch_side[WEST], N*fine_patch.coarsened->N_patch_side[WEST]);
-	fc2d_hps_matrix<double> L12_east = build_L12(N*fine_patch.N_patch_side[EAST], N*fine_patch.coarsened->N_patch_side[EAST]);
-	fc2d_hps_matrix<double> L12_south = build_L12(N*fine_patch.N_patch_side[SOUTH], N*fine_patch.coarsened->N_patch_side[SOUTH]);
-	fc2d_hps_matrix<double> L12_north = build_L12(N*fine_patch.N_patch_side[NORTH], N*fine_patch.coarsened->N_patch_side[NORTH]);
-	std::vector<fc2d_hps_matrix<double>> L12_diagonals = {L12_west, L12_east, L12_south, L12_north};
-	fc2d_hps_matrix<double> L12_patch = block_diag(L12_diagonals);
+	// fc2d_hps_matrix<double> L12_west = build_L12(N*fine_patch.N_patch_side[WEST], N*fine_patch.coarsened->N_patch_side[WEST]);
+	// fc2d_hps_matrix<double> L12_east = build_L12(N*fine_patch.N_patch_side[EAST], N*fine_patch.coarsened->N_patch_side[EAST]);
+	// fc2d_hps_matrix<double> L12_south = build_L12(N*fine_patch.N_patch_side[SOUTH], N*fine_patch.coarsened->N_patch_side[SOUTH]);
+	// fc2d_hps_matrix<double> L12_north = build_L12(N*fine_patch.N_patch_side[NORTH], N*fine_patch.coarsened->N_patch_side[NORTH]);
+	// std::vector<fc2d_hps_matrix<double>> L12_diagonals = {L12_west, L12_east, L12_south, L12_north};
+	// fc2d_hps_matrix<double> L12_patch = block_diag(L12_diagonals);
 
 	// Particular Neumann data
 	// printf("HERE1\n");
@@ -340,7 +340,7 @@ void fc2d_hps_upwards(fclaw2d_global_t* glob) {
     fc2d_hps_quadtree<fc2d_hps_patch>* quadtree = fc2d_hps_quadtree<fc2d_hps_patch>::get_instance();
 
     // Traverse inorder to set non-homogeneous RHS and BC data into solution vector
-    quadtree->traverse(visit_set_particular_data_leaves);
+    quadtree->traverse_postorder(visit_set_particular_data_leaves);
 
     // Merge upwards to merge non-homogeneous data
     quadtree->merge(merge_4to1_upwards);

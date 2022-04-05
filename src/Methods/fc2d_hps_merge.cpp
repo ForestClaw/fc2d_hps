@@ -38,8 +38,8 @@ fc2d_hps_matrix<double> build_L12(int n_rows, int n_cols) {
 				L12(i,j+1) = -0.25;
 			}
 			else if (i == n_rows-1 && j == n_cols-2) {
-				L12(i,j) = 0.75;
-				L12(i,j+1) = 0.25;
+				L12(i,j) = -0.25;
+				L12(i,j+1) = 1.25;
 			}
 			else if (i == 2*j+1 && i%2 == 1 && i != n_rows-1) {
 				L12(i,j) = 0.75;
@@ -507,68 +507,9 @@ std::vector<int> tag_patch_coarsen(fc2d_hps_patch& parent, fc2d_hps_patch& child
 	std::vector<int> tags(4);
 
 	for (int i = 0; i < 4; i++) gens[i] = (int) log2(patches[i].N_patch_side[EAST]);
-	
 	int min_gens = *std::min_element(gens.begin(), gens.end());
-
 	for (int i = 0; i < 4; i++) tags[i] = gens[i] - min_gens;
 
-	
-	// if (child0.level > child1.level || child0.level > child2.level || child0.level > child3.level) {
-	// 	std::vector<int> level_differences = {child0.level - child1.level, child0.level - child2.level, child0.level - child3.level};
-	// 	printf("child0 level_differences: ");
-	// 	for (auto& l : level_differences) printf("%i ");
-	// 	printf("\n");
-	// 	tags[0] = *std::max_element(level_differences.begin(), level_differences.end());
-	// }
-	// if (child1.level > child0.level || child1.level > child2.level || child1.level > child3.level) {
-	// 	std::vector<int> level_differences = {child1.level - child0.level, child1.level - child2.level, child1.level - child3.level};
-	// 	printf("child1 level_differences: ");
-	// 	for (auto& l : level_differences) printf("%i ");
-	// 	printf("\n");
-	// 	tags[1] = *std::max_element(level_differences.begin(), level_differences.end());
-	// }
-	// if (child2.level > child1.level || child2.level > child0.level || child2.level > child3.level) {
-	// 	std::vector<int> level_differences = {child2.level - child1.level, child2.level - child0.level, child2.level - child3.level};
-	// 	printf("child2 level_differences: ");
-	// 	for (auto& l : level_differences) printf("%i ");
-	// 	printf("\n");
-	// 	tags[2] = *std::max_element(level_differences.begin(), level_differences.end());
-	// }
-	// if (child3.level > child1.level || child3.level > child2.level || child3.level > child0.level) {
-	// 	std::vector<int> level_differences = {child3.level - child1.level, child3.level - child2.level, child3.level - child0.level};
-	// 	printf("child3 level_differences: ");
-	// 	for (auto& l : level_differences) printf("%i ");
-	// 	printf("\n");
-	// 	tags[3] = *std::max_element(level_differences.begin(), level_differences.end());
-	// }
-
-
-	// if (child0.N_patch_side[EAST] > child1.N_patch_side[WEST] ||
-	// 	child0.N_patch_side[NORTH] > child2.N_patch_side[SOUTH] ||
-	// 	child0.N_patch_side[EAST] > child3.N_patch_side[WEST] ||
-	// 	child0.N_patch_side[NORTH] > child3.N_patch_side[SOUTH]) {
-
-	// 		int N_generations = (int) log2(child0.N_patch_side[EAST]);
-	// 		tags[0] = 1;
-	// }
-	// if (child1.N_patch_side[WEST] > child0.N_patch_side[EAST] ||
-	// 	child1.N_patch_side[NORTH] > child3.N_patch_side[SOUTH] ||
-	// 	child1.N_patch_side[WEST] > child2.N_patch_side[EAST] ||
-	// 	child1.N_patch_side[NORTH] > child2.N_patch_side[SOUTH]) {
-	// 		tags[1] = 1;
-	// }
-	// if (child2.N_patch_side[EAST] > child3.N_patch_side[WEST] ||
-	// 	child2.N_patch_side[SOUTH] > child0.N_patch_side[NORTH] ||
-	// 	child2.N_patch_side[EAST] > child1.N_patch_side[WEST] ||
-	// 	child2.N_patch_side[SOUTH] > child1.N_patch_side[NORTH]) {
-	// 		tags[2] = 1;
-	// }
-	// if (child3.N_patch_side[WEST] > child2.N_patch_side[EAST] ||
-	// 	child3.N_patch_side[SOUTH] > child1.N_patch_side[NORTH] ||
-	// 	child3.N_patch_side[WEST] > child0.N_patch_side[EAST] ||
-	// 	child3.N_patch_side[SOUTH] > child0.N_patch_side[NORTH]) {
-	// 		tags[3] = 1;
-	// }
 	return tags;
 
 }
@@ -585,10 +526,6 @@ void coarsen_patch(fc2d_hps_patch& fine_patch) {
 	fine_patch.coarsened->N_patch_side[EAST] = fine_patch.N_patch_side[EAST] / 2;
 	fine_patch.coarsened->N_patch_side[SOUTH] = fine_patch.N_patch_side[SOUTH] / 2;
 	fine_patch.coarsened->N_patch_side[NORTH] = fine_patch.N_patch_side[NORTH] / 2;
-	// fine_patch.coarsened->N_patch_side[WEST] = fine_patch.N_patch_side[WEST];
-	// fine_patch.coarsened->N_patch_side[EAST] = fine_patch.N_patch_side[EAST];
-	// fine_patch.coarsened->N_patch_side[SOUTH] = fine_patch.N_patch_side[SOUTH];
-	// fine_patch.coarsened->N_patch_side[NORTH] = fine_patch.N_patch_side[NORTH];
 	fine_patch.coarsened->grid = fc2d_hps_patchgrid(fine_patch.grid.Nx/2, fine_patch.grid.Ny/2, fine_patch.grid.x_lower, fine_patch.grid.x_upper, fine_patch.grid.y_lower, fine_patch.grid.y_upper);
 	fine_patch.coarsened->user = fine_patch.user;
 
