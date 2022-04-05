@@ -113,6 +113,7 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
     for (int i = 0; i < root_patch.T.rows; i++) {
         for (int j = 0; j < root_patch.T.cols; j++) {
             double diff = fabs(root_patch.T(i,j) - T_root(i,j));
+            // printf("%i    %i    %16.8e    %16.8e    %16.8e    %16.8e\n", i, j, root_patch.T(i,j), T_root(i,j), diff, max_diff);
             if (diff > max_diff) {
                 max_diff = diff;
             }

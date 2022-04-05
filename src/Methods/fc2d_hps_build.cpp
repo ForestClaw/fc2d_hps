@@ -58,6 +58,22 @@ void visit_build_dtn(fc2d_hps_patch& patch) {
 void visit_merge(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& beta, fc2d_hps_patch& gamma, fc2d_hps_patch& omega) {
     // printf("4to1 merge: alpha = %i, beta = %i, gamma = %i, omega = %i\n", alpha.ID, beta.ID, gamma.ID, omega.ID);
     merge_4to1(tau, alpha, beta, gamma, omega);
+
+    fc2d_hps_FISHPACK_solver solver;
+    fc2d_hps_matrix<double> T_parent = solver.build_dtn(tau.grid);
+
+    double max_diff = 0;
+    for (int i = 0; i < tau.T.rows; i++) {
+        for (int j = 0; j < tau.T.cols; j++) {
+            double diff = fabs(tau.T(i,j) - T_parent(i,j));
+            // printf("%i    %i    %16.8e    %16.8e    %16.8e    %16.8e\n", i, j, tau.T(i,j), T_root(i,j), diff, max_diff);
+            if (diff > max_diff) {
+                max_diff = diff;
+            }
+        }
+    }
+
+    printf("max difference for patch at [%.2f, %.2f] to [%.2f, %.2f] = %16.8e\n", tau.grid.x_lower, tau.grid.y_lower, tau.grid.x_upper, tau.grid.y_upper, max_diff);
 }
 
 void fc2d_hps_build(fclaw2d_global_t *glob)

@@ -1,4 +1,5 @@
 #include <Methods/fc2d_hps_merge.hpp>
+#include <Structures/fc2d_hps_patchsolver.hpp>
 
 // Cache vector for DtN matrix
 extern std::vector<fc2d_hps_matrix<double>> T_cache;
@@ -21,8 +22,9 @@ fc2d_hps_matrix<double> build_L21(int n_rows, int n_cols) {
 		for (int j = 0; j < n_cols; j++) {
 			if (j == 2*i) {
 				// printf("i = %i, j = %i\n", i, j);
-				L21(i,j) = 0.5;
-				L21(i,j+1) = 0.5;
+				// L21(i,j) = 0.5;
+				// L21(i,j+1) = 0.5;
+				L21(i,j) = 1;
 			}
 		}
 	}
@@ -34,18 +36,22 @@ fc2d_hps_matrix<double> build_L12(int n_rows, int n_cols) {
 	for (int i = 0; i < n_rows; i++) {
 		for (int j = 0; j < n_cols; j++) {
 			if (i == 0 && j == 0) {
-				L12(i,j) = 1.25;
-				L12(i,j+1) = -0.25;
+				// L12(i,j) = 1.25;
+				// L12(i,j+1) = -0.25;
+				L12(i,j) = 1;
 			}
 			else if (i == n_rows-1 && j == n_cols-2) {
-				L12(i,j) = -0.25;
-				L12(i,j+1) = 1.25;
+				// L12(i,j) = -0.25;
+				// L12(i,j+1) = 1.25;
+				L12(i,j+1) = 1;
 			}
 			else if (i == 2*j+1 && i%2 == 1 && i != n_rows-1) {
-				L12(i,j) = 0.75;
-				L12(i,j+1) = 0.25;
-				L12(i+1,j) = 0.25;
-				L12(i+1,j+1) = 0.75;
+				// L12(i,j) = 0.75;
+				// L12(i,j+1) = 0.25;
+				// L12(i+1,j) = 0.25;
+				// L12(i+1,j+1) = 0.75;
+				L12(i,j) = 1;
+				L12(i+1,j+1) = 1;
 			}
 		}
 	}
