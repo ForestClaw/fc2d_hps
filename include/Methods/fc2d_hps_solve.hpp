@@ -67,6 +67,7 @@ extern int current_ID; // use static
 // HPS Solve Routine
 void visit_split(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& beta, fc2d_hps_patch& gamma, fc2d_hps_patch& omega);
 void visit_patchsolver(fc2d_hps_patch& patch);
+void set_root_boundary_data(fc2d_hps_patch& root_patch);
 void fc2d_hps_solve(struct fclaw2d_global* glob);
 
 // Patch Solver Routine

@@ -249,21 +249,11 @@ void visit_set_particular_data_leaves(fc2d_hps_patch& patch) {
 void coarsen_patch_upwards(fc2d_hps_patch& fine_patch) {
 
 	// Build L21
-	int N = fine_patch.N_cells_leaf;
-	fc2d_hps_matrix<double> L21_west = build_L21(N*fine_patch.coarsened->N_patch_side[WEST], N*fine_patch.N_patch_side[WEST]);
-	fc2d_hps_matrix<double> L21_east = build_L21(N*fine_patch.coarsened->N_patch_side[EAST], N*fine_patch.N_patch_side[EAST]);
-	fc2d_hps_matrix<double> L21_south = build_L21(N*fine_patch.coarsened->N_patch_side[SOUTH], N*fine_patch.N_patch_side[SOUTH]);
-	fc2d_hps_matrix<double> L21_north = build_L21(N*fine_patch.coarsened->N_patch_side[NORTH], N*fine_patch.N_patch_side[NORTH]);
-	std::vector<fc2d_hps_matrix<double>> L21_diagonals = {L21_west, L21_east, L21_south, L21_north};
+	int N_fine = fine_patch.N_cells_leaf * fine_patch.N_patch_side[WEST];
+	int N_coarse = N_fine / 2;
+	fc2d_hps_matrix<double> L21_side = build_L21(N_coarse, N_fine);
+	std::vector<fc2d_hps_matrix<double>> L21_diagonals = {L21_side, L21_side, L21_side, L21_side};
 	fc2d_hps_matrix<double> L21_patch = block_diag(L21_diagonals);
-
-	// Build L12
-	// fc2d_hps_matrix<double> L12_west = build_L12(N*fine_patch.N_patch_side[WEST], N*fine_patch.coarsened->N_patch_side[WEST]);
-	// fc2d_hps_matrix<double> L12_east = build_L12(N*fine_patch.N_patch_side[EAST], N*fine_patch.coarsened->N_patch_side[EAST]);
-	// fc2d_hps_matrix<double> L12_south = build_L12(N*fine_patch.N_patch_side[SOUTH], N*fine_patch.coarsened->N_patch_side[SOUTH]);
-	// fc2d_hps_matrix<double> L12_north = build_L12(N*fine_patch.N_patch_side[NORTH], N*fine_patch.coarsened->N_patch_side[NORTH]);
-	// std::vector<fc2d_hps_matrix<double>> L12_diagonals = {L12_west, L12_east, L12_south, L12_north};
-	// fc2d_hps_matrix<double> L12_patch = block_diag(L12_diagonals);
 
 	// Particular Neumann data
 	// printf("HERE1\n");
@@ -271,7 +261,7 @@ void coarsen_patch_upwards(fc2d_hps_patch& fine_patch) {
 
 	// Particular solution data
 	// printf("HERE2\n");
-	fine_patch.coarsened->w = L21_west * fine_patch.w;
+	fine_patch.coarsened->w = L21_side * fine_patch.w;
 
 }
 

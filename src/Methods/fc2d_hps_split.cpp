@@ -146,28 +146,18 @@ void uncoarsen_patch(fc2d_hps_patch& patch) {
     fclaw2d_global_t* glob = (fclaw2d_global_t*) patch.user;
     fc2d_hps_options_t* hps_opt = fc2d_hps_get_options(glob);
 
-    // Build L21
-	int N = patch.N_cells_leaf;
-	// fc2d_hps_matrix<double> L21_west = build_L21(N*patch.coarsened->N_patch_side[WEST], N*patch.N_patch_side[WEST]);
-	// fc2d_hps_matrix<double> L21_east = build_L21(N*patch.coarsened->N_patch_side[EAST], N*patch.N_patch_side[EAST]);
-	// fc2d_hps_matrix<double> L21_south = build_L21(N*patch.coarsened->N_patch_side[SOUTH], N*patch.N_patch_side[SOUTH]);
-	// fc2d_hps_matrix<double> L21_north = build_L21(N*patch.coarsened->N_patch_side[NORTH], N*patch.N_patch_side[NORTH]);
-	// std::vector<fc2d_hps_matrix<double>> L21_diagonals = {L21_west, L21_east, L21_south, L21_north};
-	// fc2d_hps_matrix<double> L21_patch = block_diag(L21_diagonals);
-
 	// Build L12
-	fc2d_hps_matrix<double> L12_west = build_L12(N*patch.N_patch_side[WEST], N*patch.coarsened->N_patch_side[WEST]);
-	fc2d_hps_matrix<double> L12_east = build_L12(N*patch.N_patch_side[EAST], N*patch.coarsened->N_patch_side[EAST]);
-	fc2d_hps_matrix<double> L12_south = build_L12(N*patch.N_patch_side[SOUTH], N*patch.coarsened->N_patch_side[SOUTH]);
-	fc2d_hps_matrix<double> L12_north = build_L12(N*patch.N_patch_side[NORTH], N*patch.coarsened->N_patch_side[NORTH]);
-	std::vector<fc2d_hps_matrix<double>> L12_diagonals = {L12_west, L12_east, L12_south, L12_north};
+	int N_fine = patch.N_cells_leaf * patch.N_patch_side[WEST];
+	int N_coarse = N_fine / 2;
+	fc2d_hps_matrix<double> L12_side = build_L12(N_fine, N_coarse);
+	std::vector<fc2d_hps_matrix<double>> L12_diagonals = {L12_side, L12_side, L12_side, L12_side};
 	fc2d_hps_matrix<double> L12_patch = block_diag(L12_diagonals);
 
     // Interpolate data down to original patch
     // printf("uncoarsening patch\n");
     patch.g = L12_patch * patch.coarsened->g;
     if (hps_opt->nonhomogeneous_rhs) {
-        patch.w = L12_south * patch.coarsened->w;
+        patch.w = L12_side * patch.coarsened->w;
     }
 
     patch.has_coarsened = false;

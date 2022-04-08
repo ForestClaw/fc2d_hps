@@ -16,15 +16,15 @@ std::vector<int> fill_range(int start, int end) {
 	return v;
 }
 
-fc2d_hps_matrix<double> build_L21(int n_rows, int n_cols) {
+fc2d_hps_matrix<double> build_L21(int n_rows, int n_cols) { // Fine to coarse
 	fc2d_hps_matrix<double> L21(n_rows, n_cols, 0);
 	for (int i = 0; i < n_rows; i++) {
 		for (int j = 0; j < n_cols; j++) {
 			if (j == 2*i) {
 				// printf("i = %i, j = %i\n", i, j);
-				// L21(i,j) = 0.5;
-				// L21(i,j+1) = 0.5;
-				L21(i,j) = 1;
+				L21(i,j) = 0.5;
+				L21(i,j+1) = 0.5;
+				// L21(i,j) = 1;
 			}
 		}
 	}
@@ -33,25 +33,37 @@ fc2d_hps_matrix<double> build_L21(int n_rows, int n_cols) {
 
 fc2d_hps_matrix<double> build_L12(int n_rows, int n_cols) {
 	fc2d_hps_matrix<double> L12(n_rows, n_cols, 0);
+	int k = 3;
+	std::vector<double> edge_coefs = {1.40625, -0.5625, 0.15625};
 	for (int i = 0; i < n_rows; i++) {
 		for (int j = 0; j < n_cols; j++) {
 			if (i == 0 && j == 0) {
 				// L12(i,j) = 1.25;
 				// L12(i,j+1) = -0.25;
-				L12(i,j) = 1;
+				L12(i,j) = edge_coefs[0];
+				L12(i,j+1) = edge_coefs[1];
+				L12(i,j+2) = edge_coefs[2];
+				// printf("first row = [");
+				// for (int jj = 0; jj < L12.cols; jj++) printf("%6.6f,  ", L12(i,jj));
+				// printf("]\n");
 			}
-			else if (i == n_rows-1 && j == n_cols-2) {
+			else if (i == n_rows-1 && j == n_cols-k) {
 				// L12(i,j) = -0.25;
 				// L12(i,j+1) = 1.25;
-				L12(i,j+1) = 1;
+				L12(i,j) = edge_coefs[2];
+				L12(i,j+1) = edge_coefs[1];
+				L12(i,j+2) = edge_coefs[0];
+				// printf("last row = [");
+				// for (int jj = 0; jj < L12.cols; jj++) printf("%6.6f,  ", L12(i,jj));
+				// printf("]\n");
 			}
 			else if (i == 2*j+1 && i%2 == 1 && i != n_rows-1) {
-				// L12(i,j) = 0.75;
-				// L12(i,j+1) = 0.25;
-				// L12(i+1,j) = 0.25;
-				// L12(i+1,j+1) = 0.75;
-				L12(i,j) = 1;
-				L12(i+1,j+1) = 1;
+				L12(i,j) = 0.75;
+				L12(i,j+1) = 0.25;
+				L12(i+1,j) = 0.25;
+				L12(i+1,j+1) = 0.75;
+				// L12(i,j) = 1;
+				// L12(i+1,j+1) = 1;
 			}
 		}
 	}
@@ -536,25 +548,31 @@ void coarsen_patch(fc2d_hps_patch& fine_patch) {
 	fine_patch.coarsened->user = fine_patch.user;
 
 	// Build L21
-	int N = fine_patch.N_cells_leaf;
-	fc2d_hps_matrix<double> L21_west = build_L21(N*fine_patch.coarsened->N_patch_side[WEST], N*fine_patch.N_patch_side[WEST]);
-	fc2d_hps_matrix<double> L21_east = build_L21(N*fine_patch.coarsened->N_patch_side[EAST], N*fine_patch.N_patch_side[EAST]);
-	fc2d_hps_matrix<double> L21_south = build_L21(N*fine_patch.coarsened->N_patch_side[SOUTH], N*fine_patch.N_patch_side[SOUTH]);
-	fc2d_hps_matrix<double> L21_north = build_L21(N*fine_patch.coarsened->N_patch_side[NORTH], N*fine_patch.N_patch_side[NORTH]);
-	std::vector<fc2d_hps_matrix<double>> L21_diagonals = {L21_west, L21_east, L21_south, L21_north};
+	int N_fine = fine_patch.N_cells_leaf * fine_patch.N_patch_side[WEST];
+	int N_coarse = N_fine / 2;
+
+	fc2d_hps_matrix<double> L21_side = build_L21(N_coarse, N_fine);
+	std::vector<fc2d_hps_matrix<double>> L21_diagonals = {L21_side, L21_side, L21_side, L21_side};
 	fc2d_hps_matrix<double> L21_patch = block_diag(L21_diagonals);
+	// int N = fine_patch.N_cells_leaf;
+	// fc2d_hps_matrix<double> L21_west = build_L21(N*fine_patch.coarsened->N_patch_side[WEST], N*fine_patch.N_patch_side[WEST]);
+	// fc2d_hps_matrix<double> L21_east = build_L21(N*fine_patch.coarsened->N_patch_side[EAST], N*fine_patch.N_patch_side[EAST]);
+	// fc2d_hps_matrix<double> L21_south = build_L21(N*fine_patch.coarsened->N_patch_side[SOUTH], N*fine_patch.N_patch_side[SOUTH]);
+	// fc2d_hps_matrix<double> L21_north = build_L21(N*fine_patch.coarsened->N_patch_side[NORTH], N*fine_patch.N_patch_side[NORTH]);
+	// std::vector<fc2d_hps_matrix<double>> L21_diagonals = {L21_west, L21_east, L21_south, L21_north};
+	// fc2d_hps_matrix<double> L21_patch = block_diag(L21_diagonals);
 
 	// Build L12
-	fc2d_hps_matrix<double> L12_west = build_L12(N*fine_patch.N_patch_side[WEST], N*fine_patch.coarsened->N_patch_side[WEST]);
-	fc2d_hps_matrix<double> L12_east = build_L12(N*fine_patch.N_patch_side[EAST], N*fine_patch.coarsened->N_patch_side[EAST]);
-	fc2d_hps_matrix<double> L12_south = build_L12(N*fine_patch.N_patch_side[SOUTH], N*fine_patch.coarsened->N_patch_side[SOUTH]);
-	fc2d_hps_matrix<double> L12_north = build_L12(N*fine_patch.N_patch_side[NORTH], N*fine_patch.coarsened->N_patch_side[NORTH]);
-	std::vector<fc2d_hps_matrix<double>> L12_diagonals = {L12_west, L12_east, L12_south, L12_north};
+	
+	fc2d_hps_matrix<double> L12_side = build_L12(N_fine, N_coarse);
+	std::vector<fc2d_hps_matrix<double>> L12_diagonals = {L12_side, L12_side, L12_side, L12_side};
 	fc2d_hps_matrix<double> L12_patch = block_diag(L12_diagonals);
 
 	// DtN matrix
 	fine_patch.coarsened->T = L21_patch * fine_patch.T;
 	fine_patch.coarsened->T = fine_patch.coarsened->T * L12_patch;
+	// fc2d_hps_FISHPACK_solver solver;
+	// fine_patch.coarsened->T = solver.build_dtn(fine_patch.coarsened->grid);
 
 	// Solution matrix
 	fine_patch.coarsened->S = fine_patch.S * L12_patch;

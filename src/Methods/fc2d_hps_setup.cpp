@@ -36,8 +36,9 @@ fc2d_hps_patch init_fn(fc2d_hps_quadtree<fc2d_hps_patch>* quadtree, int level, i
 	else {
 		// Build branch patch
 		// Get parent patch
-		int p_idx = quadtree->parent_indices[level][idx];
-		int pID = quadtree->global_indices[level-1][p_idx];
+		// int p_idx = quadtree->parent_indices[level][idx];
+		// int pID = quadtree->global_indices[level-1][p_idx];
+		int pID = quadtree->parent_indices[level][idx];
 		fc2d_hps_patch parent_patch = quadtree->data[pID];
 
 		// Build child patch
@@ -88,10 +89,13 @@ fc2d_hps_patch init_fn(fc2d_hps_quadtree<fc2d_hps_patch>* quadtree, int level, i
 		patch.user = (fclaw2d_global_t*) glob;
 	}
 
+	// patch.print_info();
+
 	return patch;
 }
 
 void visit_set_ID(fc2d_hps_patch& patch) {
+	// patch.print_info();
     if (patch.is_leaf == true) {
         patch.ID = current_ID++;
     }
@@ -114,6 +118,7 @@ void fc2d_hps_setup(struct fclaw2d_global* glob) {
 
 	// Get quadtree
 	fc2d_hps_quadtree<fc2d_hps_patch>* quadtree = fc2d_hps_quadtree<fc2d_hps_patch>::get_instance(p4est, init_fn, glob);
+	// std::cout << *quadtree;
 
     // Get HPS options
     fc2d_hps_options_t* hps_opt = fc2d_hps_get_options(glob);
@@ -121,7 +126,6 @@ void fc2d_hps_setup(struct fclaw2d_global* glob) {
     // Set patch IDs
     current_ID = 0;
     quadtree->traverse_postorder(visit_set_ID);
-	// quadtree->traverse(visit_set_ID);
 
     // Set up DtN cache
     if (hps_opt->cache_T) {

@@ -41,6 +41,32 @@ void visit_patchsolver(fc2d_hps_patch& patch) {
         // Get options
         fclaw2d_global_t* glob = (fclaw2d_global_t*) patch.user;
         fc2d_hps_options_t* hps_opt = fc2d_hps_get_options(glob);
+        // fc2d_hps_vtable_t* hps_vt = fc2d_hps_vt();
+        // int example = 1;
+        // int flag = 0;
+
+        // for (int j = 0; j < patch.grid.Ny; j++) {
+        //     double x = patch.grid.x_lower;
+        //     double y = patch.grid.point(YDIM, j);
+        //     hps_vt->fort_qexact(&example, &x, &y, &patch.g[j], NULL, NULL, &flag);
+        // }
+        // for (int j = 0; j < patch.grid.Ny; j++) {
+        //     double x = patch.grid.x_upper;
+        //     double y = patch.grid.point(YDIM, j);
+        //     hps_vt->fort_qexact(&example, &x, &y, &patch.g[j + patch.grid.Ny], NULL, NULL, &flag);
+        // }
+        // for (int i = 0; i < patch.grid.Nx; i++) {
+        //     double x = patch.grid.point(XDIM, i);
+        //     double y = patch.grid.y_lower;
+        //     hps_vt->fort_qexact(&example, &x, &y, &patch.g[i + 2*patch.grid.Ny], NULL, NULL, &flag);
+        // }
+        // for (int i = 0; i < patch.grid.Nx; i++) {
+        //     double x = patch.grid.point(XDIM, i);
+        //     double y = patch.grid.y_upper;
+        //     hps_vt->fort_qexact(&example, &x, &y, &patch.g[i + 3*patch.grid.Ny], NULL, NULL, &flag);
+        // }
+
+        // TODO: Short-circuit RHS
 
         // Get patch solver
         // TODO: Put patch solver in glob...?
@@ -97,31 +123,8 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
     // Get quadtree
     fc2d_hps_quadtree<fc2d_hps_patch>* quadtree = fc2d_hps_quadtree<fc2d_hps_patch>::get_instance();
 
-    // Check T
-
     // Build Dirichlet data at top level
     fc2d_hps_patch& root_patch = quadtree->data[0];
-    root_patch.print_info();
-
-    fc2d_hps_FISHPACK_solver solver;
-    fc2d_hps_matrix<double> T_root = solver.build_dtn(root_patch.grid);
-
-    // printf("T_root = [%i, %i]\n", T_root.rows, T_root.cols);
-    // printf("root_patch.T = [%i, %i]\n", root_patch.T.rows, root_patch.T.cols);
-
-    double max_diff = 0;
-    for (int i = 0; i < root_patch.T.rows; i++) {
-        for (int j = 0; j < root_patch.T.cols; j++) {
-            double diff = fabs(root_patch.T(i,j) - T_root(i,j));
-            // printf("%i    %i    %16.8e    %16.8e    %16.8e    %16.8e\n", i, j, root_patch.T(i,j), T_root(i,j), diff, max_diff);
-            if (diff > max_diff) {
-                max_diff = diff;
-            }
-        }
-    }
-
-    printf("max difference = %16.8e\n", max_diff);
-
     set_root_boundary_data(root_patch);
     // root_patch.print_info();
 
@@ -129,7 +132,7 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
     quadtree->split(visit_split);
 
     // Iterate over leaf nodes and apply patch solver
-    quadtree->traverse(visit_patchsolver);
+    quadtree->traverse_preorder(visit_patchsolver);
 
     fclaw_global_essentialf("End HPS solve\n");
 }

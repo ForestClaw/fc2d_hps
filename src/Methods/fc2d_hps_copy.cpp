@@ -1,6 +1,9 @@
 #include "Methods/fc2d_hps_copy.hpp"
 
 void visit_copy_data(fc2d_hps_patch& patch) {
+
+    // TODO: Look at forestclaw iterator for copying
+
     if (patch.is_leaf == true) {
 
         // patch.print_info();
@@ -59,7 +62,7 @@ void fc2d_hps_clawpatch_data_move(fclaw2d_global* glob) {
 
     // Copy data to ForestClaw
     // quadtree->traverse_postorder(visit_copy_data);
-    quadtree->traverse(visit_copy_data);
+    quadtree->traverse_preorder(visit_copy_data);
     
     fclaw_global_essentialf("End move to ForestClaw data\n");
 }
