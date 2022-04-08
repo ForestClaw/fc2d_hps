@@ -72,7 +72,7 @@ void simple_link_solvers(fclaw2d_global_t *glob);
 
 void SETPROB();
 
-#define SIMPLE_FORT_QEXACT_COMPLETE FCLAW_F77_FUNC(simple_fort_qexact_rhs,SIMPLE_FORT_QEXACT_COMPLETE)
+#define SIMPLE_FORT_QEXACT_COMPLETE FCLAW_F77_FUNC(simple_qexact_complete,SIMPLE_FORT_QEXACT_COMPLETE)
 
 void SIMPLE_FORT_QEXACT_COMPLETE(const int* example,
                                  const double* x, const double* y,
