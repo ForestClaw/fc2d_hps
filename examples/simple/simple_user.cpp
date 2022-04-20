@@ -81,7 +81,7 @@ void simple_link_solvers(fclaw2d_global_t *glob)
     /* HPS virtual table : Initialize RHS */
     fc2d_hps_vtable_t*  hps_vt = fc2d_hps_vt();
     hps_vt->fort_rhs = &SIMPLE_FORT_RHS;
-    // hps_vt->fort_qexact = &SIMPLE_FORT_QEXACT_COMPLETE; // why does this give linker errors?
+    hps_vt->fort_qexact = &SIMPLE_FORT_QEXACT_COMPLETE; // why does this give linker errors?
 
     /* Clawpatch : Compute the error */
     fclaw2d_clawpatch_vtable_t *clawpatch_vt = fclaw2d_clawpatch_vt();

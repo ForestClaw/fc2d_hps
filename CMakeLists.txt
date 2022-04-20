@@ -17,3 +17,6 @@ add_subdirectory(external)
 
 # -- source files
 add_subdirectory(src)
+
+# -- examples
+add_subdirectory(examples)

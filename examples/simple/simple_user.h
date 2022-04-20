@@ -72,7 +72,7 @@ void simple_link_solvers(fclaw2d_global_t *glob);
 
 void SETPROB();
 
-#define SIMPLE_FORT_QEXACT_COMPLETE FCLAW_F77_FUNC(simple_fort_qexact_rhs,SIMPLE_FORT_QEXACT_COMPLETE)
+#define SIMPLE_FORT_QEXACT_COMPLETE FCLAW_F77_FUNC(simple_qexact_complete,SIMPLE_FORT_QEXACT_COMPLETE)
 
 void SIMPLE_FORT_QEXACT_COMPLETE(const int* example,
                                  const double* x, const double* y,
@@ -89,9 +89,9 @@ void SIMPLE_FORT_RHS(const int* blockno, const int* mbc, const int* mx,
 
 #define SIMPLE_COMPUTE_ERROR FCLAW_F77_FUNC(simple_compute_error,SIMPLE_COMPUTE_ERROR)
 
-void SIMPLE_COMPUTE_ERROR(const int* blockno, const int *mx, const int *my, const int* mbc, const int* mfields,
-                           const double *dx, const double *dy, const double *xlower,
-                           const double *ylower, const double *t, double q[],
+void SIMPLE_COMPUTE_ERROR(int* blockno, int *mx, int *my, int* mbc, int* mfields,
+                        double *dx, double *dy, double *xlower,
+                        double *ylower, double *t, double q[],
                            double error[], double soln[]);
 
 

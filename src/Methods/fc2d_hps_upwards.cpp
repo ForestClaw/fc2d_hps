@@ -8,6 +8,18 @@ fc2d_hps_vector<double> merge_w(fc2d_hps_matrix<double>& X_tau, fc2d_hps_vector<
 
 }
 
+fc2d_hps_vector<double> merge_w_alpha_refined(fc2d_hps_matrix<double>& X_tau, fc2d_hps_vector<double>& h_3_alpha, fc2d_hps_vector<double>& h_3_beta, fc2d_hps_matrix<double>& L21) {
+    fc2d_hps_vector<double> temp = L21 * h_3_alpha;
+    temp = h_3_beta - temp;
+    return solve(X_tau, temp);
+}
+
+fc2d_hps_vector<double> merge_w_beta_refined(fc2d_hps_matrix<double>& X_tau, fc2d_hps_vector<double>& h_3_alpha, fc2d_hps_vector<double>& h_3_beta, fc2d_hps_matrix<double>& L21) {
+    fc2d_hps_vector<double> temp = L21 * h_3_beta;
+    temp = temp - h_3_alpha;
+    return solve(X_tau, temp);
+}
+
 fc2d_hps_vector<double> merge_h(fc2d_hps_matrix<double>& T_13_alpha, fc2d_hps_matrix<double>& T_23_beta, fc2d_hps_vector<double>& w_tau, fc2d_hps_vector<double>& h_1_alpha, fc2d_hps_vector<double>& h_2_beta) {
 	fc2d_hps_matrix<double> H(T_13_alpha.rows + T_23_beta.rows, T_13_alpha.cols);
 	H.intract(0, 0, T_13_alpha);
@@ -20,6 +32,36 @@ fc2d_hps_vector<double> merge_h(fc2d_hps_matrix<double>& T_13_alpha, fc2d_hps_ma
 	h = h + temp;
 
 	return h;
+}
+
+fc2d_hps_vector<double> merge_h_alpha_refined(fc2d_hps_matrix<double>& T_13_alpha, fc2d_hps_matrix<double>& T_23_beta, fc2d_hps_vector<double>& w_tau, fc2d_hps_vector<double>& h_1_alpha, fc2d_hps_vector<double>& h_2_beta, fc2d_hps_matrix<double>& L12) {
+    fc2d_hps_matrix<double> temp = T_13_alpha * L12;
+    fc2d_hps_matrix<double> H(temp.rows + T_23_beta.rows, temp.cols);
+    H.intract(0, 0, temp);
+    H.intract(temp.rows, 0, T_23_beta);
+    fc2d_hps_vector<double> h = H * w_tau;
+
+    fc2d_hps_vector<double> temp2(h_1_alpha.size() + h_2_beta.size());
+	temp2.intract(0, h_1_alpha);
+	temp2.intract(h_1_alpha.size(), h_2_beta);
+	h = h + temp2;
+
+    return h;
+}
+
+fc2d_hps_vector<double> merge_h_beta_refined(fc2d_hps_matrix<double>& T_13_alpha, fc2d_hps_matrix<double>& T_23_beta, fc2d_hps_vector<double>& w_tau, fc2d_hps_vector<double>& h_1_alpha, fc2d_hps_vector<double>& h_2_beta, fc2d_hps_matrix<double>& L12) {
+    fc2d_hps_matrix<double> temp = T_23_beta * L12;
+    fc2d_hps_matrix<double> H(T_13_alpha.rows + temp.rows, T_13_alpha.cols);
+    H.intract(0, 0, T_13_alpha);
+    H.intract(T_13_alpha.rows, 0, temp);
+    fc2d_hps_vector<double> h = H * w_tau;
+
+    fc2d_hps_vector<double> temp2(h_1_alpha.size() + h_2_beta.size());
+	temp2.intract(0, h_1_alpha);
+	temp2.intract(h_1_alpha.size(), h_2_beta);
+	h = h + temp2;
+
+    return h;
 }
 
 fc2d_hps_patch merge_horizontal_upwards(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
@@ -51,7 +93,7 @@ fc2d_hps_patch merge_horizontal_upwards(fc2d_hps_patch& alpha, fc2d_hps_patch& b
 	fc2d_hps_vector<double> h_3_beta = beta.h.from_index_set(index_sets.I3_beta);
 
     // Perform linear algebra
-    fc2d_hps_matrix<double> X_tau; // Is this already built from build stage?
+    fc2d_hps_matrix<double> X_tau;
 	fc2d_hps_vector<double> w_tau;
 	fc2d_hps_vector<double> h_tau;
     if (alpha.N_patch_side[WEST] == beta.N_patch_side[EAST]) {
@@ -59,14 +101,6 @@ fc2d_hps_patch merge_horizontal_upwards(fc2d_hps_patch& alpha, fc2d_hps_patch& b
         X_tau = merge_X(T_33_alpha, T_33_beta);
 		w_tau = merge_w(X_tau, h_3_alpha, h_3_beta);
 		h_tau = merge_h(T_13_alpha, T_23_beta, w_tau, h_1_alpha, h_2_beta);
-	}
-	else if (2 * alpha.N_patch_side[WEST] == beta.N_patch_side[EAST]) {
-		// Alpha = fine, beta = coarse
-		throw std::logic_error("[fc2d_hps_merge::merge_horizontal] Not implemented!");
-	}
-	else if (alpha.N_patch_side[WEST] == 2 * beta.N_patch_side[EAST]) {
-		// Alpha = coarse, beta = fine
-		throw std::logic_error("[fc2d_hps_merge::merge_horizontal] Not implemented!");
 	}
 	else {
 		throw std::invalid_argument("[fc2d_hps_merge::merge_horizontal] Size mismatch between alpha and beta.");
@@ -125,7 +159,7 @@ fc2d_hps_patch merge_vertical_upwards(fc2d_hps_patch& alpha, fc2d_hps_patch& bet
 	fc2d_hps_vector<double> h_3_beta = beta.h.from_index_set(index_sets.I3_beta);
 
     // Perform linear algebra
-    fc2d_hps_matrix<double> X_tau; // Is this already built from build stage?
+    fc2d_hps_matrix<double> X_tau;
     fc2d_hps_vector<double> w_tau;
 	fc2d_hps_vector<double> h_tau;
 	// Begin cases
@@ -134,14 +168,6 @@ fc2d_hps_patch merge_vertical_upwards(fc2d_hps_patch& alpha, fc2d_hps_patch& bet
         X_tau = merge_X(T_33_alpha, T_33_beta);
 		w_tau = merge_w(X_tau, h_3_alpha, h_3_beta);
 		h_tau = merge_h(T_13_alpha, T_23_beta, w_tau, h_1_alpha, h_2_beta);
-	}
-	else if (2 * alpha.N_patch_side[NORTH] == beta.N_patch_side[SOUTH]) {
-		// Alpha = fine, beta = coarse
-		throw std::logic_error("[fc2d_hps_merge::merge_horizontal] Not implemented!");
-	}
-	else if (alpha.N_patch_side[NORTH] == 2 * beta.N_patch_side[SOUTH]) {
-		// Alpha = coarse, beta = fine
-		throw std::logic_error("[fc2d_hps_merge::merge_horizontal] Not implemented!");
 	}
 	else {
 		throw std::invalid_argument("[fc2d_hps_merge::merge_horizontal] Size mismatch between alpha and beta.");
@@ -199,9 +225,24 @@ void visit_set_particular_data_leaves(fc2d_hps_patch& patch) {
         fc2d_hps_vector<double> g_zero(2*patch.grid.Nx + 2*patch.grid.Ny, 0);
         patch.h = FISHPACK_solver.dtn(patch.grid, g_zero, patch.f);
 
-        // patch.print_info();
-
     }
+}
+
+void coarsen_patch_upwards(fc2d_hps_patch& fine_patch) {
+
+	// Build L21
+	int N_fine = fine_patch.N_cells_leaf * fine_patch.N_patch_side[WEST];
+	int N_coarse = N_fine / 2;
+	fc2d_hps_matrix<double> L21_side = build_L21(N_coarse, N_fine);
+	std::vector<fc2d_hps_matrix<double>> L21_diagonals = {L21_side, L21_side, L21_side, L21_side};
+	fc2d_hps_matrix<double> L21_patch = block_diag(L21_diagonals);
+
+	// Particular Neumann data
+	fine_patch.coarsened->h = L21_patch * fine_patch.h;
+
+	// Particular solution data
+	fine_patch.coarsened->w = L21_side * fine_patch.w;
+
 }
 
 void merge_4to1_upwards(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& child1, fc2d_hps_patch& child2, fc2d_hps_patch& child3) {
@@ -211,12 +252,36 @@ void merge_4to1_upwards(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps
 	fc2d_hps_patch beta_prime;
 	fc2d_hps_patch tau;
 
-	// Horizontal merge
-	alpha_prime = merge_horizontal_upwards(child0, child1);
-    alpha_prime.T = child0.T_prime;
+	// Check for adaptivity
+	fc2d_hps_patch* alpha = &child0;
+	fc2d_hps_patch* beta = &child1;
+	fc2d_hps_patch* gamma = &child2;
+	fc2d_hps_patch* omega = &child3;
+	std::vector<int> tags = tag_patch_coarsen(parent, child0, child1, child2, child3);
 
-	beta_prime = merge_horizontal_upwards(child2, child3);
-    beta_prime.T = child2.T_prime;
+	while (tags[0]-- > 0) {
+		coarsen_patch_upwards(*alpha);
+		alpha = alpha->coarsened;
+	}
+	while (tags[1]-- > 0) {
+		coarsen_patch_upwards(*beta);
+		beta = beta->coarsened;
+	}
+	while (tags[2]-- > 0) {
+		coarsen_patch_upwards(*gamma);
+		gamma = gamma->coarsened;
+	}
+	while (tags[3]-- > 0) {
+		coarsen_patch_upwards(*omega);
+		omega = omega->coarsened;
+	}
+
+	// Horizontal merge
+	alpha_prime = merge_horizontal_upwards(*alpha, *beta);
+    alpha_prime.T = alpha->T_prime;
+
+	beta_prime = merge_horizontal_upwards(*gamma, *omega);
+    beta_prime.T = gamma->T_prime;
 
 	// Vertical merge
 	tau = merge_vertical_upwards(alpha_prime, beta_prime);
@@ -234,7 +299,7 @@ void fc2d_hps_upwards(fclaw2d_global_t* glob) {
     fc2d_hps_quadtree<fc2d_hps_patch>* quadtree = fc2d_hps_quadtree<fc2d_hps_patch>::get_instance();
 
     // Traverse inorder to set non-homogeneous RHS and BC data into solution vector
-    quadtree->traverse(visit_set_particular_data_leaves);
+    quadtree->traverse_postorder(visit_set_particular_data_leaves);
 
     // Merge upwards to merge non-homogeneous data
     quadtree->merge(merge_4to1_upwards);

@@ -21,10 +21,6 @@ enum BOUNDARY_SIDE {
 	NORTH
 };
 
-/**
- * 
- * 
- */
 class fc2d_hps_poisson_problem {
 
 public:
@@ -42,10 +38,6 @@ private:
 
 };
 
-/**
- * 
- * 
- */
 class fc2d_hps_laplace_problem : public fc2d_hps_poisson_problem {
 
 public:
@@ -58,10 +50,6 @@ public:
 
 };
 
-/**
- * 
- * 
- */
 class fc2d_hps_constant_laplace_problem : public fc2d_hps_laplace_problem {
 
 public:
@@ -74,10 +62,6 @@ public:
 
 };
 
-/**
- * 
- * 
- */
 class fc2d_hps_linear_laplace_problem : public fc2d_hps_laplace_problem {
 
 public:
@@ -89,10 +73,6 @@ public:
 
 };
 
-/**
- * 
- * 
- */
 class fc2d_hps_hyperbolic_laplace_problem : public fc2d_hps_laplace_problem {
 
 private:

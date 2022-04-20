@@ -32,16 +32,16 @@ endif()
 # ----------------------------------
 # HPS library and examples
 # ----------------------------------
-if(TARGET FORESTCLAW::HPS)
+# if(TARGET FORESTCLAW::HPS)
 
     # Hello world program
-    add_subdirectory(hello)
+    # add_subdirectory(hello)
 
     # Simple
     add_subdirectory(simple)
 
-    # Poisson's equation (timing and error testing)
-    add_subdirectory(poisson)
+    # Adaptive Testing
+    # add_subdirectory(adaptive_testing)
 
-endif()
+# endif()
 

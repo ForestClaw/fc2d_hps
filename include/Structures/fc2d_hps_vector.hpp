@@ -1,28 +1,3 @@
-/*
-  Copyright (c) 2019-2021 Carsten Burstedde, Donna Calhoun, Damyn Chipman
-  All rights reserved.
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-
-  * Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-  * Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
 #ifndef FC2D_HPS_VECTOR_HPP
 #define FC2D_HPS_VECTOR_HPP
 
@@ -47,20 +22,6 @@ public:
 	std::size_t size() const {
 		return this->std::vector<T>::size();
 	}
-
-	/**
-	 * @brief Index operator; returns object at location `index`.
-	 * 
-	 * @param index Index of object
-	 * @return T& Object at index
-	 */
-	// @TODO: Fix index operator to allow for error handling
-	// T& operator[](std::size_t index) {
-	// 	if (index < 0 || index >= this->size()) {
-	// 		throw std::out_of_range("[fc2d_hps_vector<T>::operator[]] `index` is either negative or out of range.");
-	// 	}
-	// 	return this->std::vector<T>::operator[](index);
-	// }
 
 	/**
 	 * @brief Extracts and returns a subset of the vector.
@@ -213,18 +174,6 @@ fc2d_hps_vector<T> operator-(fc2d_hps_vector<T> & lhs, T rhs) {
 	return res;
 
 }
-
-// @TODO: Not sure why this function isn't working in unit testing...
-// template<class T>
-// fc2d_hps_vector<T> operator-(T lhs, fc2d_hps_vector<T> & rhs) {
-
-// 	fc2d_hps_vector<T> res(rhs.size(), lhs);
-// 	for (int i = 0; i < res.size(); i++) {
-// 		res[i] = res[i] - rhs[i];
-// 	}
-// 	return res;
-
-// }
 
 template<class T>
 fc2d_hps_vector<T> operator*(fc2d_hps_vector<T> & lhs, fc2d_hps_vector<T> & rhs) {

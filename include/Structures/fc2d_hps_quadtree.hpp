@@ -71,7 +71,14 @@ public:
 		std::vector<T>* d;
 		int global_counter;
 
-	} quadtree_data_wrapper_t;	
+	} quadtree_data_wrapper_t;
+
+	typedef struct quadtree_traversal_wrapper {
+
+		std::function<void(T&)> visit;
+		T& data;
+
+	} quadtree_traversal_wrapper_t;
 
 	fc2d_hps_quadtree(fc2d_hps_quadtree& other) = delete;
 	void operator=(const fc2d_hps_quadtree&) = delete;
@@ -97,13 +104,15 @@ public:
 
 	}
 
-	void traverse(std::function<void(T&)> visit) {
+	void traverse_preorder(std::function<void(T&)> visit) {
 
-		for (int l = 0; l < this->global_indices.size(); l++) {
-			for (int i = 0; i < this->global_indices[l].size(); i++) {
-				visit(this->data[global_indices[l][i]]);
-			}
-		}
+		for (auto& d : this->data) visit(d);
+
+	}
+
+	void traverse_postorder(std::function<void(T&)> visit) {
+
+		this->_traverse_postorder(visit, 0, 0);
 
 	}
 
@@ -116,13 +125,12 @@ public:
 					int c1_idx = i+1;
 					int c2_idx = i+2;
 					int c3_idx = i+3;
-					int p_idx = this->parent_indices[l][i];
 
 					int c0ID = this->global_indices[l][c0_idx];
 					int c1ID = this->global_indices[l][c1_idx];
 					int c2ID = this->global_indices[l][c2_idx];
 					int c3ID = this->global_indices[l][c3_idx];
-					int pID = this->global_indices[l-1][p_idx];
+					int pID = this->parent_indices[l][i];
 
 					visit(
 						this->data[pID],
@@ -141,18 +149,16 @@ public:
 
 		for (int l = 0; l < this->global_indices.size(); l++) {
 			for (int i = 0; i < this->global_indices[l].size(); i++) {
-				int p_idx = i;
-				int c0_idx = this->child_indices[l][i];
-				int c1_idx = c0_idx + 1;
-				int c2_idx = c0_idx + 2;
-				int c3_idx = c0_idx + 3;
 
-				if (c0_idx != -1) {
-					int pID = this->global_indices[l][p_idx];
-					int c0ID = this->global_indices[l+1][c0_idx];
-					int c1ID = this->global_indices[l+1][c1_idx];
-					int c2ID = this->global_indices[l+1][c2_idx];
-					int c3ID = this->global_indices[l+1][c3_idx];
+				int pID = this->global_indices[l][i];
+				int c0ID = this->child_indices[l][i];
+
+				if (c0ID != -1) {
+					auto it = std::find(this->global_indices[l+1].begin(), this->global_indices[l+1].end(), c0ID);
+					int c_idx = it - this->global_indices[l+1].begin();
+					int c1ID = this->global_indices[l+1][c_idx+1];
+					int c2ID = this->global_indices[l+1][c_idx+2];
+					int c3ID = this->global_indices[l+1][c_idx+3];
 
 					visit(
 						this->data[pID],
@@ -164,6 +170,39 @@ public:
 				}
 			}
 		}
+
+	}
+
+	friend std::ostream& operator<<(std::ostream& os, const fc2d_hps_quadtree& quadtree) {
+
+		os << "Global Indices:" << std::endl;
+		for (auto& g : quadtree.global_indices) {
+			for (auto& i : g) {
+				os << i << ",  ";
+			}
+			os << std::endl;
+		}
+		os << std::endl;
+
+		os << "Parent Indices:" << std::endl;
+		for (auto& p : quadtree.parent_indices) {
+			for (auto& i : p) {
+				os << i << ",  ";
+			}
+			os << std::endl;
+		}
+		os << std::endl;
+
+		os << "Child Indices:" << std::endl;
+		for (auto& c : quadtree.child_indices) {
+			for (auto& i : c) {
+				os << i << ",  ";
+			}
+			os << std::endl;
+		}
+		os << std::endl;
+
+		return os;
 
 	}
 
@@ -242,6 +281,31 @@ private:
 
 	}
 
+	void _traverse_postorder(std::function<void(T&)> visit, int level, int idx) {
+		int gID = this->global_indices[level][idx];
+		int cID = this->child_indices[level][idx];
+		if (cID == -1) {
+			visit(this->data[gID]);
+			return;
+		}
+		else {
+			auto it = std::find(this->global_indices[level+1].begin(), this->global_indices[level+1].end(), cID);
+			int c_idx = it - this->global_indices[level+1].begin();
+			for (int i = 0; i < 4; i++) {
+				_traverse_postorder(visit, level+1, c_idx+i);
+			}
+			visit(this->data[gID]);
+		}
+	}
+
+	void _merge(std::function<void(T&, T&, T&, T&, T&)> visit, int level, int idx) {
+		int gID = this->global_indices[level][idx];
+		int cID = this->child_indices[level][idx];
+		if (cID == -1) {
+
+		}
+	}
+
 	static int p4est_visit_pre(p4est_t* p4est, p4est_topidx_t which_tree, p4est_quadrant_t* quadrant, p4est_locidx_t local_num, void* point) {
 
 		// Get access to level arrays
@@ -251,20 +315,18 @@ private:
 		level_array& child_indices = *(wrapper->c);
 		std::vector<T> data = *(wrapper->d);
 
-		// Quadrant's global ID
-		int my_global_ID = wrapper->global_counter;
-
 		// Populate global index array
-		global_indices[quadrant->level].push_back(wrapper->global_counter);
-		wrapper->global_counter++;
+		global_indices[quadrant->level].push_back(wrapper->global_counter++);
 
 		// Populate parent index array
+		int pID;
 		if (quadrant->level == 0) {
-			parent_indices[quadrant->level].push_back(-1);
+			pID = -1;
 		}
 		else {
-			parent_indices[quadrant->level].push_back(global_indices[quadrant->level-1].size() - 1);
+			pID = global_indices[quadrant->level-1][global_indices[quadrant->level-1].size() - 1];
 		}
+		parent_indices[quadrant->level].push_back(pID);
 
 		return 1;
 	}
@@ -279,14 +341,16 @@ private:
 		std::vector<T> data = *(wrapper->d);
 
 		// Populate child array
+		int cID;
 		if (local_num < 0) {
 			// Current patch is not a leaf
-			child_indices[quadrant->level].push_back(global_indices[quadrant->level+1].size()-4);
+			cID = global_indices[quadrant->level+1][global_indices[quadrant->level+1].size()-4];
 		}
 		else {
 			// Patch is a leaf
-			child_indices[quadrant->level].push_back(-1);
+			cID = -1;
 		}
+		child_indices[quadrant->level].push_back(cID);
 
 		return 1;
 	}

@@ -1,28 +1,3 @@
-/*
-  Copyright (c) 2019-2021 Carsten Burstedde, Donna Calhoun, Damyn Chipman
-  All rights reserved.
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-
-  * Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-  * Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
 #ifndef FC2D_HPS_MATRIX_HPP
 #define FC2D_HPS_MATRIX_HPP
 
@@ -460,6 +435,29 @@ fc2d_hps_matrix<T> solve(fc2d_hps_matrix<T>& A, fc2d_hps_matrix<T>& B) {
     }
 
     return X.transpose();
+}
+
+template<class T>
+fc2d_hps_matrix<T> block_diag(std::vector<fc2d_hps_matrix<T>> diag) {
+	
+	int nrows_total = 0;
+	int ncols_total = 0;
+	for (auto& d : diag) {
+		nrows_total += d.rows;
+		ncols_total += d.cols;
+	}
+
+	fc2d_hps_matrix<T> out(nrows_total, ncols_total);
+
+	int row_index = 0;
+	int col_index = 0;
+	for (auto& d : diag) {
+		out.intract(row_index, col_index, d);
+		row_index += d.rows;
+		col_index += d.cols;
+	}
+	
+	return out;
 }
 
 #endif // FC2D_HPS_MATRIX_HPP

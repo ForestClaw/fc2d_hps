@@ -36,8 +36,7 @@ fc2d_hps_patch init_fn(fc2d_hps_quadtree<fc2d_hps_patch>* quadtree, int level, i
 	else {
 		// Build branch patch
 		// Get parent patch
-		int p_idx = quadtree->parent_indices[level][idx];
-		int pID = quadtree->global_indices[level-1][p_idx];
+		int pID = quadtree->parent_indices[level][idx];
 		fc2d_hps_patch parent_patch = quadtree->data[pID];
 
 		// Build child patch
@@ -120,7 +119,7 @@ void fc2d_hps_setup(struct fclaw2d_global* glob) {
 
     // Set patch IDs
     current_ID = 0;
-    quadtree->traverse(visit_set_ID);
+    quadtree->traverse_postorder(visit_set_ID);
 
     // Set up DtN cache
     if (hps_opt->cache_T) {

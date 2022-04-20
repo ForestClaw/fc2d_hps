@@ -17,6 +17,8 @@ void fc2d_hps_patch::print_info() {
 	printf("  ID           = %i\n", this->ID);
 	printf("  level        = %i\n", this->level);
 	printf("  is_leaf      = %i\n", this->is_leaf);
+	printf("  has_coarsened= %i\n", this->has_coarsened);
+	printf("  has_finer    = %i\n", this->has_finer);
 	printf("  N_cells_leaf = %i\n", this->N_cells_leaf);
 	printf("  N_patch_side:\n");
 	printf("    WEST  = %i\n", this->N_patch_side[WEST]);

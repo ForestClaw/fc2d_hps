@@ -1,6 +1,9 @@
 #include "Methods/fc2d_hps_copy.hpp"
 
 void visit_copy_data(fc2d_hps_patch& patch) {
+
+    // TODO: Look at forestclaw iterator for copying
+
     if (patch.is_leaf == true) {
 
         fclaw2d_global_t* glob = (fclaw2d_global_t*) patch.user;
@@ -25,15 +28,15 @@ void visit_copy_data(fc2d_hps_patch& patch) {
         int y_pts = patch.grid.Ny + 2*mbc;
         for (int i = 0; i < x_pts; i++) {
             for (int j = 0; j < y_pts; j++) {
-                int idx = j + i*y_pts;
+                int idx = j + i*y_pts;  
                 int idx_T = i + j*x_pts;
                 if (i > mbc-1 && i < x_pts-mbc && j > mbc-1 && j < y_pts-mbc) {
                     q[idx_T] = patch.u[idx];
                     rhs[idx_T] = patch.u[idx];
                 }
                 else {
-                    q[idx_T] = 0;
-                    rhs[idx_T] = 0;
+                    // q[idx_T] = 0;
+                    // rhs[idx_T] = 0;
                 }
             }
         }
@@ -48,7 +51,7 @@ void fc2d_hps_clawpatch_data_move(fclaw2d_global* glob) {
     fc2d_hps_quadtree<fc2d_hps_patch>* quadtree = fc2d_hps_quadtree<fc2d_hps_patch>::get_instance();
 
     // Copy data to ForestClaw
-    quadtree->traverse(visit_copy_data);
+    quadtree->traverse_preorder(visit_copy_data);
     
     fclaw_global_essentialf("End move to ForestClaw data\n");
 }

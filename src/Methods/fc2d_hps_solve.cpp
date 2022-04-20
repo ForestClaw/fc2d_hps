@@ -1,28 +1,3 @@
-/*
-Copyright (c) 2019-2021 Carsten Burstedde, Donna Calhoun, Damyn Chipman
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
- * Redistributions of source code must retain the above copyright notice, this
-list of conditions and the following disclaimer.
- * Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation
-and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
 #include <Methods/fc2d_hps_solve.hpp>
 
 // Global declarations
@@ -30,6 +5,7 @@ extern std::vector<fc2d_hps_matrix<double>> T_cache;
 
 void visit_split(fc2d_hps_patch& tau, fc2d_hps_patch& alpha, fc2d_hps_patch& beta, fc2d_hps_patch& gamma, fc2d_hps_patch& omega) {
     if (tau.is_leaf == false) {
+        // printf("splitting...\n");
         split_1to4(tau, alpha, beta, gamma, omega);
     }
 }
@@ -52,6 +28,37 @@ void visit_patchsolver(fc2d_hps_patch& patch) {
     }
 }
 
+void set_root_boundary_data(fc2d_hps_patch& root_patch) {
+
+    fclaw2d_global_t* glob = (fclaw2d_global_t*) root_patch.user;
+    fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
+    fc2d_hps_options_t* hps_opt = fc2d_hps_get_options(glob);
+    fc2d_hps_vtable_t* hps_vt = fc2d_hps_vt();
+
+    int size_of_g = 2*root_patch.grid.Nx + 2*root_patch.grid.Ny;
+    root_patch.g = fc2d_hps_vector<double>(size_of_g, 0);
+    fc2d_hps_vector<double> g_west(root_patch.grid.Ny);
+    fc2d_hps_vector<double> g_east(root_patch.grid.Ny);
+    fc2d_hps_vector<double> g_south(root_patch.grid.Nx);
+    fc2d_hps_vector<double> g_north(root_patch.grid.Nx);
+    for (int j = 0; j < root_patch.grid.Ny; j++) {
+        double y = root_patch.grid.point(YDIM, j);
+        g_west[j] = hps_vt->fort_eval_bc(&hps_opt->boundary_conditions[0], &glob->curr_time, &root_patch.grid.x_lower, &y);
+        g_east[j] = hps_vt->fort_eval_bc(&hps_opt->boundary_conditions[1], &glob->curr_time, &root_patch.grid.x_upper, &y);
+    }
+    for (int i = 0; i < root_patch.grid.Nx; i++) {
+        double x = root_patch.grid.point(XDIM, i);
+        g_south[i] = hps_vt->fort_eval_bc(&hps_opt->boundary_conditions[2], &glob->curr_time, &x, &root_patch.grid.y_lower);
+        g_north[i] = hps_vt->fort_eval_bc(&hps_opt->boundary_conditions[3], &glob->curr_time, &x, &root_patch.grid.y_upper);
+    }
+    root_patch.g.intract(0*root_patch.grid.Nx, g_west);
+    root_patch.g.intract(1*root_patch.grid.Nx, g_east);
+    root_patch.g.intract(2*root_patch.grid.Nx, g_south);
+    root_patch.g.intract(3*root_patch.grid.Nx, g_north);
+    return;
+
+}
+
 void fc2d_hps_solve(fclaw2d_global_t* glob) {
     
     fclaw_global_essentialf("Begin HPS solve\n");
@@ -65,32 +72,14 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
     fc2d_hps_quadtree<fc2d_hps_patch>* quadtree = fc2d_hps_quadtree<fc2d_hps_patch>::get_instance();
 
     // Build Dirichlet data at top level
-    int size_of_g = 2*quadtree->data[0].grid.Nx + 2*quadtree->data[0].grid.Ny;
-    quadtree->data[0].g = fc2d_hps_vector<double>(size_of_g, 0);
-    fc2d_hps_vector<double> g_west(quadtree->data[0].grid.Ny);
-    fc2d_hps_vector<double> g_east(quadtree->data[0].grid.Ny);
-    fc2d_hps_vector<double> g_south(quadtree->data[0].grid.Nx);
-    fc2d_hps_vector<double> g_north(quadtree->data[0].grid.Nx);
-    for (int j = 0; j < quadtree->data[0].grid.Ny; j++) {
-        double y = quadtree->data[0].grid.point(YDIM, j);
-        g_west[j] = hps_vt->fort_eval_bc(&hps_opt->boundary_conditions[0], &glob->curr_time, &quadtree->data[0].grid.x_lower, &y);
-        g_east[j] = hps_vt->fort_eval_bc(&hps_opt->boundary_conditions[1], &glob->curr_time, &quadtree->data[0].grid.x_upper, &y);
-    }
-    for (int i = 0; i < quadtree->data[0].grid.Nx; i++) {
-        double x = quadtree->data[0].grid.point(XDIM, i);
-        g_south[i] = hps_vt->fort_eval_bc(&hps_opt->boundary_conditions[2], &glob->curr_time, &x, &quadtree->data[0].grid.y_lower);
-        g_north[i] = hps_vt->fort_eval_bc(&hps_opt->boundary_conditions[3], &glob->curr_time, &x, &quadtree->data[0].grid.y_upper);
-    }
-    quadtree->data[0].g.intract(0*quadtree->data[0].grid.Nx, g_west);
-    quadtree->data[0].g.intract(1*quadtree->data[0].grid.Nx, g_east);
-    quadtree->data[0].g.intract(2*quadtree->data[0].grid.Nx, g_south);
-    quadtree->data[0].g.intract(3*quadtree->data[0].grid.Nx, g_north);
+    fc2d_hps_patch& root_patch = quadtree->data[0];
+    set_root_boundary_data(root_patch);
 
     // Traverse tree from root and apply solution operator or patch solver
     quadtree->split(visit_split);
 
     // Iterate over leaf nodes and apply patch solver
-    quadtree->traverse(visit_patchsolver);
+    quadtree->traverse_preorder(visit_patchsolver);
 
     fclaw_global_essentialf("End HPS solve\n");
 }

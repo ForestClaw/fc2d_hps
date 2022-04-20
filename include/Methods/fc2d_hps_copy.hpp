@@ -19,8 +19,8 @@
 #include "fc2d_hps_methods.hpp"
 
 // Globals
-extern patch_tree quadtree; // use static
-extern int current_ID; // use static
+extern patch_tree quadtree;
+extern int current_ID;
 extern std::vector<fc2d_hps_matrix<double>> T_cache;
 
 void visit_copy_data(fc2d_hps_patch& patch);

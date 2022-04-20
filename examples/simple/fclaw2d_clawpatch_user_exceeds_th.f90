@@ -14,7 +14,7 @@ integer function user_exceeds_th(blockno,&
     integer :: refine
 
     refine = 0
-    if (xc .gt. 0 .and. yc .gt. 0) then
+    if (xc .gt. 0) then
         refine = 1
     endif
 

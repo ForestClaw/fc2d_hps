@@ -52,25 +52,6 @@ fclaw2d_domain_t* create_domain(sc_MPI_Comm mpicomm, fclaw_options_t* fclaw_opt)
     return domain;
 }
 
-double init_fn(p4est_t* p4est, void* user) {
-    return 1.0;
-}
-
-void merge_fn(double& p, double& c0, double& c1, double& c2, double& c3) {
-    p = c0 + c1 + c2 + c3;
-}
-
-void split_fn(double& p, double& c0, double& c1, double& c2, double& c3) {
-    c0 = p / 4;
-    c1 = p / 4;
-    c2 = p / 4;
-    c3 = p / 4;
-}
-
-void visit_print(double& d) {
-    printf("node data: d = %f\n", d);
-}
-
 static
 void run_program(fclaw2d_global_t* glob)
 {
@@ -99,12 +80,12 @@ void run_program(fclaw2d_global_t* glob)
 
     /* Compute sum of RHS; reset error accumulators */
     int init_flag = 1;  
-    // fclaw2d_diagnostics_gather(glob,init_flag);
+    fclaw2d_diagnostics_gather(glob,init_flag);
     init_flag = 0;
 
     /* Output rhs */
     int Frame = 0;
-    // fclaw2d_output_frame(glob,Frame);
+    fclaw2d_output_frame(glob,Frame);
  
     /* Solve the elliptic problem */
     fclaw2d_elliptic_solve(glob);
@@ -112,15 +93,8 @@ void run_program(fclaw2d_global_t* glob)
     /* Compute error, compute conservation */
     fclaw2d_diagnostics_gather(glob, init_flag);
 
-    /* Reset to time FISHPACK */
-    // init_flag = 1;
-    // fclaw2d_diagnostics_gather(glob, init_flag);
-
-    /* Run FISHPACK */
-
-
     /* Output solution */
-    Frame = 0;
+    Frame = 1;
     fclaw2d_output_frame(glob,Frame);
 
     /* ---------------------------------------------------------------
