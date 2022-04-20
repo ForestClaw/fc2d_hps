@@ -120,14 +120,11 @@ public:
 
 		for (int l = this->global_indices.size()-1; l > 0; l--) {
 			for (int i = 0; i < this->global_indices[l].size(); i++) {
-				// printf("l = %i,  i = %i\n", l, i);
 				if (i % 4 == 0) {
 					int c0_idx = i;
 					int c1_idx = i+1;
 					int c2_idx = i+2;
 					int c3_idx = i+3;
-					// int p_idx = this->parent_indices[l][i];
-					// printf("gID = %i, c0_idx = %i, c1_idx = %i, c2_idx = %i, c3_idx = %i\n", this->global_indices[l][i], c0_idx, c1_idx, c2_idx, c3_idx);
 
 					int c0ID = this->global_indices[l][c0_idx];
 					int c1ID = this->global_indices[l][c1_idx];
@@ -135,7 +132,6 @@ public:
 					int c3ID = this->global_indices[l][c3_idx];
 					int pID = this->parent_indices[l][i];
 
-					// printf("merging: pID = %i, c0ID = %i, c1ID = %i, c2ID = %i, c3ID = %i\n", pID, c0ID, c1ID, c2ID, c3ID);
 					visit(
 						this->data[pID],
 						this->data[c0ID],
@@ -164,7 +160,6 @@ public:
 					int c2ID = this->global_indices[l+1][c_idx+2];
 					int c3ID = this->global_indices[l+1][c_idx+3];
 
-					// printf("splitting: pID = %i, c0ID = %i, c1ID = %i, c2ID = %i, c3ID = %i\n", pID, c0ID, c1ID, c2ID, c3ID);
 					visit(
 						this->data[pID],
 						this->data[c0ID],
@@ -173,28 +168,6 @@ public:
 						this->data[c3ID]
 					);
 				}
-
-				// int p_idx = i;
-				// int c0_idx = this->child_indices[l][i];
-				// int c1_idx = c0_idx + 1;
-				// int c2_idx = c0_idx + 2;
-				// int c3_idx = c0_idx + 3;
-
-				// if (c0_idx != -1) {
-				// 	int pID = this->global_indices[l][p_idx];
-				// 	int c0ID = this->global_indices[l+1][c0_idx];
-				// 	int c1ID = this->global_indices[l+1][c1_idx];
-				// 	int c2ID = this->global_indices[l+1][c2_idx];
-				// 	int c3ID = this->global_indices[l+1][c3_idx];
-
-				// 	visit(
-				// 		this->data[pID],
-				// 		this->data[c0ID],
-				// 		this->data[c1ID],
-				// 		this->data[c2ID],
-				// 		this->data[c3ID]
-				// 	);
-				// }
 			}
 		}
 

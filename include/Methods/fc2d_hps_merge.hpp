@@ -19,24 +19,6 @@ typedef struct index_set {
 
 } index_set_t;
 
-enum fc2d_hps_merge_case {
-    HORIZONTAL_UNIFORM,
-    HORIZONTAL_ALPHA,
-    HORIZONTAL_BETA,
-    VERTICAL_UNIFORM,
-    VERTICAL_ALPHA,
-    VERTICAL_BETA,
-    VERTICAL_GAMMA,
-    VERTICAL_OMEGA,
-    VERTICAL_ALPHA_PRIME,
-    VERTICAL_BETA_PRIME,
-    VERTICAL_ALPHA_COARSE,
-    VERTICAL_BETA_COARSE,
-    VERTICAL_GAMMA_COARSE,
-    VERTICAL_OMEGA_COARSE
-};
-
-fc2d_hps_merge_case identify_merge_case(fc2d_hps_patch& alpha, fc2d_hps_patch& beta);
 std::vector<int> fill_range(int start, int end);
 fc2d_hps_matrix<double> build_L21(int n_rows, int n_cols);
 fc2d_hps_matrix<double> build_L12(int n_rows, int n_cols);

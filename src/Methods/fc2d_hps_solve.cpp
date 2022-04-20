@@ -1,28 +1,3 @@
-/*
-Copyright (c) 2019-2021 Carsten Burstedde, Donna Calhoun, Damyn Chipman
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
- * Redistributions of source code must retain the above copyright notice, this
-list of conditions and the following disclaimer.
- * Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation
-and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
 #include <Methods/fc2d_hps_solve.hpp>
 
 // Global declarations
@@ -41,32 +16,6 @@ void visit_patchsolver(fc2d_hps_patch& patch) {
         // Get options
         fclaw2d_global_t* glob = (fclaw2d_global_t*) patch.user;
         fc2d_hps_options_t* hps_opt = fc2d_hps_get_options(glob);
-        // fc2d_hps_vtable_t* hps_vt = fc2d_hps_vt();
-        // int example = 1;
-        // int flag = 0;
-
-        // for (int j = 0; j < patch.grid.Ny; j++) {
-        //     double x = patch.grid.x_lower;
-        //     double y = patch.grid.point(YDIM, j);
-        //     hps_vt->fort_qexact(&example, &x, &y, &patch.g[j], NULL, NULL, &flag);
-        // }
-        // for (int j = 0; j < patch.grid.Ny; j++) {
-        //     double x = patch.grid.x_upper;
-        //     double y = patch.grid.point(YDIM, j);
-        //     hps_vt->fort_qexact(&example, &x, &y, &patch.g[j + patch.grid.Ny], NULL, NULL, &flag);
-        // }
-        // for (int i = 0; i < patch.grid.Nx; i++) {
-        //     double x = patch.grid.point(XDIM, i);
-        //     double y = patch.grid.y_lower;
-        //     hps_vt->fort_qexact(&example, &x, &y, &patch.g[i + 2*patch.grid.Ny], NULL, NULL, &flag);
-        // }
-        // for (int i = 0; i < patch.grid.Nx; i++) {
-        //     double x = patch.grid.point(XDIM, i);
-        //     double y = patch.grid.y_upper;
-        //     hps_vt->fort_qexact(&example, &x, &y, &patch.g[i + 3*patch.grid.Ny], NULL, NULL, &flag);
-        // }
-
-        // TODO: Short-circuit RHS
 
         // Get patch solver
         // TODO: Put patch solver in glob...?
@@ -106,7 +55,6 @@ void set_root_boundary_data(fc2d_hps_patch& root_patch) {
     root_patch.g.intract(1*root_patch.grid.Nx, g_east);
     root_patch.g.intract(2*root_patch.grid.Nx, g_south);
     root_patch.g.intract(3*root_patch.grid.Nx, g_north);
-    // for (int i = 0; i < root_patch.g.size(); i++) printf("%6.2e\n", root_patch.g[i]);
     return;
 
 }
@@ -126,7 +74,6 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
     // Build Dirichlet data at top level
     fc2d_hps_patch& root_patch = quadtree->data[0];
     set_root_boundary_data(root_patch);
-    // root_patch.print_info();
 
     // Traverse tree from root and apply solution operator or patch solver
     quadtree->split(visit_split);

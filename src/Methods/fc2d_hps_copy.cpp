@@ -6,8 +6,6 @@ void visit_copy_data(fc2d_hps_patch& patch) {
 
     if (patch.is_leaf == true) {
 
-        // patch.print_info();
-
         fclaw2d_global_t* glob = (fclaw2d_global_t*) patch.user;
         fclaw2d_domain_t* domain = glob->domain;
         fclaw2d_patch_t* fc_patch = &(domain->blocks->patches[patch.ID]);
@@ -22,8 +20,6 @@ void visit_copy_data(fc2d_hps_patch& patch) {
         fclaw2d_clawpatch_grid_data(glob, fc_patch, &Nx, &Ny, &mbc, &x_lower, &y_lower, &dx, &dy);
         fclaw2d_clawpatch_soln_data(glob, fc_patch, &q, &meqn);
         fclaw2d_clawpatch_rhs_data(glob, fc_patch, &rhs, &mfields);
-
-        // printf("patch.ID = %i, blockno = %i\n", patch.ID, fc_patch->u.blockno);
 
         // @TODO: Work on memcpy
 
@@ -42,14 +38,8 @@ void visit_copy_data(fc2d_hps_patch& patch) {
                     // q[idx_T] = 0;
                     // rhs[idx_T] = 0;
                 }
-                // q[idx_T] = (double) patch.ID;
-                // rhs[idx_T] = (double) patch.ID;
-                // q[idx_T] = (double) patch.level;
             }
         }
-
-        // std::string filename = 
-        // patch.to_vtk()
     }
 
 }
@@ -61,7 +51,6 @@ void fc2d_hps_clawpatch_data_move(fclaw2d_global* glob) {
     fc2d_hps_quadtree<fc2d_hps_patch>* quadtree = fc2d_hps_quadtree<fc2d_hps_patch>::get_instance();
 
     // Copy data to ForestClaw
-    // quadtree->traverse_postorder(visit_copy_data);
     quadtree->traverse_preorder(visit_copy_data);
     
     fclaw_global_essentialf("End move to ForestClaw data\n");

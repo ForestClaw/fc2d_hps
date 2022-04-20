@@ -4,7 +4,7 @@
 #include "fc2d_hps_methods.hpp"
 
 // Global declarations
-extern patch_tree quadtree; // use static...?
+extern patch_tree quadtree;
 extern int current_ID;
 extern std::vector<fc2d_hps_matrix<double>> T_cache;
 

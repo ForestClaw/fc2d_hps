@@ -93,7 +93,7 @@ fc2d_hps_patch merge_horizontal_upwards(fc2d_hps_patch& alpha, fc2d_hps_patch& b
 	fc2d_hps_vector<double> h_3_beta = beta.h.from_index_set(index_sets.I3_beta);
 
     // Perform linear algebra
-    fc2d_hps_matrix<double> X_tau; // Is this already built from build stage?
+    fc2d_hps_matrix<double> X_tau;
 	fc2d_hps_vector<double> w_tau;
 	fc2d_hps_vector<double> h_tau;
     if (alpha.N_patch_side[WEST] == beta.N_patch_side[EAST]) {
@@ -101,14 +101,6 @@ fc2d_hps_patch merge_horizontal_upwards(fc2d_hps_patch& alpha, fc2d_hps_patch& b
         X_tau = merge_X(T_33_alpha, T_33_beta);
 		w_tau = merge_w(X_tau, h_3_alpha, h_3_beta);
 		h_tau = merge_h(T_13_alpha, T_23_beta, w_tau, h_1_alpha, h_2_beta);
-	}
-	else if (2 * alpha.N_patch_side[WEST] == beta.N_patch_side[EAST]) {
-		// Alpha = fine, beta = coarse
-		throw std::logic_error("[fc2d_hps_merge::merge_horizontal] Not implemented!");
-	}
-	else if (alpha.N_patch_side[WEST] == 2 * beta.N_patch_side[EAST]) {
-		// Alpha = coarse, beta = fine
-		throw std::logic_error("[fc2d_hps_merge::merge_horizontal] Not implemented!");
 	}
 	else {
 		throw std::invalid_argument("[fc2d_hps_merge::merge_horizontal] Size mismatch between alpha and beta.");
@@ -167,7 +159,7 @@ fc2d_hps_patch merge_vertical_upwards(fc2d_hps_patch& alpha, fc2d_hps_patch& bet
 	fc2d_hps_vector<double> h_3_beta = beta.h.from_index_set(index_sets.I3_beta);
 
     // Perform linear algebra
-    fc2d_hps_matrix<double> X_tau; // Is this already built from build stage?
+    fc2d_hps_matrix<double> X_tau;
     fc2d_hps_vector<double> w_tau;
 	fc2d_hps_vector<double> h_tau;
 	// Begin cases
@@ -176,14 +168,6 @@ fc2d_hps_patch merge_vertical_upwards(fc2d_hps_patch& alpha, fc2d_hps_patch& bet
         X_tau = merge_X(T_33_alpha, T_33_beta);
 		w_tau = merge_w(X_tau, h_3_alpha, h_3_beta);
 		h_tau = merge_h(T_13_alpha, T_23_beta, w_tau, h_1_alpha, h_2_beta);
-	}
-	else if (2 * alpha.N_patch_side[NORTH] == beta.N_patch_side[SOUTH]) {
-		// Alpha = fine, beta = coarse
-		throw std::logic_error("[fc2d_hps_merge::merge_horizontal] Not implemented!");
-	}
-	else if (alpha.N_patch_side[NORTH] == 2 * beta.N_patch_side[SOUTH]) {
-		// Alpha = coarse, beta = fine
-		throw std::logic_error("[fc2d_hps_merge::merge_horizontal] Not implemented!");
 	}
 	else {
 		throw std::invalid_argument("[fc2d_hps_merge::merge_horizontal] Size mismatch between alpha and beta.");
@@ -241,8 +225,6 @@ void visit_set_particular_data_leaves(fc2d_hps_patch& patch) {
         fc2d_hps_vector<double> g_zero(2*patch.grid.Nx + 2*patch.grid.Ny, 0);
         patch.h = FISHPACK_solver.dtn(patch.grid, g_zero, patch.f);
 
-        // patch.print_info();
-
     }
 }
 
@@ -256,11 +238,9 @@ void coarsen_patch_upwards(fc2d_hps_patch& fine_patch) {
 	fc2d_hps_matrix<double> L21_patch = block_diag(L21_diagonals);
 
 	// Particular Neumann data
-	// printf("HERE1\n");
 	fine_patch.coarsened->h = L21_patch * fine_patch.h;
 
 	// Particular solution data
-	// printf("HERE2\n");
 	fine_patch.coarsened->w = L21_side * fine_patch.w;
 
 }
@@ -278,13 +258,6 @@ void merge_4to1_upwards(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps
 	fc2d_hps_patch* gamma = &child2;
 	fc2d_hps_patch* omega = &child3;
 	std::vector<int> tags = tag_patch_coarsen(parent, child0, child1, child2, child3);
-	// printf("TAGS UPWARDS: ");
-	// for (auto& t : tags) printf("%i ", t);
-	// printf("\n");
-	// if (tags[0]) coarsen_patch_upwards(child0);
-	// if (tags[1]) coarsen_patch_upwards(child1);
-	// if (tags[2]) coarsen_patch_upwards(child2);
-	// if (tags[3]) coarsen_patch_upwards(child3);
 
 	while (tags[0]-- > 0) {
 		coarsen_patch_upwards(*alpha);
@@ -304,18 +277,14 @@ void merge_4to1_upwards(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps
 	}
 
 	// Horizontal merge
-	// printf("HERE3\n");
 	alpha_prime = merge_horizontal_upwards(*alpha, *beta);
     alpha_prime.T = alpha->T_prime;
 
-	// printf("HERE4\n");
 	beta_prime = merge_horizontal_upwards(*gamma, *omega);
     beta_prime.T = gamma->T_prime;
 
 	// Vertical merge
-	// printf("HERE5\n");
 	tau = merge_vertical_upwards(alpha_prime, beta_prime);
-	// printf("HERE6\n");
 	
 	// Copy only necessary data to parent
     parent.w = tau.w;

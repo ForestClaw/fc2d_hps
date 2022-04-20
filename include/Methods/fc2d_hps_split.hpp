@@ -1,6 +1,5 @@
 #ifndef FC2D_HPS_SPLIT_HPP_
 #define FC2D_HPS_SPLIT_HPP_
-#pragma once
 
 #include <Structures/fc2d_hps_patch.hpp>
 #include "fc2d_hps_methods.hpp"
