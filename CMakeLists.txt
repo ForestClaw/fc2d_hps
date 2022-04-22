@@ -1,22 +1,47 @@
+# --------------------------------------------
+# List of available applications and examples
+#
+# Note : Any files below which are uncommented
+# need to be available at compile time, even 
+# the configuration flag is not set.  
+# --------------------------------------------
+
+
 cmake_minimum_required(VERSION 3.13...3.20)
-project(fc2d_hps)
 
-set(CMAKE_CXX_STANDARD 11)
+project(HPS LANGUAGES C CXX Fortran)
 
-# -- unit tests
-# include(FetchContent)
-# FetchContent_Declare(
-# 	googletest
-# 	URL https://github.com/google/googletest/archive/refs/tags/release-1.11.0.zip
-# )
-# FetchContent_MakeAvailable(googletest)
-# add_subdirectory(tests)
+set(CMAKE_CXX_STANDARD 17)
 
-# -- external libraries
-add_subdirectory(external)
+# -- check if this being included as a subdirectory
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/ForestClawExternalProject)
 
-# -- source files
+# --- get installed ForestClaw package
+
+# Set to True if you want to download ForestClaw and build from scratch
+set(external_build False)
+if(NOT external_build)
+    # 'clawpack' here refers to the "-Dclawpack=on" cmake flag
+    # This uses -DFORESTCLAW_ROOT to find ForestClaw installation
+    find_package(FORESTCLAW REQUIRED COMPONENTS clawpack mpi)
+else()
+    # --- fall back to external project build
+    include(ForestClawExternalProject)
+    ForestClawExternalProject(TAG develop COMPONENTS clawpack mpi)
+endif()
+ 
+add_subdirectory(external/mmio)
+add_subdirectory(examples)
 add_subdirectory(src)
 
-# -- examples
-add_subdirectory(examples)
+# include(examples/hps.cmake)
+
+# -- set environment string used for regression tests
+set(FCLAW_TEST_ENVIRONMENT "FCLAW_APPLICATIONS_BUILD_DIR=${PROJECT_BINARY_DIR};FCLAW_APPLICATIONS_SRC_DIR=${PROJECT_SOURCE_DIR}")
+if(TARGET MPI::MPI_C)
+    list(APPEND FCLAW_TEST_ENVIRONMENT "FCLAW_MPIRUN=${MPIEXEC_EXECUTABLE}")
+    list(APPEND FCLAW_TEST_ENVIRONMENT "FCLAW_MPI_TEST_FLAGS=${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}")
+endif()
+
+
+

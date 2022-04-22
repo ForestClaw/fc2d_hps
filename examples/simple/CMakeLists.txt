@@ -1,3 +1,5 @@
+set(include_dir ${PROJECT_SOURCE_DIR}/include)
+
 add_library(simple_f OBJECT
   fclaw2d_clawpatch_user_exceeds_th.f90
   hsmooth.f90 
@@ -18,13 +20,18 @@ add_executable(simple
   $<TARGET_OBJECTS:simple_f>
 )
 
+target_link_libraries(simple PRIVATE
+  mmio
+)
+
+
 target_include_directories(simple PRIVATE 
   ${CMAKE_CURRENT_SOURCE_DIR}
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+  ${include_dir}
 )
 
 target_link_libraries(simple PRIVATE 
-  forestclaw clawpatch hps
+  FORESTCLAW::FORESTCLAW
 )
 
 configure_file(fclaw_options.ini fclaw_options.ini)
