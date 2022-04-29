@@ -20,19 +20,15 @@ add_executable(simple
   $<TARGET_OBJECTS:simple_f>
 )
 
-target_link_libraries(simple PRIVATE
-  mmio
-)
-
-
 target_include_directories(simple PRIVATE 
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${include_dir}
+  ${FORESTCLAW_ROOT}/include
+  ${P4EST_ROOT}/include
 )
 
-target_link_libraries(simple PRIVATE 
-  FORESTCLAW::FORESTCLAW
-)
+target_link_directories(simple PUBLIC ${P4EST_ROOT}/lib ${FORESTCLAW_ROOT}/lib)
+target_link_libraries(simple PUBLIC mmio sc p4est forestclaw clawpatch z hps blas lapack mmio fishpack90)
 
 configure_file(fclaw_options.ini fclaw_options.ini)
 configure_file(scripts/run_timing.py run_timing.py)
