@@ -1,5 +1,3 @@
-set(include_dir ${PROJECT_SOURCE_DIR}/include)
-
 add_library(simple_f OBJECT
   fclaw2d_clawpatch_user_exceeds_th.f90
   hsmooth.f90 
@@ -20,15 +18,18 @@ add_executable(simple
   $<TARGET_OBJECTS:simple_f>
 )
 
+# target_include_directories(simple PRIVATE 
+#   ${CMAKE_CURRENT_SOURCE_DIR}
+#   ${include_dir}
+#   ${FORESTCLAW_ROOT}/include
+#   ${P4EST_ROOT}/include
+# )
+
 target_include_directories(simple PRIVATE 
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${include_dir}
-  ${FORESTCLAW_ROOT}/include
-  ${P4EST_ROOT}/include
 )
 
-target_link_directories(simple PUBLIC ${P4EST_ROOT}/lib ${FORESTCLAW_ROOT}/lib)
-target_link_libraries(simple PUBLIC mmio sc p4est forestclaw clawpatch z hps blas lapack mmio fishpack90)
+target_link_libraries(simple PUBLIC hps)
 
 configure_file(fclaw_options.ini fclaw_options.ini)
 configure_file(scripts/run_timing.py run_timing.py)

@@ -46,27 +46,25 @@ target_sources(hps PRIVATE
   $<TARGET_OBJECTS:hps_f>
 )
 
+# target_include_directories(hps
+#   PUBLIC
+#   ${CMAKE_CURRENT_SOURCE_DIR}/../external/mmio
+#   ${PROJECT_SOURCE_DIR}/include
+#   ${FORESTCLAW_ROOT}/include
+#   ${P4EST_ROOT}/include
+# )
+
 target_include_directories(hps
   PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/../external/mmio
   ${PROJECT_SOURCE_DIR}/include
-  ${FORESTCLAW_ROOT}/include
-  ${P4EST_ROOT}/include
 )
-
-# target_include_directories(hps
-#   INTERFACE
-#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-#   $<INSTALL_INTERFACE:include>
-#   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
-#   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/patches/clawpatch>
-# )
 
 # target_include_directories(hps PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../external/mmio)
 # target_link_directories(hps PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/../external/mmio)
 
-target_link_directories(hps PUBLIC ${P4EST_ROOT}/lib ${FORESTCLAW_ROOT}/lib)
-target_link_libraries(hps PUBLIC forestclaw clawpatch blas lapack mmio fishpack90 sc p4est)
+# target_link_directories(hps PUBLIC ${P4EST_ROOT}/lib ${FORESTCLAW_ROOT}/lib)
+target_link_libraries(hps PUBLIC FORESTCLAW::FORESTCLAW FORESTCLAW::CLAWPATCH blas lapack mmio fishpack90)
 
 # -- install
 
@@ -88,5 +86,3 @@ target_link_libraries(hps PUBLIC forestclaw clawpatch blas lapack mmio fishpack9
 
 
 # -- imported target, for use from FetchContent
-add_library(FORESTCLAW::HPS INTERFACE IMPORTED GLOBAL)
-target_link_libraries(FORESTCLAW::HPS INTERFACE hps)
