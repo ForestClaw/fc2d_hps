@@ -31,6 +31,7 @@ fc2d_hps_patch init_fn(fc2d_hps_quadtree<fc2d_hps_patch>* quadtree, int level, i
 		}
 		patch.N_cells_leaf = Nx;
 		patch.N_patch_side = {1, 1, 1, 1};
+		patch.has_coarsened = false;
 		patch.user = (fclaw2d_global_t*) glob;
 	}
 	else {
@@ -84,6 +85,7 @@ fc2d_hps_patch init_fn(fc2d_hps_quadtree<fc2d_hps_patch>* quadtree, int level, i
 		}
 		patch.N_cells_leaf = Nx;
 		patch.N_patch_side = {1, 1, 1, 1};
+		patch.has_coarsened = false;
 		patch.user = (fclaw2d_global_t*) glob;
 	}
 

@@ -62,7 +62,6 @@ void set_root_boundary_data(fc2d_hps_patch& root_patch) {
 void fc2d_hps_solve(fclaw2d_global_t* glob) {
     
     fclaw_global_essentialf("Begin HPS solve\n");
-    printf("HERE\n");
 
     // Get options
     fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
@@ -75,14 +74,12 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
     // Build Dirichlet data at top level
     fc2d_hps_patch& root_patch = quadtree->data[0];
     set_root_boundary_data(root_patch);
-    printf("HERE\n");
 
     // Traverse tree from root and apply solution operator or patch solver
     quadtree->split(visit_split);
-    printf("HERE\n");
+
     // Iterate over leaf nodes and apply patch solver
     quadtree->traverse_preorder(visit_patchsolver);
-    printf("HERE\n");
     fclaw_global_essentialf("End HPS solve\n");
 }
 
