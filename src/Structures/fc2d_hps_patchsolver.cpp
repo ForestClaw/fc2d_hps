@@ -48,8 +48,8 @@ fc2d_hps_vector<double> fc2d_hps_FISHPACK_solver::solve(fc2d_hps_patchgrid grid,
 	hstcrtt_(&A, &B, &M, &MBDCND, BDA, BDB,
 			&C, &D, &N, &NBDCND, BDC, BDD,
 			&ELMBDA, F, &IDIMF, &PERTRB, &IERROR, W);
-	if (IERROR != 0) {
-		// std::cerr << "[fc2d_hps_FISHPACK_solver::solve] WARNING: call to hstcrt_ returned non-zero error value: IERROR = " << IERROR << std::endl;
+	if (IERROR != 1) {
+		std::cerr << "[fc2d_hps_FISHPACK_solver::solve] WARNING: call to hstcrt_ returned non-zero error value: IERROR = " << IERROR << std::endl;
 	}
 
 	// Move FISHPACK solution into fc2d_hps_vector for output

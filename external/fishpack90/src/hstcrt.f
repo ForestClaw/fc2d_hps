@@ -329,7 +329,6 @@ C-----------------------------------------------
 C
 C     CHECK FOR INVALID PARAMETERS.
 C
-    !   WRITE (*, *) '    BEGINNING HSTCRT... '
       IERROR = 0
       IF (A >= B) IERROR = 1
       IF (MBDCND<0 .OR. MBDCND>4) IERROR = 2
