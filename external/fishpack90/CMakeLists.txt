@@ -47,14 +47,16 @@ set(FISHPACK_TESTS
 	${CMAKE_CURRENT_SOURCE_DIR}/test/tsepx4.f
 )
 
+# set(CMAKE_Fortran_FLAGS "-Wno-unused-dummy-argument -fallow-argument-mismatch -fdefault-real-8")
+
 add_library(
 	fishpack90 STATIC
 	${FISHPACK_SOURCES}
 )
 
 target_compile_options(
-	fishpack90 PUBLIC
-	"-w"
+	fishpack90 BEFORE PRIVATE 
+	"-w" "-fallow-argument-mismatch" "-fdefault-real-8"
 )
 
 install(

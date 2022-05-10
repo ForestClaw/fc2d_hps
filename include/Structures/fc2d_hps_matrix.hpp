@@ -7,7 +7,7 @@
 #include <fstream>
 #include <cassert>
 
-#include <mmio.h>
+#include "../../external/mmio/mmio.h"
 
 #include "fc2d_hps_vector.hpp"
 

@@ -18,14 +18,18 @@ add_executable(simple
   $<TARGET_OBJECTS:simple_f>
 )
 
+# target_include_directories(simple PRIVATE 
+#   ${CMAKE_CURRENT_SOURCE_DIR}
+#   ${include_dir}
+#   ${FORESTCLAW_ROOT}/include
+#   ${P4EST_ROOT}/include
+# )
+
 target_include_directories(simple PRIVATE 
   ${CMAKE_CURRENT_SOURCE_DIR}
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
 )
 
-target_link_libraries(simple PRIVATE 
-  forestclaw clawpatch hps
-)
+target_link_libraries(simple PUBLIC hps)
 
 configure_file(fclaw_options.ini fclaw_options.ini)
 configure_file(scripts/run_timing.py run_timing.py)

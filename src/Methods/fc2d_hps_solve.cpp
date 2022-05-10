@@ -80,7 +80,6 @@ void fc2d_hps_solve(fclaw2d_global_t* glob) {
 
     // Iterate over leaf nodes and apply patch solver
     quadtree->traverse_preorder(visit_patchsolver);
-
     fclaw_global_essentialf("End HPS solve\n");
 }
 
@@ -92,7 +91,7 @@ void fc2d_hps_fishpack_solve(fclaw2d_global_t* glob) {
     fc2d_hps_options_t* hps_opt = fc2d_hps_get_options(glob);
     fc2d_hps_vtable_t* hps_vt = fc2d_hps_vt();
 
-    FCLAW_ASSERT(fclaw_opt->minlevel == 0 && fclaw_opt->maxlevel = 0);
+    // FCLAW_ASSERT(fclaw_opt->minlevel == 0 && fclaw_opt->maxlevel = 0);
 
     // Build grid
     int Nx = clawpatch_opt->mx;

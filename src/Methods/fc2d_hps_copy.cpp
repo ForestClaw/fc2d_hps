@@ -1,4 +1,5 @@
 #include "Methods/fc2d_hps_copy.hpp"
+#include <stdio.h>
 
 void visit_copy_data(fc2d_hps_patch& patch) {
 
@@ -44,11 +45,22 @@ void visit_copy_data(fc2d_hps_patch& patch) {
 
 }
 
+void visit_patch_to_vtk(fc2d_hps_patch& patch) {
+    if (patch.is_leaf) {
+        char filename_c[256];
+        sprintf(filename_c, "patch%03i", patch.ID);
+        std::string filename(filename_c);
+        patch.to_vtk(filename, "Patch Data", "u");
+    }
+}
+
 void fc2d_hps_clawpatch_data_move(fclaw2d_global* glob) {
     fclaw_global_essentialf("Begin move to ForestClaw data\n");
 
     // Get quadtree
     fc2d_hps_quadtree<fc2d_hps_patch>* quadtree = fc2d_hps_quadtree<fc2d_hps_patch>::get_instance();
+
+    // quadtree->traverse_preorder(visit_patch_to_vtk);
 
     // Copy data to ForestClaw
     quadtree->traverse_preorder(visit_copy_data);
