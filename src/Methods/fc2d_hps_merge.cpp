@@ -191,10 +191,6 @@ index_set_t make_index_sets_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& be
 
 fc2d_hps_patch merge_horizontal(fc2d_hps_patch& alpha, fc2d_hps_patch& beta) {
 
-	// Get options
-	fclaw2d_global_t* glob = (fclaw2d_global_t*) alpha.user;
-	fc2d_hps_options* hps_opt = fc2d_hps_get_options(glob);
-
 	// Get number of points for each side for each patch
 	int N_points_leaf_side = alpha.N_cells_leaf;
 	int N_W_alpha = alpha.N_patch_side[WEST] * N_points_leaf_side;
@@ -477,9 +473,9 @@ void merge_4to1(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
 	if (child2.T.size() == 0) { throw std::invalid_argument("[fc2d_hps_merge merge_4to1] `child2.T.size()` is 0; it shouldn't be..."); }
 	if (child3.T.size() == 0) { throw std::invalid_argument("[fc2d_hps_merge merge_4to1] `child3.T.size()` is 0; it shouldn't be..."); }
 
-	// Get options
-	fclaw2d_global_t* glob = (fclaw2d_global_t*) parent.user;
-	fc2d_hps_options* hps_opt = fc2d_hps_get_options(glob);
+	// // Get options
+	// fclaw2d_global_t* glob = (fclaw2d_global_t*) parent.user;
+	// fc2d_hps_options* hps_opt = fc2d_hps_get_options(glob);
 
 	// Forward declarations
 	fc2d_hps_patch alpha_prime;
