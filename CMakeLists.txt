@@ -30,6 +30,8 @@ else()
     ForestClawExternalProject(TAG develop COMPONENTS clawpack mpi)
 endif()
 
+find_package(PETSc)
+
 # message("FORESTCLAW = " ${FORESTCLAW_ROOT})
  
 add_subdirectory(external)

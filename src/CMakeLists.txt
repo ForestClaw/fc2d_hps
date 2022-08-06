@@ -64,7 +64,7 @@ target_include_directories(hps
 # target_link_directories(hps PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/../external/mmio)
 
 # target_link_directories(hps PUBLIC ${P4EST_ROOT}/lib ${FORESTCLAW_ROOT}/lib)
-target_link_libraries(hps PUBLIC FORESTCLAW::FORESTCLAW FORESTCLAW::CLAWPATCH blas lapack mmio fishpack90)
+target_link_libraries(hps PUBLIC FORESTCLAW::FORESTCLAW FORESTCLAW::CLAWPATCH PETSC::PETSC blas lapack mmio fishpack90)
 
 # -- install
 

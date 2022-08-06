@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <petscmat.h>
 #include "fc2d_hps_vector.hpp"
 #include "fc2d_hps_matrix.hpp"
 #include "fc2d_hps_quadtree.hpp"
