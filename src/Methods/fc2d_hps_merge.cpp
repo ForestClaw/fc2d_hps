@@ -1,10 +1,6 @@
 #include <Methods/fc2d_hps_merge.hpp>
 #include <Structures/fc2d_hps_patchsolver.hpp>
 
-// Cache vector for DtN matrix
-extern std::vector<fc2d_hps_matrix<double>> T_cache;
-
-
 std::vector<int> fill_range(int start, int end) {
 	std::vector<int> v(end - start);
 	for (int i = 0; i < v.size(); i++) {

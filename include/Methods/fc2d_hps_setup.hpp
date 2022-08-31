@@ -18,6 +18,8 @@
 #include <Structures/fc2d_hps_patch.hpp>
 #include <Structures/fc2d_hps_quadtree.hpp>
 #include <Structures/fc2d_hps_patchsolver.hpp>
+#include <Util/GenericSingleton.hpp>
+#include <Structures/fc2d_hps_datacache.hpp>
 
 // Globals
 typedef fc2d_hps_quadtree<fc2d_hps_patch> patch_tree;
