@@ -66,7 +66,7 @@ void run_program(fclaw2d_global_t* glob)
     fclaw2d_vtables_initialize(glob);
 
     /* Test hps solver */
-    fc2d_hps_solver_initialize();
+    fc2d_hps_solver_initialize(glob);
 
     /* set up elliptic solver to use the hps solver */
     simple_link_solvers(glob);
@@ -128,8 +128,8 @@ main (int argc, char **argv)
     app = fclaw_app_new (&argc, &argv, NULL);
 
     /* Create new options packages */
-    fclaw_opt = fclaw_options_register(app,"fclaw_options.ini");
-    clawpatch_opt = fclaw2d_clawpatch_options_register(app,"fclaw_options.ini");
+    fclaw_opt = fclaw_options_register(app,"Options","fclaw_options.ini");
+    clawpatch_opt = fclaw2d_clawpatch_options_register(app,"clawpatch","fclaw_options.ini");
     hps_opt = fc2d_hps_options_register(app,"fclaw_options.ini");
     user_opt = simple_options_register(app,"fclaw_options.ini");  
 

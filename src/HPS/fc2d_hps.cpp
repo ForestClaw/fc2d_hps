@@ -158,7 +158,7 @@ int hps_tag4refinement(fclaw2d_global_t *glob,
     int mfields;
     fclaw2d_clawpatch_rhs_data(glob,this_patch,&rhs,&mfields);
 
-    fclaw2d_clawpatch_vtable_t* clawpatch_vt = fclaw2d_clawpatch_vt();
+    fclaw2d_clawpatch_vtable_t* clawpatch_vt = fclaw2d_clawpatch_vt(glob);
     FCLAW_ASSERT(clawpatch_vt->fort_tag4refinement != NULL);
 
 
@@ -192,7 +192,7 @@ int hps_tag4coarsening(fclaw2d_global_t *glob,
         fclaw2d_clawpatch_rhs_data(glob,&fine_patches[igrid],&rhs[igrid],&mfields);
     }
 
-    fclaw2d_clawpatch_vtable_t* clawpatch_vt = fclaw2d_clawpatch_vt();
+    fclaw2d_clawpatch_vtable_t* clawpatch_vt = fclaw2d_clawpatch_vt(glob);
     FCLAW_ASSERT(clawpatch_vt->fort_tag4coarsening != NULL);
 
     const fclaw_options_t *fclaw_opt = fclaw2d_get_options(glob);
@@ -218,7 +218,7 @@ void hps_compute_error(fclaw2d_global_t *glob,
     fclaw_options_t *fclaw_opt = fclaw2d_get_options(glob);
     if (fclaw_opt->compute_error)
     {
-        fclaw2d_clawpatch_vtable_t *clawpatch_vt = fclaw2d_clawpatch_vt();
+        fclaw2d_clawpatch_vtable_t *clawpatch_vt = fclaw2d_clawpatch_vt(glob);
         FCLAW_ASSERT(clawpatch_vt->fort_compute_patch_error != NULL);
 
         int mx, my, mbc;
@@ -273,7 +273,7 @@ void hps_conservation_check(fclaw2d_global_t *glob,
     double *rhs;  /* Solution is stored in the right hand side */ 
     fclaw2d_clawpatch_rhs_data(glob,patch,&rhs,&mfields);
 
-    fclaw2d_clawpatch_vtable_t *clawpatch_vt = fclaw2d_clawpatch_vt();
+    fclaw2d_clawpatch_vtable_t *clawpatch_vt = fclaw2d_clawpatch_vt(glob);
     FCLAW_ASSERT(clawpatch_vt->fort_conservation_check != NULL);
 
 
@@ -310,13 +310,15 @@ fc2d_hps_vtable_t* hps_vt_init()
 	return &s_hps_vt;
 }
 
-void fc2d_hps_solver_initialize()
+void fc2d_hps_solver_initialize(fclaw2d_global_t *glob)
 {
+
+
 	int claw_version = 4; /* solution data is organized as (i,j,m) */
-	fclaw2d_clawpatch_vtable_initialize(claw_version);
+	fclaw2d_clawpatch_vtable_initialize(glob, claw_version);
 
 	/* Patch : These could be over-written by user specific settings */
-	fclaw2d_patch_vtable_t*   patch_vt = fclaw2d_patch_vt();  
+	fclaw2d_patch_vtable_t*   patch_vt = fclaw2d_patch_vt(glob);  
 	patch_vt->rhs            = hps_rhs;   /* Calls FORTRAN routine */
     patch_vt->initialize     = hps_rhs;   /* Get an initial refinement */
 	patch_vt->setup          = NULL;
@@ -326,11 +328,11 @@ void fc2d_hps_solver_initialize()
     patch_vt->tag4coarsening = hps_tag4coarsening;
 
     /* Clawpatch and ForestClaw : Output functions */
-    fclaw2d_vtable_t*   fclaw_vt = fclaw2d_vt();
+    fclaw2d_vtable_t*   fclaw_vt = fclaw2d_vt(glob);
     fclaw_vt->output_frame = hps_output;
 
     /* Elliptic specific functions */
-    fclaw2d_elliptic_vtable_t *elliptic_vt = fclaw2d_elliptic_vt();
+    fclaw2d_elliptic_vtable_t *elliptic_vt = fclaw2d_elliptic_vt(glob);
     elliptic_vt->setup = hps_setup_solver;
 
     /* Solver doesn't do anything so far */
@@ -343,7 +345,7 @@ void fc2d_hps_solver_initialize()
     hps_vt->fort_eval_bc  = &FC2D_HPS_FORT_EVAL_BC_DEFAULT;
 
     /* Diagnostics : Error, conservation */
-    fclaw2d_clawpatch_vtable_t *clawpatch_vt = fclaw2d_clawpatch_vt();
+    fclaw2d_clawpatch_vtable_t *clawpatch_vt = fclaw2d_clawpatch_vt(glob);
     clawpatch_vt->compute_error = hps_compute_error;  /* calls user-defined fortran routine */
 
     /* Conservation check : Compares sum(rhs) with sum of normal fluxes around the boundary
@@ -351,7 +353,7 @@ void fc2d_hps_solver_initialize()
     clawpatch_vt->conservation_check = hps_conservation_check;        
 
     /* These are specialized for the elliptic problem */
-    fclaw2d_diagnostics_vtable_t *diag_vt = fclaw2d_diagnostics_vt();
+    fclaw2d_diagnostics_vtable_t *diag_vt = fclaw2d_diagnostics_vt(glob);
     diag_vt->patch_init_diagnostics     = fc2d_hps_diagnostics_initialize;
     diag_vt->patch_reset_diagnostics    = fc2d_hps_diagnostics_reset;
     diag_vt->patch_compute_diagnostics  = fc2d_hps_diagnostics_compute;

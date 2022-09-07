@@ -75,7 +75,7 @@ void simple_problem_setup(fclaw2d_global_t *glob)
 void simple_link_solvers(fclaw2d_global_t *glob)
 {
     /* ForestClaw vtable */
-    fclaw2d_vtable_t *fclaw_vt = fclaw2d_vt();
+    fclaw2d_vtable_t *fclaw_vt = fclaw2d_vt(glob);
     fclaw_vt->problem_setup = &simple_problem_setup;  
 
     /* HPS virtual table : Initialize RHS */
@@ -84,7 +84,7 @@ void simple_link_solvers(fclaw2d_global_t *glob)
     hps_vt->fort_qexact = &SIMPLE_FORT_QEXACT_COMPLETE; // why does this give linker errors?
 
     /* Clawpatch : Compute the error */
-    fclaw2d_clawpatch_vtable_t *clawpatch_vt = fclaw2d_clawpatch_vt();
+    fclaw2d_clawpatch_vtable_t *clawpatch_vt = fclaw2d_clawpatch_vt(glob);
 
     /* Specialized for this example */
     clawpatch_vt->fort_compute_patch_error = &SIMPLE_COMPUTE_ERROR;

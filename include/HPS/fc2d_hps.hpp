@@ -94,7 +94,7 @@ struct fc2d_hps_vtable
 	  int is_set;
 };
 
-void fc2d_hps_solver_initialize(void);
+void fc2d_hps_solver_initialize(fclaw2d_global_t* glob);
 
 fc2d_hps_vtable_t* fc2d_hps_vt(void);
 
