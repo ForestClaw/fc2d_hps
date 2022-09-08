@@ -10,6 +10,7 @@
 #include <Structures/fc2d_hps_vector.hpp>
 #include <Structures/fc2d_hps_matrix.hpp>
 #include <Structures/fc2d_hps_patch.hpp>
+#include <Structures/fc2d_hps_datacache.hpp>
 typedef struct index_set {
 
     std::vector<int> I1;

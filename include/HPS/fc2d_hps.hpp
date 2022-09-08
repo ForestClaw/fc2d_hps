@@ -20,6 +20,21 @@ typedef  struct fc2d_hps_vtable  fc2d_hps_vtable_t;
 
 
 /* --------------------------- Fortran defs solver functions -------------------------- */
+// extern void fc2d_hps_fort_tag4refinement_(
+//                                     const int* mx,
+//                                     const int* my,
+//                                     const int* mbc,
+//                                     const int* mfields,
+//                                     const double* xlower,
+//                                     const double* ylower,
+//                                     const double* dx,
+//                                     const double* dy,
+//                                     const int* blockno,
+//                                     double rhs[],
+//                                     const double* refine_threshold,
+//                                     const int* initflag,
+//                                     int* tag_patch
+//                                 );
 
 typedef void (*fc2d_hps_fort_qexact_t)(const int* example,
                                        const double* x,
@@ -53,6 +68,22 @@ typedef void (*fc2d_hps_fort_apply_bc_t)(const int* blockno, const  int* mx, con
                                          int intersects_bc[], int mthbc[], 
                                          double rhs[], fc2d_hps_fort_eval_bc_t g_bc, 
                                          int* cons_check, double flux_sum[]);
+
+typedef void (*fc2d_hps_fort_tag4refinement_t)(
+    const int* mx,
+    const int* my,
+    const int* mbc,
+    const int* mfields,
+    const double* xlower,
+    const double* ylower,
+    const double* dx,
+    const double* dy,
+    const int* blockno,
+    double rhs[],
+    const double* refine_threshold,
+    const int* initflag,
+    int* tag_patch
+);
 
 typedef void (*fc2d_hps_patch_solver_t)(struct fclaw2d_global *glob);
 

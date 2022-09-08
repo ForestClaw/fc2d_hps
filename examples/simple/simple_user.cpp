@@ -89,6 +89,8 @@ void simple_link_solvers(fclaw2d_global_t *glob)
     /* Specialized for this example */
     clawpatch_vt->fort_compute_patch_error = &SIMPLE_COMPUTE_ERROR;
     clawpatch_vt->fort_user_exceeds_threshold = &USER_EXCEEDS_TH;
+    // clawpatch_vt->fort_tag4refinement = &simple_tag4refinement;
+    clawpatch_vt->fort_tag4refinement = &FC2D_HPS_FORT_TAG4REFINEMENT;
 
     /* BCs : Include inhomogeneous boundary conditions on the right hand side */
     hps_vt->fort_apply_bc = &SIMPLE_FORT_APPLY_BC;
@@ -101,5 +103,29 @@ void simple_link_solvers(fclaw2d_global_t *glob)
     /* This one will be used only if we are also computing the error.  In this case
        the error and exact solution will be output, along with computed solution */          
     hps_vt->fort_output = &SIMPLE_FORT_OUTPUT_ASCII; 
+}
+
+void simple_tag4refinement(const int* mx,
+                           const int* my,
+                           const int* mbc,
+                           const int* mfields,
+                           const double* xlower,
+                           const double* ylower,
+                           const double* dx,
+                           const double* dy,
+                           const int* blockno,
+                           double rhs[],
+                           const double* refine_threshold,
+                           const int* initflag,
+                           int* tag_patch) {
+
+    //
+    if (*xlower > 0 && *ylower > 0) {
+        *tag_patch = 1;
+    }
+    else {
+        *tag_patch = 0;
+    }
+
 }
 

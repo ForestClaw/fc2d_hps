@@ -54,6 +54,23 @@ double FC2D_HPS_FORT_EVAL_BC(const int* iface,
                                      const double* t, 
                                      const double* x, const double* y);
 
+#define FC2D_HPS_FORT_TAG4_REFINEMENT FCLAW_F77_FUNC(fc2d_hps_fort_tag4refinement, FC2D_HPS_FORT_TAG4_REFINEMENT)
+
+void FC2D_HPS_FORT_TAG4REFINEMENT(
+    const int* mx,
+    const int* my,
+    const int* mbc,
+    const int* mfields,
+    const double* xlower,
+    const double* ylower,
+    const double* dx,
+    const double* dy,
+    const int* blockno,
+    double rhs[],
+    const double* refine_threshold,
+    const int* initflag,
+    int* tag_patch
+);
 
 #ifdef __cplusplus
 }

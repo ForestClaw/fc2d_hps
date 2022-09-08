@@ -88,7 +88,9 @@ void run_program(fclaw2d_global_t* glob)
     fclaw2d_output_frame(glob,Frame);
  
     /* Solve the elliptic problem */
+    std::cout << "Calling elliptic solver..." << std::endl;
     fclaw2d_elliptic_solve(glob);
+    std::cout << "Done with elliptic solver" << std::endl;
 
     /* Compute error, compute conservation */
     fclaw2d_diagnostics_gather(glob, init_flag);

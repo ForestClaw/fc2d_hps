@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fclaw2d_clawpatch.h>
 
 #include <HPS/fc2d_hps.hpp>
+#include <Util/fc2d_hps_fort.h>
 #include <Util/fc2d_hps_options.h>
 #include <Util/fc2d_hps_output_ascii.h>
 // #include <Structures/fc2d_hps_patchsolver.hpp>
@@ -64,6 +65,22 @@ extern "C"
 /* --------------------------- Problem dependent functions -----------------------------*/
 
 void simple_link_solvers(fclaw2d_global_t *glob);
+
+
+/* --------------------------- C++ Callback functions ---------------------------------------*/
+void simple_tag4refinement(const int* mx,
+                           const int* my,
+                           const int* mbc,
+                           const int* mfields,
+                           const double* xlower,
+                           const double* ylower,
+                           const double* dx,
+                           const double* dy,
+                           const int* blockno,
+                           double rhs[],
+                           const double* refine_threshold,
+                           const int* initflag,
+                           int* tag_patch);
 
 
 /* --------------------------- Fortran functions ---------------------------------------*/
@@ -111,6 +128,8 @@ void SIMPLE_FORT_APPLY_BC(const int* blockno, const  int* mx, const  int* my,
 
 double SIMPLE_FORT_EVAL_BC(const int* iface, const double* t,
                             const double* x, const double* y);
+
+#define SIMPLE_TAG4REFINEMENT FCLAW_F77_FUNC(fc2d_hps_fort_tag4refinement, SIMPLE_TAG4REFINEMENT)
 
 
 /* ----------------------------- Fortran - output functions --------------------------- */
