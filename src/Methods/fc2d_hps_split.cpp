@@ -138,6 +138,7 @@ void uncoarsen_patch(fc2d_hps_patch& patch) {
     }
 
     patch.has_coarsened = false;
+    delete patch.coarsened;
 
     return;
 

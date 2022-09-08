@@ -470,45 +470,84 @@ void merge_4to1(fc2d_hps_patch& parent, fc2d_hps_patch& child0, fc2d_hps_patch& 
 	if (child3.T.size() == 0) { throw std::invalid_argument("[fc2d_hps_merge merge_4to1] `child3.T.size()` is 0; it shouldn't be..."); }
 
 	// // Get options
-	// fclaw2d_global_t* glob = (fclaw2d_global_t*) parent.user;
-	// fc2d_hps_options* hps_opt = fc2d_hps_get_options(glob);
+	fclaw2d_global_t* glob = (fclaw2d_global_t*) parent.user;
+	fc2d_hps_options* hps_opt = fc2d_hps_get_options(glob);
 
 	// Forward declarations
 	fc2d_hps_patch alpha_prime;
 	fc2d_hps_patch beta_prime;
 	fc2d_hps_patch tau;
 
-	// Check for adaptivity
-	fc2d_hps_patch* alpha = &child0;
-	fc2d_hps_patch* beta = &child1;
-	fc2d_hps_patch* gamma = &child2;
-	fc2d_hps_patch* omega = &child3;
-	std::vector<int> tags = tag_patch_coarsen(parent, child0, child1, child2, child3);
+	// Check for cached operators. If they exist, use them instead
+	fc2d_hps_matrix<double> T_tau;
+	bool operatorXFound = false;
+	bool operatorTFound = false;
+	bool operatorSFound = false;
+	if (hps_opt->cache_T) {
+		// Get cache instance
+		DataCache<fc2d_hps_matrix<double>>& matrixOperatorCache = DataCache<fc2d_hps_matrix<double>>::getInstance();
 
-	while (tags[0]-- > 0) {
-		coarsen_patch(*alpha);
-		alpha = alpha->coarsened;
-	}
-	while (tags[1]-- > 0) {
-		coarsen_patch(*beta);
-		beta = beta->coarsened;
-	}
-	while (tags[2]-- > 0) {
-		coarsen_patch(*gamma);
-		gamma = gamma->coarsened;
-	}
-	while (tags[3]-- > 0) {
-		coarsen_patch(*omega);
-		omega = omega->coarsened;
+		// Check for parent level operators
+		std::string cacheLevel = std::to_string(child0.level - 1);
+		if (matrixOperatorCache.dataMap.find("X_" + cacheLevel) != matrixOperatorCache.dataMap.end()) {
+			operatorXFound = true;
+		}
+
+		if (matrixOperatorCache.dataMap.find("S_" + cacheLevel) != matrixOperatorCache.dataMap.end()) {
+			operatorSFound = true;
+		}
+
+		if (matrixOperatorCache.dataMap.find("T_" + cacheLevel) != matrixOperatorCache.dataMap.end()) {
+			operatorTFound = true;
+		}
 	}
 
-	// Horizontal merge
-	alpha_prime = merge_horizontal(*alpha, *beta);
+	if (operatorXFound && operatorSFound && operatorTFound) {
+		// Get cache instance
+		DataCache<fc2d_hps_matrix<double>>& matrixOperatorCache = DataCache<fc2d_hps_matrix<double>>::getInstance();
 
-	beta_prime = merge_horizontal(*gamma, *omega);
+		// All necessary operators are found, set them to parent
+		std::string cacheLevel = std::to_string(parent.level);
+		tau.level = child0.level - 1;
+		tau.is_leaf = false;
+		// tau.X = matrixOperatorCache.dataMap[""]
 
-	// Vertical merge
-	tau = merge_vertical(alpha_prime, beta_prime);
+	}
+	else {
+		// Need to compute operators via merge
+
+		// Check for adaptivity
+		fc2d_hps_patch* alpha = &child0;
+		fc2d_hps_patch* beta = &child1;
+		fc2d_hps_patch* gamma = &child2;
+		fc2d_hps_patch* omega = &child3;
+		std::vector<int> tags = tag_patch_coarsen(parent, child0, child1, child2, child3);
+
+		while (tags[0]-- > 0) {
+			coarsen_patch(*alpha);
+			alpha = alpha->coarsened;
+		}
+		while (tags[1]-- > 0) {
+			coarsen_patch(*beta);
+			beta = beta->coarsened;
+		}
+		while (tags[2]-- > 0) {
+			coarsen_patch(*gamma);
+			gamma = gamma->coarsened;
+		}
+		while (tags[3]-- > 0) {
+			coarsen_patch(*omega);
+			omega = omega->coarsened;
+		}
+
+		// Horizontal merge
+		alpha_prime = merge_horizontal(*alpha, *beta);
+
+		beta_prime = merge_horizontal(*gamma, *omega);
+
+		// Vertical merge
+		tau = merge_vertical(alpha_prime, beta_prime);
+	}
 	
 	// Copy only necessary data to parent
 	parent.level = tau.level;

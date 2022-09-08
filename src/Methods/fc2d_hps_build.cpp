@@ -14,12 +14,12 @@ void visit_build_dtn(fc2d_hps_patch& patch) {
         // Set DtN on leaf
         // @TODO: Implement caching of T for each level
         if (hps_opt->cache_T) {
-            DataCache<fc2d_hps_matrix<double>>& D2NCache = DataCache<fc2d_hps_matrix<double>>::getInstance();
-            if (D2NCache.dataMap.find("T_0") == D2NCache.dataMap.end()) {
+            DataCache<fc2d_hps_matrix<double>>& matrixOperatorCache = DataCache<fc2d_hps_matrix<double>>::getInstance();
+            if (matrixOperatorCache.dataMap.find("T_0") == matrixOperatorCache.dataMap.end()) {
                 // T for patch level is not set; build from patch solver
-                D2NCache.dataMap["T_0"] = FISHPACK_solver.build_dtn(patch.grid);
+                matrixOperatorCache.dataMap["T_0"] = FISHPACK_solver.build_dtn(patch.grid);
             }
-            patch.T = D2NCache.dataMap["T_0"];
+            patch.T = matrixOperatorCache.dataMap["T_0"];
         }
         else {
             patch.T = FISHPACK_solver.build_dtn(patch.grid);

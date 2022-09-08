@@ -124,7 +124,7 @@ void fc2d_hps_setup(struct fclaw2d_global* glob) {
 
     // Set up DtN cache
     if (hps_opt->cache_T) {
-		DataCache<fc2d_hps_matrix<double>>& D2NCache = DataCache<fc2d_hps_matrix<double>>::getInstance();
+		DataCache<fc2d_hps_matrix<double>>& matrixOperatorCache = DataCache<fc2d_hps_matrix<double>>::getInstance();
     }
 
     fclaw_global_essentialf("End HPS setup\n");
