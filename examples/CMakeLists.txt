@@ -39,6 +39,7 @@
 
     # Simple
     add_subdirectory(simple)
+    add_subdirectory(svd)
 
     # Adaptive Testing
     # add_subdirectory(adaptive_testing)
