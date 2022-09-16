@@ -38,8 +38,8 @@
     # add_subdirectory(hello)
 
     # Simple
-    add_subdirectory(simple)
     add_subdirectory(svd)
+    add_subdirectory(simple)
 
     # Adaptive Testing
     # add_subdirectory(adaptive_testing)
