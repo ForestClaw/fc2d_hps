@@ -97,3 +97,29 @@ else()
     add_subdirectory(mmio)
 
 endif()
+
+add_subdirectory(matplotlibcpp)
+
+FetchContent_GetProperties(matplotlibcpp)
+
+if(${matplotlibcpp_POPULATED} AND ${PETSC_FOUND})
+    
+    set(EXTERNAL_PKGS_INCLUDE
+        ${PYTHON_INCLUDE_DIR}
+        ${NUMPY_INCLUDE_DIR}
+        ${matplotlibcpp_SOURCE_DIR}
+        ${PETSC_INCLUDE}
+        CACHE INTERNAL "HydroForest external pacakges' include directories"
+    )
+
+    set(EXTERNAL_PKGS_LIB
+        ${PYTHON_LIBRARY_DIR}
+        ${PETSC_LIB}
+        CACHE INTERNAL "HydroForest external packages' library directories"
+    )
+
+else()
+
+    message(FATAL_ERROR "External packages not ready...")
+
+endif()

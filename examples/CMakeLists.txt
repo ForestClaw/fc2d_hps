@@ -38,6 +38,7 @@
     # add_subdirectory(hello)
 
     # Simple
+    add_subdirectory(toybox)
     add_subdirectory(svd)
     add_subdirectory(simple)
 
