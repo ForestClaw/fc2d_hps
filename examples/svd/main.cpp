@@ -9,8 +9,8 @@
 #include <Structures/fc2d_hps_patchsolver.hpp>
 #include <petsc.h>
 #include <petscmat.h>
-#include <slepc.h>
-#include <slepcsvd.h>
+// #include <slepc.h>
+// #include <slepcsvd.h>
 #include <matplotlibcpp.h>
 
 namespace plt = matplotlibcpp;
@@ -25,7 +25,7 @@ std::vector<double> SVDValuesFromMat(Mat& mat) {
     MatType matType; MatGetType(mat, &matType);
     // Mat matDense;
     if (matType != MATDENSE) {
-        std::cout << "Converting..." << std::endl;
+        // std::cout << "Converting..." << std::endl;
         MatConvert(mat, MATDENSE, MAT_INPLACE_MATRIX, &mat);
     }
 
@@ -73,10 +73,10 @@ int main(int argc, char** argv) {
 
     MPI_Init(&argc, &argv);
     PetscInitialize(&argc, &argv, NULL, NULL);
-    SlepcInitialize(&argc, &argv, NULL, NULL);
+    // SlepcInitialize(&argc, &argv, NULL, NULL);
 
     fc2d_hps_FISHPACK_solver solver;
-    std::vector<int> nCellsVector({2, 4, 8, 16, 32, 64, 128, 256, 512});
+    std::vector<int> nCellsVector({2, 4, 8, 16, 32, 64, 128});
     std::vector<double> conditionNumbers(nCellsVector.size());
     for (auto i = 0; i < nCellsVector.size(); i++) {
         int nCells = nCellsVector[i];
@@ -108,16 +108,17 @@ int main(int argc, char** argv) {
         MatDestroy(&TPetsc);
     }
 
+    plt::figure();
     plt::loglog(nCellsVector, conditionNumbers);
     plt::title("Condition Number of DtN Matrix");
     plt::xlabel("Cells per Leaf Side");
     plt::ylabel("Condition Number");
+    plt::save("condition_number_dtn.pdf");
     plt::show();
-    plt::save("condition_number_dtn.png");
     
     // Clean up
 
-    SlepcFinalize();
+    // SlepcFinalize();
     PetscFinalize();
     MPI_Finalize();
 

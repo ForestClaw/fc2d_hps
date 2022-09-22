@@ -69,7 +69,7 @@ target_include_directories(hps
 # target_link_directories(hps PUBLIC ${P4EST_ROOT}/lib ${FORESTCLAW_ROOT}/lib)
 message(STATUS "PETSC_LIB IN SRC = " ${PETSC_LIB})
 target_link_directories(hps PUBLIC ${PETSC_LIB} ${SLEPC_LIB} ${EXTERNAL_PKGS_LIB})
-target_link_libraries(hps PUBLIC FORESTCLAW::FORESTCLAW FORESTCLAW::CLAWPATCH petsc slepc blas lapack mmio fishpack90 ${PYTHON_VERSION})
+target_link_libraries(hps PUBLIC FORESTCLAW::FORESTCLAW FORESTCLAW::CLAWPATCH petsc blas lapack mmio fishpack90 ${PYTHON_VERSION})
 
 # -- install
 
