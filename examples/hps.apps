@@ -1,8 +1,0 @@
-## ------------------------- HPS examples ----------------------
-##
-## Examples using the HPS solver developed by Martinsson and Gillman
-## 
-## -----------------------------------------------------------------
-
-## Laplace (constant coefficient)
-include src/solvers/fc2d_hps/examples/laplace/Makefile.am
