@@ -1,5 +1,6 @@
 # Check if EllipticForest path is set
 if(ELLIPTICFOREST_ROOT)
+    message(STATUS ${ELLIPTICFOREST_ROOT})
 
     # Check if EllipticForest libraries exist
     if(EXISTS ${ELLIPTICFOREST_ROOT}/include/EllipticForest.hpp)
@@ -22,8 +23,8 @@ if(ELLIPTICFOREST_ROOT)
         ${ELLIPTICFOREST_INCLUDE}
         ${PETSC_ROOT}/include
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
-    target_link_directories(fc2d_hps PUBLIC ${ELLIPTICFOREST_LIB})
-    target_link_libraries(fc2d_hps PUBLIC forestclaw clawpatch EllipticForest fishpack90)
+    target_link_directories(fc2d_hps PUBLIC ${ELLIPTICFOREST_LIB} ${PETSC_ROOT}/lib)
+    target_link_libraries(fc2d_hps PUBLIC forestclaw clawpatch EllipticForest fishpack90 petsc)
     target_sources(fc2d_hps PRIVATE fc2d_hps_interface.cpp)
 
     install(FILES fc2d_hps_interface.hpp DESTINATION include)

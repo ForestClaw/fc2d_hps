@@ -82,7 +82,7 @@ fc2d_hps_vtable_t* fc2d_hps_vt();
 void fc2d_hps_solver_initialize(fclaw2d_global_t* glob);
 void fc2d_hps_setprob(fclaw2d_global_t* glob);
 void fc2d_hps_rhs(fclaw2d_global_t* glob, fclaw2d_patch_t *patch, int blockno, int patchno);
-void fc2d_hps_heat_set_lambda(double lambda);
+void fc2d_hps_heat_set_lambda(fclaw2d_global_t* glob, double lambda);
 double fc2d_hps_heat_get_lambda();
 void hps_setup_solver(fclaw2d_global_t *glob);
 void hps_rhs(fclaw2d_global_t *glob, fclaw2d_patch_t *patch, int blockno, int patchno);
@@ -93,6 +93,15 @@ int hps_tag4coarsening(fclaw2d_global_t *glob, fclaw2d_patch_t *fine_patches, in
 void hps_compute_error(fclaw2d_global_t *glob, fclaw2d_patch_t *patch, int blockno, int patchno, void *user);
 void hps_conservation_check(fclaw2d_global_t *glob, fclaw2d_patch_t *patch, int blockno, int patchno, void *user);
 fc2d_hps_vtable_t* hps_vt_init();
+void hps_regrid_hook(fclaw2d_domain_t * old_domain,
+                     fclaw2d_patch_t * old_patch,
+                     fclaw2d_domain_t * new_domain,
+                     fclaw2d_patch_t * new_patch,
+                     fclaw2d_patch_relation_t newsize,
+                     int blockno,
+                     int old_patchno,
+                     int new_patchno,
+                     void *user);
 
 /*************************************************/
 // fc2d_hps_physical_bc

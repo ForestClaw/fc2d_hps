@@ -30,6 +30,7 @@ void fc2d_hps_solver_initialize(fclaw2d_global_t* glob) {
     /* Clawpatch and ForestClaw : Output functions */
     fclaw2d_vtable_t*   fclaw_vt = fclaw2d_vt(glob);
     fclaw_vt->output_frame = hps_output;
+    fclaw_vt->hook_regrid = hps_regrid_hook;
 
     /* Elliptic specific functions */
     fclaw2d_elliptic_vtable_t *elliptic_vt = fclaw2d_elliptic_vt(glob);
@@ -71,12 +72,17 @@ void fc2d_hps_rhs(fclaw2d_global_t* glob, fclaw2d_patch_t *patch, int blockno, i
     return;
 }
 
-void fc2d_hps_heat_set_lambda(double lambda) {
+static double lambdaGlobal = 0.0;
+
+void fc2d_hps_heat_set_lambda(fclaw2d_global_t* glob, double lambda) {
+    // EllipticForest::EllipticForestApp& app = EllipticForest::EllipticForestApp::getInstance();
+    // app.options.setOption("lambda", lambda);
+    lambdaGlobal = lambda;
     return;
 }
 
 double fc2d_hps_heat_get_lambda() {
-    return 0;
+    return lambdaGlobal;
 }
 
 void hps_setup_solver(fclaw2d_global_t *glob) {
@@ -101,7 +107,8 @@ void hps_setup_solver(fclaw2d_global_t *glob) {
     root_patch.isLeaf = true;
 
     // Create patch solver
-    EllipticForest::FISHPACK::FISHPACKFVSolver solver{};
+    double lambda = fc2d_hps_heat_get_lambda();
+    EllipticForest::FISHPACK::FISHPACKFVSolver solver(lambda);
 
     // Create new HPS algorithm
     // TODO: delete HPS in clean up function (where...?)
@@ -142,9 +149,17 @@ void hps_solve(fclaw2d_global_t *glob) {
     EllipticForest::EllipticForestApp& app = EllipticForest::EllipticForestApp::getInstance();
     app.log("Beginning HPS solve...");
 
+    // Get fc2d_hps virtual table
+    fc2d_hps_vtable_t* hps_vt = fc2d_hps_vt();
+
     // Get HPS algorithm from glob
     // TODO: Should I get this from somewhere else?
     HPSAlgorithm* HPS = (HPSAlgorithm*) glob->user;
+
+    // Update solver with lambda
+    // TODO: There's gotta be a better way to do this...
+    // app.log("Setting lambda to: %e", fc2d_hps_heat_get_lambda());
+    HPS->patchSolver = EllipticForest::FISHPACK::FISHPACKFVSolver(fc2d_hps_heat_get_lambda());
 
     // Call build stage
     HPS->buildStage();
@@ -161,7 +176,7 @@ void hps_solve(fclaw2d_global_t *glob) {
             for (auto j = 0; j < grid.nPointsY(); j++) {
                 int idx = j + i*grid.nPointsY();
                 int idx_T = i + j*grid.nPointsX();
-                leafPatch.vectorF()[idx] = rhs[idx_T];
+                leafPatch.vectorF()[idx] = rhs[idx];
                 // printf("idx = %i, idx_T = %i, rhs = %f\n", idx, idx_T, rhs[idx_T]);
             }
         }
@@ -169,46 +184,115 @@ void hps_solve(fclaw2d_global_t *glob) {
     });
 
     // Call solve stage; provide Dirichlet data via function
-    HPS->solveStage([&](EllipticForest::FISHPACK::FISHPACKPatch& rootPatch){
-        fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
-        fc2d_hps_vtable_t* hps_vt = fc2d_hps_vt();
-
-        EllipticForest::FISHPACK::FISHPACKFVGrid& grid = rootPatch.grid();
-        rootPatch.vectorG() = EllipticForest::Vector<double>(2*grid.nPointsX() + 2*grid.nPointsY());
-
-        EllipticForest::Vector<double> gWest(grid.nPointsY());
-        EllipticForest::Vector<double> gEast(grid.nPointsY());
-        EllipticForest::Vector<double> gSouth(grid.nPointsX());
-        EllipticForest::Vector<double> gNorth(grid.nPointsX());
-
-        int dirichletBC = 1;
-
-        for (auto j = 0; j < grid.nPointsY(); j++) {
-            double y = grid(1, j);
-            double x_lower = grid.xLower();
-            double x_upper = grid.xUpper();
-            gWest[j] = hps_vt->fort_eval_bc(&dirichletBC, &glob->curr_time, &x_lower, &y);
-            gEast[j] = hps_vt->fort_eval_bc(&dirichletBC, &glob->curr_time, &x_upper, &y);
+    std::vector<int> boundaryTypes = {
+        std::get<int>(app.options["boundary-type-west"]),
+        std::get<int>(app.options["boundary-type-east"]),
+        std::get<int>(app.options["boundary-type-south"]),
+        std::get<int>(app.options["boundary-type-north"])
+    };
+    HPS->solveStage([&](int side, double x, double y, double* a, double* b){
+        if (boundaryTypes[side] == 0) {
+            *a = 1.0;
+            *b = 0.0;
         }
-        for (auto i = 0; i < grid.nPointsX(); i++) {
-            double x = grid(0, i);
-            double y_lower = grid.yLower();
-            double y_upper = grid.yUpper();
-            gSouth[i] = hps_vt->fort_eval_bc(&dirichletBC, &glob->curr_time, &x, &y_lower);
-            gNorth[i] = hps_vt->fort_eval_bc(&dirichletBC, &glob->curr_time, &x, &y_upper);
+        else if (boundaryTypes[side] == 1) {
+            *a = 0.0;
+            *b = 1.0;
         }
-
-
-        rootPatch.vectorG().setSegment(0*grid.nPointsX(), gWest);
-        rootPatch.vectorG().setSegment(1*grid.nPointsX(), gEast);
-        rootPatch.vectorG().setSegment(2*grid.nPointsX(), gSouth);
-        rootPatch.vectorG().setSegment(3*grid.nPointsX(), gNorth);
-        
-        // std::cout << rootPatch.str() << std::endl;
-        // std::cout << "g = " << rootPatch.vectorG() << std::endl;
-
-        return;
+        else {
+            std::cerr << "INVALID BC TYPE" << std::endl;
+        }
+        return hps_vt->fort_eval_bc(&side, nullptr, &x, &y);
     });
+
+    // HPS->solveStage([&](EllipticForest::FISHPACK::FISHPACKPatch& rootPatch){
+    //     fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
+    //     fc2d_hps_vtable_t* hps_vt = fc2d_hps_vt();
+
+    //     EllipticForest::FISHPACK::FISHPACKFVGrid& grid = rootPatch.grid();
+    //     rootPatch.vectorG() = EllipticForest::Vector<double>(2*grid.nPointsX() + 2*grid.nPointsY());
+
+    //     // std::vector<int> boundaryTypes = {
+    //     //     std::get<int>(app.options["boundary-type-west"]),
+    //     //     std::get<int>(app.options["boundary-type-east"]),
+    //     //     std::get<int>(app.options["boundary-type-south"]),
+    //     //     std::get<int>(app.options["boundary-type-north"])
+    //     // };
+
+    //     // for (auto s = 0; s < 4; s++) {
+    //     //     double x, y;
+    //     //     int nPointsSide;
+
+    //     //     if (s == 0 || s == 1)   nPointsSide = grid.nPointsY();
+    //     //     else                    nPointsSide = grid.nPointsX();
+
+    //     //     switch (s) {
+    //     //         case 0:
+    //     //             x = grid.xLower();
+    //     //             break;
+    //     //         case 1:
+    //     //             x = grid.xUpper();
+    //     //             break;
+    //     //         case 2:
+    //     //             y = grid.yLower();
+    //     //             break;
+    //     //         case 3:
+    //     //             y = grid.yUpper();
+    //     //             break;
+    //     //     }
+
+    //     //     EllipticForest::Vector<double> boundaryDataSide(nPointsSide);
+    //     //     for (auto i = 0; i < nPointsSide; i++) {
+    //     //         if (s == 0 || s == 1)   y = grid(1, i);
+    //     //         else                    x = grid(0, i);
+    //     //         boundaryDataSide[i] = hps_vt->fort_eval_bc(&boundaryTypes[s], &glob->curr_time, &x, &y);
+    //     //     }
+
+    //     //     if (boundaryTypes[s] == 0) {
+    //     //         // Dirichlet BC
+    //     //         rootPatch.vectorG().setSegment(s*nPointsSide, boundaryDataSide);
+    //     //     }
+    //     //     else if (boundaryTypes[s] == 1) {
+    //     //         // Neumann BC
+    //     //         EllipticForest::Matrix<double> T = rootPatch.matrixT()(s*nPointsSide, (s+1)*nPointsSide-1, s*nPointsSide, (s+1)*nPointsSide-1);
+    //     //         EllipticForest::Vector<double> g = EllipticForest::solve(T, boundaryDataSide);
+    //     //         rootPatch.vectorG().setSegment(s*nPointsSide, g);
+    //     //     }
+
+    //     // }
+
+    //     EllipticForest::Vector<double> gWest(grid.nPointsY());
+    //     EllipticForest::Vector<double> gEast(grid.nPointsY());
+    //     EllipticForest::Vector<double> gSouth(grid.nPointsX());
+    //     EllipticForest::Vector<double> gNorth(grid.nPointsX());
+
+    //     int dirichletBC = 1;
+
+    //     for (auto j = 0; j < grid.nPointsY(); j++) {
+    //         double y = grid(1, j);
+    //         double x_lower = grid.xLower();
+    //         double x_upper = grid.xUpper();
+    //         gWest[j] = hps_vt->fort_eval_bc(&dirichletBC, &glob->curr_time, &x_lower, &y);
+    //         gEast[j] = hps_vt->fort_eval_bc(&dirichletBC, &glob->curr_time, &x_upper, &y);
+    //     }
+    //     for (auto i = 0; i < grid.nPointsX(); i++) {
+    //         double x = grid(0, i);
+    //         double y_lower = grid.yLower();
+    //         double y_upper = grid.yUpper();
+    //         gSouth[i] = hps_vt->fort_eval_bc(&dirichletBC, &glob->curr_time, &x, &y_lower);
+    //         gNorth[i] = hps_vt->fort_eval_bc(&dirichletBC, &glob->curr_time, &x, &y_upper);
+    //     }
+
+    //     rootPatch.vectorG().setSegment(0*grid.nPointsX(), gWest);
+    //     rootPatch.vectorG().setSegment(1*grid.nPointsX(), gEast);
+    //     rootPatch.vectorG().setSegment(2*grid.nPointsX(), gSouth);
+    //     rootPatch.vectorG().setSegment(3*grid.nPointsX(), gNorth);
+        
+    //     // std::cout << rootPatch.str() << std::endl;
+    //     // std::cout << "g = " << rootPatch.vectorG() << std::endl;
+
+    //     return;
+    // });
 
     // Copy data to ForestClaw patch
     HPS->quadtree.traversePreOrder([&](EllipticForest::FISHPACK::FISHPACKPatch& patch){
@@ -216,25 +300,30 @@ void hps_solve(fclaw2d_global_t *glob) {
             fclaw2d_patch_t* fc_patch = &(glob->domain->blocks->patches[patch.leafID]);
 
             int mbc;
-            int Nx, Ny;
+            int mx, my;
             double x_lower, y_lower, dx, dy;
             double* q;
             int meqn, mfields;
             double* rhs;
-            fclaw2d_clawpatch_grid_data(glob, fc_patch, &Nx, &Ny, &mbc, &x_lower, &y_lower, &dx, &dy);
+            fclaw2d_clawpatch_grid_data(glob, fc_patch, &mx, &my, &mbc, &x_lower, &y_lower, &dx, &dy);
             fclaw2d_clawpatch_soln_data(glob, fc_patch, &q, &meqn);
             fclaw2d_clawpatch_rhs_data(glob, fc_patch, &rhs, &mfields);
 
             EllipticForest::FISHPACK::FISHPACKFVGrid& grid = patch.grid();
-            int nx = grid.nPointsX() + 2*mbc;
-            int ny = grid.nPointsY() + 2*mbc;
+            int nx = mx + 2*mbc;
+            int ny = mx + 2*mbc;
             for (auto i = 0; i < nx; i++) {
                 for (auto j = 0; j < ny; j++) {
-                    int idx = j + i*ny;
-                    int idx_T = i + j*nx;
                     if (i > mbc-1 && i < nx-mbc && j > mbc-1 && j < ny-mbc) {
-                        q[idx] = patch.vectorU()[idx];
-                        rhs[idx] = patch.vectorU()[idx];
+                        int ii = i - mbc;
+                        int jj = j - mbc;
+                        int idx_ef = jj + ii*mx;
+                        int idx_ef_T = ii + jj*my;
+                        int idx_fc = j + i*nx;
+                        int idx_fc_T = i + j*ny;
+
+                        // q[idx_fc] = patch.vectorU()[idx_ef];
+                        rhs[idx_fc] = patch.vectorU()[idx_ef];
                     }
                 }
             }
@@ -403,6 +492,163 @@ void hps_conservation_check(fclaw2d_global_t *glob, fclaw2d_patch_t *patch, int 
 fc2d_hps_vtable_t* hps_vt_init() {
     FCLAW_ASSERT(s_hps_vt.is_set == 0);
 	return &s_hps_vt;
+}
+
+void hps_regrid_hook(fclaw2d_domain_t * old_domain,
+                     fclaw2d_patch_t * old_patch,
+                     fclaw2d_domain_t * new_domain,
+                     fclaw2d_patch_t * new_patch,
+                     fclaw2d_patch_relation_t newsize,
+                     int blockno,
+                     int old_patchno,
+                     int new_patchno,
+                     void *user) {
+
+    // Get the EF app, HPS, and quadtree
+    EllipticForest::EllipticForestApp& app = EllipticForest::EllipticForestApp::getInstance();
+    app.log("REGRID HOOK");
+    app.log("  OLD_PATCH # = %i", old_patchno);
+    app.log("  NEW_PATCH # = %i", new_patchno);
+    fclaw2d_global_t* glob = fclaw2d_global_get_global();
+    HPSAlgorithm* HPS = (HPSAlgorithm*) glob->user;
+    auto& quadtree = HPS->quadtree;
+    auto& solver = HPS->patchSolver;
+
+    // Get current quadtree node
+    int old_globalID = 0;
+    // quadtree.traversePostOrder([&](EllipticForest::FISHPACK::FISHPACKPatch& patch){
+    //     if (patch.leafID == new_patchno) {
+    //         app.log("\tFOUND NODE");
+    //         old_globalID = patch.globalID;
+    //         std::cout << patch.str() << std::endl;
+    //     }
+    //     return;
+    // });
+    quadtree.traversePreOrder([&](EllipticForest::Quadtree<EllipticForest::FISHPACK::FISHPACKPatch>::QuadtreeNode node){
+        auto& patch = node.data;
+        if (node.leafID == new_patchno) {
+            app.log("\tFOUND NODE");
+            old_globalID = node.globalID;
+            // std::cout << "PATCH: " << std::endl << patch->str() << std::endl;
+            // std::cout << "NODE:" << std::endl;
+            // std::cout << "level    = " << node.level << std::endl;
+            // std::cout << "globalID = " << node.globalID << std::endl;
+            // std::cout << "levelID  = " << node.levelID << std::endl;
+            // std::cout << "parentID = " << node.parentID << std::endl;
+            // std::cout << "childIDs = ";
+            // for (auto& i : node.childrenIDs) std::cout << i << ",  ";
+            // std::cout << std::endl;
+            return false;
+        }
+        return true;
+    });
+    auto old_node = quadtree.getNode(old_globalID);
+    auto& old_node_data = old_node.data;
+    // app.log("  QUADTREE = ");
+    // std::cout << quadtree << std::endl;
+
+    if (newsize == FCLAW2D_PATCH_SAMESIZE) {
+        // Old patch has same refinement as new patch; copy data
+        app.log("\tNO REGRID");
+    }
+    else if (newsize == FCLAW2D_PATCH_HALFSIZE) {
+        // Old patch is more coarse than new patch; interpolate 1 patch to 4
+        app.log("\tINTERPOLATE 1 TO 4");
+        quadtree.refineNode(old_node.globalID, [&](EllipticForest::FISHPACK::FISHPACKPatch& parentPatch){
+            std::vector<EllipticForest::FISHPACK::FISHPACKPatch> childrenPatches(4);
+
+            // Build children grids
+            auto& parentGrid = parentPatch.grid();
+            int nx = parentGrid.nPointsX();
+            int ny = parentGrid.nPointsY();
+            double xLower = parentGrid.xLower();
+            double xUpper = parentGrid.xUpper();
+            double xMid = (xLower + xUpper) / 2.0;
+            double yLower = parentGrid.yLower();
+            double yUpper = parentGrid.yUpper();
+            double yMid = (yLower + yUpper) / 2.0;
+            EllipticForest::FISHPACK::FISHPACKFVGrid child0Grid(nx, ny, xLower, xMid, yLower, yMid);
+            EllipticForest::FISHPACK::FISHPACKFVGrid child1Grid(nx, ny, xMid, xUpper, yLower, yMid);
+            EllipticForest::FISHPACK::FISHPACKFVGrid child2Grid(nx, ny, xLower, xMid, yMid, yUpper);
+            EllipticForest::FISHPACK::FISHPACKFVGrid child3Grid(nx, ny, xMid, xUpper, yMid, yUpper);
+
+            // Build child patches
+            childrenPatches[0] = EllipticForest::FISHPACK::FISHPACKPatch(child0Grid);
+            childrenPatches[1] = EllipticForest::FISHPACK::FISHPACKPatch(child1Grid);
+            childrenPatches[2] = EllipticForest::FISHPACK::FISHPACKPatch(child2Grid);
+            childrenPatches[3] = EllipticForest::FISHPACK::FISHPACKPatch(child3Grid);
+            int globalIDCounter = 1;
+            int leafIDCounter = 0;
+            for (auto& patch : childrenPatches) {
+                patch.globalID = parentPatch.globalID + globalIDCounter++; // ??? Maybe...
+                patch.leafID = parentPatch.leafID + leafIDCounter++; // ??? Maybe...
+                patch.level = parentPatch.level + 1;
+                patch.isLeaf = true;
+            }
+            parentPatch.leafID = -1;
+
+            // Compute child data
+            for (auto& patch : childrenPatches) {
+                // Compute T
+                patch.matrixT() = solver.buildD2N(patch.grid());
+
+                // Compute f
+                auto& grid = patch.grid();
+                fclaw2d_patch_t* fc_patch = &(new_domain->blocks->patches[patch.leafID]);
+                int mfields;
+                double* rhs;
+                fclaw2d_clawpatch_rhs_data(glob, fc_patch, &rhs, &mfields);
+                patch.vectorF() = EllipticForest::Vector<double>(grid.nPointsX() * grid.nPointsY());
+                for (auto i = 0; i < grid.nPointsX(); i++) {
+                    for (auto j = 0; j < grid.nPointsY(); j++) {
+                        int idx = j + i*grid.nPointsY();
+                        int idx_T = i + j*grid.nPointsX();
+                        patch.vectorF()[idx] = rhs[idx];
+                    }
+                }
+
+                // Compute h
+                patch.vectorH() = solver.particularNeumannData(patch.grid(), patch.vectorF());
+            }
+
+            // Merge child data to get new parent data; updates parent node with appropiate data
+            HPS->merge4to1(parentPatch, childrenPatches[0], childrenPatches[1], childrenPatches[2], childrenPatches[3]);
+            HPS->upwards4to1(parentPatch, childrenPatches[0], childrenPatches[1], childrenPatches[2], childrenPatches[3]);
+
+            return childrenPatches;
+        });
+    }
+    else if (newsize == FCLAW2D_PATCH_DOUBLESIZE) {
+        // Old patch is more fine than new patch; average 4 patches to 1
+        app.log("\tAVERAGE 4 TO 1");
+        quadtree.coarsenNode(old_node.globalID, [&](EllipticForest::FISHPACK::FISHPACKPatch& child0Patch, EllipticForest::FISHPACK::FISHPACKPatch& child1Patch, EllipticForest::FISHPACK::FISHPACKPatch& child2Patch, EllipticForest::FISHPACK::FISHPACKPatch& child3Patch){
+            EllipticForest::FISHPACK::FISHPACKPatch parentPatch;
+
+            // Build parent grid
+            int nx = child0Patch.grid().nPointsX();
+            int ny = child0Patch.grid().nPointsY();
+            double xLower = child0Patch.grid().xLower();
+            double xUpper = child1Patch.grid().xUpper();
+            double yLower = child0Patch.grid().yLower();
+            double yUpper = child2Patch.grid().yUpper();
+            EllipticForest::FISHPACK::FISHPACKFVGrid parentGrid(nx, ny, xLower, xUpper, yLower, yUpper);
+
+            parentPatch.grid() = parentGrid;
+            
+            
+
+            return parentPatch;
+        });
+    }
+
+    // For debugging: Check if quadtree is valid
+    // if (!quadtree.isValid()) {
+    //     std::cerr << "[EllipticForest] Quadtree is invalid." << std::endl;
+    //     exit;
+    // }
+
+    return;
+
 }
 
 /*************************************************/
