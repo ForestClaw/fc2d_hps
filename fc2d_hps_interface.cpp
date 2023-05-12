@@ -506,55 +506,44 @@ void hps_regrid_hook(fclaw2d_domain_t * old_domain,
 
     // Get the EF app, HPS, and quadtree
     EllipticForest::EllipticForestApp& app = EllipticForest::EllipticForestApp::getInstance();
-    app.log("REGRID HOOK");
-    app.log("  OLD_PATCH # = %i", old_patchno);
-    app.log("  NEW_PATCH # = %i", new_patchno);
+    // app.log("REGRID HOOK");
+    // app.log("  OLD_PATCH # = %i", old_patchno);
+    // app.log("  NEW_PATCH # = %i", new_patchno);
     fclaw2d_global_t* glob = fclaw2d_global_get_global();
     HPSAlgorithm* HPS = (HPSAlgorithm*) glob->user;
     auto& quadtree = HPS->quadtree;
     auto& solver = HPS->patchSolver;
 
     // Get current quadtree node
-    int old_globalID = 0;
-    // quadtree.traversePostOrder([&](EllipticForest::FISHPACK::FISHPACKPatch& patch){
-    //     if (patch.leafID == new_patchno) {
-    //         app.log("\tFOUND NODE");
-    //         old_globalID = patch.globalID;
-    //         std::cout << patch.str() << std::endl;
-    //     }
-    //     return;
-    // });
+    int target_globalID = 0;
     quadtree.traversePreOrder([&](EllipticForest::Quadtree<EllipticForest::FISHPACK::FISHPACKPatch>::QuadtreeNode node){
         auto& patch = node.data;
-        if (node.leafID == new_patchno) {
-            app.log("\tFOUND NODE");
-            old_globalID = node.globalID;
-            // std::cout << "PATCH: " << std::endl << patch->str() << std::endl;
-            // std::cout << "NODE:" << std::endl;
-            // std::cout << "level    = " << node.level << std::endl;
-            // std::cout << "globalID = " << node.globalID << std::endl;
-            // std::cout << "levelID  = " << node.levelID << std::endl;
-            // std::cout << "parentID = " << node.parentID << std::endl;
-            // std::cout << "childIDs = ";
-            // for (auto& i : node.childrenIDs) std::cout << i << ",  ";
-            // std::cout << std::endl;
-            return false;
+        if (newsize == FCLAW2D_PATCH_HALFSIZE) {
+            if (node.leafID == new_patchno) {
+                // app.log("\tFOUND NODE");
+                target_globalID = node.globalID;
+                return false;
+            }
+        }
+        else if (newsize == FCLAW2D_PATCH_DOUBLESIZE) {
+            if (node.leafID == new_patchno) {
+                // app.log("\tFOUND NODE");
+                target_globalID = node.parentID;
+                return false;
+            }
         }
         return true;
     });
-    auto old_node = quadtree.getNode(old_globalID);
-    auto& old_node_data = old_node.data;
-    // app.log("  QUADTREE = ");
-    // std::cout << quadtree << std::endl;
+    auto target_node = quadtree.getNode(target_globalID);
 
     if (newsize == FCLAW2D_PATCH_SAMESIZE) {
         // Old patch has same refinement as new patch; copy data
-        app.log("\tNO REGRID");
+        // app.log("\tNO REGRID");
     }
     else if (newsize == FCLAW2D_PATCH_HALFSIZE) {
         // Old patch is more coarse than new patch; interpolate 1 patch to 4
-        app.log("\tINTERPOLATE 1 TO 4");
-        quadtree.refineNode(old_node.globalID, [&](EllipticForest::FISHPACK::FISHPACKPatch& parentPatch){
+        // app.log("\tINTERPOLATE 1 TO 4");
+        quadtree.refineNode(target_node.globalID, [&](EllipticForest::FISHPACK::FISHPACKPatch& parentPatch){
             std::vector<EllipticForest::FISHPACK::FISHPACKPatch> childrenPatches(4);
 
             // Build children grids
@@ -620,8 +609,8 @@ void hps_regrid_hook(fclaw2d_domain_t * old_domain,
     }
     else if (newsize == FCLAW2D_PATCH_DOUBLESIZE) {
         // Old patch is more fine than new patch; average 4 patches to 1
-        app.log("\tAVERAGE 4 TO 1");
-        quadtree.coarsenNode(old_node.globalID, [&](EllipticForest::FISHPACK::FISHPACKPatch& child0Patch, EllipticForest::FISHPACK::FISHPACKPatch& child1Patch, EllipticForest::FISHPACK::FISHPACKPatch& child2Patch, EllipticForest::FISHPACK::FISHPACKPatch& child3Patch){
+        // app.log("\tAVERAGE 4 TO 1");
+        quadtree.coarsenNode(target_node.globalID, [&](EllipticForest::FISHPACK::FISHPACKPatch& child0Patch, EllipticForest::FISHPACK::FISHPACKPatch& child1Patch, EllipticForest::FISHPACK::FISHPACKPatch& child2Patch, EllipticForest::FISHPACK::FISHPACKPatch& child3Patch){
             EllipticForest::FISHPACK::FISHPACKPatch parentPatch;
 
             // Build parent grid
@@ -632,10 +621,32 @@ void hps_regrid_hook(fclaw2d_domain_t * old_domain,
             double yLower = child0Patch.grid().yLower();
             double yUpper = child2Patch.grid().yUpper();
             EllipticForest::FISHPACK::FISHPACKFVGrid parentGrid(nx, ny, xLower, xUpper, yLower, yUpper);
-
             parentPatch.grid() = parentGrid;
-            
-            
+            parentPatch.globalID = target_node.globalID;
+            parentPatch.leafID = child0Patch.leafID;
+            parentPatch.level = target_node.level;
+            parentPatch.isLeaf = true;
+
+            // Compute parent data
+            //    Compute T
+            parentPatch.matrixT() = solver.buildD2N(parentPatch.grid());
+
+            //    Compute f
+            fclaw2d_patch_t* fc_patch = &(new_domain->blocks->patches[new_patchno]);
+            int mfields;
+            double* rhs;
+            fclaw2d_clawpatch_rhs_data(glob, fc_patch, &rhs, &mfields);
+            parentPatch.vectorF() = EllipticForest::Vector<double>(parentPatch.grid().nPointsX() * parentPatch.grid().nPointsY());
+            for (auto i = 0; i < parentPatch.grid().nPointsX(); i++) {
+                for (auto j = 0; j < parentPatch.grid().nPointsY(); j++) {
+                    int idx = j + i*parentPatch.grid().nPointsY();
+                    int idx_T = i + j*parentPatch.grid().nPointsX();
+                    parentPatch.vectorF()[idx] = rhs[idx];
+                }
+            }
+
+            //    Compute h
+            parentPatch.vectorH() = solver.particularNeumannData(parentPatch.grid(), parentPatch.vectorF());
 
             return parentPatch;
         });
