@@ -39,6 +39,13 @@ typedef  void (*fc2d_hps_fort_beta_t)(const double* x,
 typedef double (*fc2d_hps_fort_eval_bc_t)(const int *iface, const double *t, 
                                           const double *x, const double *y);
 
+typedef double (*fc2d_hps_fort_eval_bc_ext_t)(const int* blockno, const int* mx, const int* my,
+                                            const int* mbc, const int* meqn, const int* mrhs, const int* maux,
+                                            const double* xlower, const double* ylower, const double* dx, const double* dy,
+                                            int intersects_bc[], int mthbc[],
+                                            double q[], double rhs[], double aux[],
+                                            const int* iface, const double* time, const double* x, const double* y);
+
 typedef void (*fc2d_hps_fort_apply_bc_t)(const int* blockno, const  int* mx, const  int* my, 
                                          const  int* mbc, const  int* meqn, 
                                          const double* xlower, const double* ylower,
@@ -66,11 +73,12 @@ typedef struct fc2d_hps_vtable
     // fc2d_hps_patch_solver_t   patch_solver;  /* 'solver' is a keyword */
 
     /* Fortran routines */
-    fc2d_hps_fort_rhs_t        fort_rhs;	
-    fc2d_hps_fort_beta_t       fort_beta;	
-    fc2d_hps_fort_apply_bc_t   fort_apply_bc;
-    fc2d_hps_fort_eval_bc_t    fort_eval_bc;
-    fc2d_hps_fort_qexact_t     fort_qexact;
+    fc2d_hps_fort_rhs_t         fort_rhs;	
+    fc2d_hps_fort_beta_t        fort_beta;	
+    fc2d_hps_fort_apply_bc_t    fort_apply_bc;
+    fc2d_hps_fort_eval_bc_t     fort_eval_bc;
+    fc2d_hps_fort_eval_bc_ext_t fort_eval_bc_ext;
+    fc2d_hps_fort_qexact_t      fort_qexact;
 
     /* Allows us to output error and exact solution, along with computed solution */
     fc2d_hps_fort_output_t     fort_output;   
@@ -85,6 +93,7 @@ void fc2d_hps_rhs(fclaw2d_global_t* glob, fclaw2d_patch_t *patch, int blockno, i
 void fc2d_hps_heat_set_lambda(fclaw2d_global_t* glob, double lambda);
 double fc2d_hps_heat_get_lambda();
 void hps_setup_solver(fclaw2d_global_t *glob);
+void hps_factor_solver(fclaw2d_global_t* glob);
 void hps_rhs(fclaw2d_global_t *glob, fclaw2d_patch_t *patch, int blockno, int patchno);
 void hps_solve(fclaw2d_global_t *glob);
 void hps_output(fclaw2d_global_t *glob, int iframe);
@@ -93,6 +102,10 @@ int hps_tag4coarsening(fclaw2d_global_t *glob, fclaw2d_patch_t *fine_patches, in
 void hps_compute_error(fclaw2d_global_t *glob, fclaw2d_patch_t *patch, int blockno, int patchno, void *user);
 void hps_conservation_check(fclaw2d_global_t *glob, fclaw2d_patch_t *patch, int blockno, int patchno, void *user);
 fc2d_hps_vtable_t* hps_vt_init();
+void global_heat_rhs(fclaw2d_global_t *glob,
+                fclaw2d_patch_t *patch,
+                int blockno,
+                int patchno);
 void hps_regrid_hook(fclaw2d_domain_t * old_domain,
                      fclaw2d_patch_t * old_patch,
                      fclaw2d_domain_t * new_domain,
@@ -149,6 +162,7 @@ void cb_hps_output_ascii(fclaw2d_domain_t * domain, fclaw2d_patch_t * patch, int
 typedef struct fc2d_hps_options
 {
     /* Boundary conditions */
+    int use_ext_bc;
     int *boundary_conditions;
     const char *bc_cond_string;
 

@@ -35,6 +35,7 @@ void fc2d_hps_solver_initialize(fclaw2d_global_t* glob) {
     /* Elliptic specific functions */
     fclaw2d_elliptic_vtable_t *elliptic_vt = fclaw2d_elliptic_vt(glob);
     elliptic_vt->setup = hps_setup_solver;
+    elliptic_vt->factor = hps_factor_solver;
 
     /* Solver doesn't do anything so far */
     elliptic_vt->solve = hps_solve;    
@@ -89,6 +90,7 @@ void hps_setup_solver(fclaw2d_global_t *glob) {
     // Get EllipticForest app
     EllipticForest::EllipticForestApp& app = EllipticForest::EllipticForestApp::getInstance();
     app.log("Setting up EllipticForest...");
+    app.options["homogeneous-rhs"] = false;
 
     // Get glob from user and get options
 	fclaw2d_clawpatch_options_t *clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
@@ -125,6 +127,12 @@ void hps_setup_solver(fclaw2d_global_t *glob) {
     HPS->setupStage(p4est);
 }
 
+void hps_factor_solver(fclaw2d_global_t* glob) {
+    HPSAlgorithm* HPS = (HPSAlgorithm*) glob->user;
+    // HPS->patchSolver = EllipticForest::FISHPACK::FISHPACKFVSolver(fc2d_hps_heat_get_lambda());
+    HPS->buildStage();
+}
+
 void hps_rhs(fclaw2d_global_t *glob, fclaw2d_patch_t *patch, int blockno, int patchno) {
     int mx,my,mbc;
     double dx,dy,xlower,ylower;
@@ -151,10 +159,35 @@ void hps_solve(fclaw2d_global_t *glob) {
 
     // Get fc2d_hps virtual table
     fc2d_hps_vtable_t* hps_vt = fc2d_hps_vt();
+    fc2d_hps_options_t hps_opt = fc2d_hps_get_options(glob);
 
     // Get HPS algorithm from glob
     // TODO: Should I get this from somewhere else?
     HPSAlgorithm* HPS = (HPSAlgorithm*) glob->user;
+
+    //
+    // HPS->quadtree.merge([&](EllipticForest::FISHPACK::FISHPACKPatch& tau, EllipticForest::FISHPACK::FISHPACKPatch& alpha, EllipticForest::FISHPACK::FISHPACKPatch& beta, EllipticForest::FISHPACK::FISHPACKPatch& gamma, EllipticForest::FISHPACK::FISHPACKPatch& omega){
+
+    //     HPS->coarsen_(tau, alpha, beta, gamma, omega);
+    //     // HPS->createIndexSets_(tau, alpha, beta, gamma, omega);
+    //     // HPS->createMatrixBlocks_(tau, alpha, beta, gamma, omega);
+
+    //     // EllipticForest::Matrix<double>& T_alpha = alpha.matrixT();
+    //     // EllipticForest::Matrix<double>& T_beta = beta.matrixT();
+    //     // EllipticForest::Matrix<double>& T_gamma = gamma.matrixT();
+    //     // EllipticForest::Matrix<double>& T_omega = omega.matrixT();
+
+    //     // int n_alpha = T_alpha.nRows();
+    //     // int n_beta = T_beta.nRows();
+    //     // int n_gamma = T_gamma.nRows();
+    //     // int n_omega = T_omega.nRows();
+
+    //     // app.log("Pre-solve merge:");
+    //     // app.log("\tn_alpha = %i, n_beta = %i, n_gamma = %i, n_omega = %i", n_alpha, n_beta, n_gamma, n_omega);
+
+
+
+    // });
 
     // Update solver with lambda
     // TODO: There's gotta be a better way to do this...
@@ -168,15 +201,35 @@ void hps_solve(fclaw2d_global_t *glob) {
     HPS->upwardsStage([&](EllipticForest::FISHPACK::FISHPACKPatch& leafPatch){
         EllipticForest::FISHPACK::FISHPACKFVGrid& grid = leafPatch.grid();
         fclaw2d_patch_t* fc_patch = &(glob->domain->blocks->patches[leafPatch.leafID]);
+
+        int mx, my;
+        int mbc;
+        double x_lower, y_lower, dx, dy;
         int mfields;
         double* rhs;
+        fclaw2d_clawpatch_grid_data(glob, fc_patch, &mx, &my, &mbc, &x_lower, &y_lower, &dx, &dy);
         fclaw2d_clawpatch_rhs_data(glob, fc_patch, &rhs, &mfields);
+        int nx = mx + 2*mbc;
+        int ny = mx + 2*mbc;
+
         leafPatch.vectorF() = EllipticForest::Vector<double>(grid.nPointsX() * grid.nPointsY());
-        for (auto i = 0; i < grid.nPointsX(); i++) {
-            for (auto j = 0; j < grid.nPointsY(); j++) {
-                int idx = j + i*grid.nPointsY();
-                int idx_T = i + j*grid.nPointsX();
-                leafPatch.vectorF()[idx] = rhs[idx];
+        for (auto i = 0; i < nx; i++) {
+            for (auto j = 0; j < ny; j++) {
+                if (i > mbc-1 && i < nx-mbc && j > mbc-1 && j < ny-mbc) {
+                    int ii = i - mbc;
+                    int jj = j - mbc;
+                    int idx_ef = jj + ii*mx;
+                    int idx_ef_T = ii + jj*my;
+                    int idx_fc = j + i*nx;
+                    int idx_fc_T = i + j*ny;
+
+                    // q[idx_fc] = patch.vectorU()[idx_ef];
+                    // rhs[idx_fc] = patch.vectorU()[idx_ef];
+                    leafPatch.vectorF()[idx_ef] = rhs[idx_fc];
+                }
+                // int idx = j + i*grid.nPointsY();
+                // int idx_T = i + j*grid.nPointsX();
+                // leafPatch.vectorF()[idx] = rhs[idx];
                 // printf("idx = %i, idx_T = %i, rhs = %f\n", idx, idx_T, rhs[idx_T]);
             }
         }
@@ -190,20 +243,40 @@ void hps_solve(fclaw2d_global_t *glob) {
         std::get<int>(app.options["boundary-type-south"]),
         std::get<int>(app.options["boundary-type-north"])
     };
-    HPS->solveStage([&](int side, double x, double y, double* a, double* b){
-        if (boundaryTypes[side] == 0) {
-            *a = 1.0;
-            *b = 0.0;
-        }
-        else if (boundaryTypes[side] == 1) {
-            *a = 0.0;
-            *b = 1.0;
-        }
-        else {
-            std::cerr << "INVALID BC TYPE" << std::endl;
-        }
-        return hps_vt->fort_eval_bc(&side, nullptr, &x, &y);
-    });
+    if (!hps_opt->use_ext_bc) {
+        HPS->solveStage([&](int side, double x, double y, double* a, double* b){
+            double time = glob->curr_time;
+            if (boundaryTypes[side] == 0) {
+                *a = 1.0;
+                *b = 0.0;
+            }
+            else if (boundaryTypes[side] == 1) {
+                *a = 0.0;
+                *b = 1.0;
+            }
+            else {
+                std::cerr << "INVALID BC TYPE" << std::endl;
+            }
+            return hps_vt->fort_eval_bc(&side, &time, &x, &y);
+        });
+    }
+    else {
+        // Can I create an interpolation function by iterating through forestclaw patches, then call that interpolation function for the actual solveStage call?
+        // Use Numerical Recipies algorithms!
+        // NOTE: Need to determine order of interpolation
+        HPS->solveStage([&](EllipticForest::FISHPACK::FISHPACKPatch& rootPatch){
+            // Iterate through patches; get boundary intersections; call extended boundary function
+            fclaw2d_global_iterate_patches(
+                fclaw2d_global_t* glob,
+                [](fclaw2d_domain_t* domain, fclaw2d_patch_t* patch, int blockno, int patchno, void* user){
+                    // 
+
+
+                },
+                NULL);
+            
+        });
+    }
 
     // HPS->solveStage([&](EllipticForest::FISHPACK::FISHPACKPatch& rootPatch){
     //     fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
@@ -573,8 +646,10 @@ void hps_regrid_hook(fclaw2d_domain_t * old_domain,
                 patch.leafID = parentPatch.leafID + leafIDCounter++; // ??? Maybe...
                 patch.level = parentPatch.level + 1;
                 patch.isLeaf = true;
+                patch.nCoarsens = 0;
             }
             parentPatch.leafID = -1;
+            // parentPatch.nCoarsens = 0;
 
             // Compute child data
             for (auto& patch : childrenPatches) {
@@ -584,15 +659,55 @@ void hps_regrid_hook(fclaw2d_domain_t * old_domain,
                 // Compute f
                 auto& grid = patch.grid();
                 fclaw2d_patch_t* fc_patch = &(new_domain->blocks->patches[patch.leafID]);
+
+                int mx,my,mbc;
+                double dx,dy,xlower,ylower;
+                fclaw2d_clawpatch_grid_data(glob,fc_patch,&mx,&my,&mbc,
+                                            &xlower,&ylower,&dx,&dy);
+
                 int mfields;
-                double* rhs;
-                fclaw2d_clawpatch_rhs_data(glob, fc_patch, &rhs, &mfields);
+                double *rhs;
+                fclaw2d_clawpatch_rhs_data(glob,fc_patch,&rhs,&mfields);
+
+                int meqn;
+                double *q;
+                fclaw2d_clawpatch_soln_data(glob,fc_patch,&q,&meqn);
+
+                double lambda = fc2d_hps_heat_get_lambda();
+
+                
+
+                // int mfields;
+                // double* rhs;
+                // global_heat_rhs(glob, fc_patch, blockno, new_patchno);
+                // NOTE: Need to call heat_rhs (heat_user.cpp) in order to init this data
+                // fclaw2d_clawpatch_rhs_data(glob, fc_patch, &rhs, &mfields);
+                // NOTE: Check if rhs is a null pointer
+                int nx = mx + 2*mbc;
+                int ny = mx + 2*mbc;
                 patch.vectorF() = EllipticForest::Vector<double>(grid.nPointsX() * grid.nPointsY());
-                for (auto i = 0; i < grid.nPointsX(); i++) {
-                    for (auto j = 0; j < grid.nPointsY(); j++) {
-                        int idx = j + i*grid.nPointsY();
-                        int idx_T = i + j*grid.nPointsX();
-                        patch.vectorF()[idx] = rhs[idx];
+                for (auto i = 0; i < nx; i++) {
+                    for (auto j = 0; j < ny; j++) {
+                        if (i > mbc-1 && i < nx-mbc && j > mbc-1 && j < ny-mbc) {
+                            int ii = i - mbc;
+                            int jj = j - mbc;
+                            int idx_ef = jj + ii*mx;
+                            int idx_ef_T = ii + jj*my;
+                            int idx_fc = j + i*nx;
+                            int idx_fc_T = i + j*ny;
+
+                            // rhs[idx_fc] = lambda*q[idx_fc];
+                            // printf("rhs[%i] = %10.4f\n", idx_fc, rhs[idx_fc]);
+
+                            // patch.vectorF()[idx_ef] = rhs[idx_fc];
+                            patch.vectorF()[idx_ef] = lambda*q[idx_fc];
+
+                            // q[idx_fc] = patch.vectorU()[idx_ef];
+                            // rhs[idx_fc] = patch.vectorU()[idx_ef];
+                        }
+                        // int idx = j + i*grid.nPointsY();
+                        // int idx_T = i + j*grid.nPointsX();
+                        // patch.vectorF()[idx] = rhs[idx];
                     }
                 }
 
@@ -603,6 +718,7 @@ void hps_regrid_hook(fclaw2d_domain_t * old_domain,
             // Merge child data to get new parent data; updates parent node with appropiate data
             HPS->merge4to1(parentPatch, childrenPatches[0], childrenPatches[1], childrenPatches[2], childrenPatches[3]);
             HPS->upwards4to1(parentPatch, childrenPatches[0], childrenPatches[1], childrenPatches[2], childrenPatches[3]);
+            // HPS->split1to4(parentPatch, childrenPatches[0], childrenPatches[1], childrenPatches[2], childrenPatches[3]);
 
             return childrenPatches;
         });
@@ -846,11 +962,16 @@ void fc2d_hps_options_store (struct fclaw2d_global* glob, fc2d_hps_options_t* hp
 }
 
 void* hps_register (fc2d_hps_options_t* hps_opt, sc_options_t * opt) {
+
+    sc_options_add_bool(opt, 0, "use-ext-bc", &hps_opt->use_ext_bc, 0, "Option to use extended boundary condition FORTRAN function");
+
     /* Array of NumFaces=4 values */
     fclaw_options_add_int_array (opt, 0, "boundary_conditions", 
                                  &hps_opt->bc_cond_string, "1 1 1 1",
                                  &hps_opt->boundary_conditions, 4,
                                  "[hps] Physical boundary condition type [1 1 1 1]");
+
+    sc_options_add_bool (opt, 0, "use-ext-bc", &hps_opt->use_ext_bc, 0, "Option to use extended version of boundary condition function (user supplied)");
 
     sc_options_add_bool (opt, 0, "ascii-out", &hps_opt->ascii_out, 0,
                            "Output ASCII formatted data [F]");
