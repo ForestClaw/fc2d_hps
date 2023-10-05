@@ -1,12 +1,11 @@
-#include "fc2d_hps_interface.hpp"
-
-using HPSAlgorithm = EllipticForest::HPSAlgorithm<EllipticForest::FISHPACK::FISHPACKFVGrid, EllipticForest::FISHPACK::FISHPACKFVSolver, EllipticForest::FISHPACK::FISHPACKPatch, double>;
+ #include "fc2d_hps_interface.hpp"
 
 /*************************************************/
 // fc2d_hps
 /*************************************************/
 
 static fc2d_hps_vtable_t s_hps_vt;
+fc2d_hps_app_context_t hps_app_context;
 
 fc2d_hps_vtable_t* fc2d_hps_vt() {
     FCLAW_ASSERT(s_hps_vt.is_set != 0);
@@ -89,12 +88,16 @@ double fc2d_hps_heat_get_lambda() {
 void hps_setup_solver(fclaw2d_global_t *glob) {
     // Get EllipticForest app
     EllipticForest::EllipticForestApp& app = EllipticForest::EllipticForestApp::getInstance();
-    app.log("Setting up EllipticForest...");
+    app.logHead("Setting up EllipticForest...");
     app.options["homogeneous-rhs"] = false;
+    app.options["cache-operators"] = false;
 
     // Get glob from user and get options
 	fclaw2d_clawpatch_options_t *clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
 	fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
+    fclaw2d_domain_t* domain = glob->domain;
+    p4est_wrap_t* p4est_wrap = (p4est_wrap_t*) domain->pp;
+    p4est_t* p4est = p4est_wrap->p4est;
 
     // Create root patch
     int nx = clawpatch_opt->mx;
@@ -103,33 +106,52 @@ void hps_setup_solver(fclaw2d_global_t *glob) {
     double x_upper = fclaw_opt->bx;
     double y_lower = fclaw_opt->ay;
     double y_upper = fclaw_opt->by;
-    EllipticForest::FISHPACK::FISHPACKFVGrid root_grid(nx, ny, x_lower, x_upper, y_lower, y_upper);
-    EllipticForest::FISHPACK::FISHPACKPatch root_patch(root_grid);
-    root_patch.level = 0;
-    root_patch.isLeaf = true;
+    EllipticForest::Petsc::PetscGrid root_grid(nx, ny, x_lower, x_upper, y_lower, y_upper);
+    EllipticForest::Petsc::PetscPatch root_patch(root_grid);
+
+    // Create node factory
+    // EllipticForest::Petsc::PetscPatchNodeFactory node_factory{};
+    hps_app_context.node_factory = new EllipticForest::Petsc::PetscPatchNodeFactory{};
+    auto& node_factory = *hps_app_context.node_factory;
+
+    // Create mesh from p4est
+    // EllipticForest::Mesh<EllipticForest::Petsc::PetscPatch> mesh(MPI_COMM_WORLD, p4est, root_patch, node_factory);
+    hps_app_context.mesh = new EllipticForest::Mesh<EllipticForest::Petsc::PetscPatch>(MPI_COMM_WORLD, p4est, root_patch, node_factory);
+    auto& mesh = *hps_app_context.mesh;
 
     // Create patch solver
     double lambda = fc2d_hps_heat_get_lambda();
-    EllipticForest::FISHPACK::FISHPACKFVSolver solver(lambda);
+    hps_app_context.solver = new EllipticForest::Petsc::PetscPatchSolver{};
+    auto& solver = *hps_app_context.solver;
+    // TODO: Should these be moved to the user/problem stuff?
+    solver.setAlphaFunction([&](double x, double y){
+        return 1.0;
+    });
+    solver.setBetaFunction([&](double x, double y){
+        return 1.0;
+    });
+    solver.setLambdaFunction([&](double x, double y){
+        return lambda;
+    });
 
     // Create new HPS algorithm
     // TODO: delete HPS in clean up function (where...?)
-    HPSAlgorithm* HPS = new HPSAlgorithm(root_patch, solver);
+    hps_app_context.HPS = new HPSAlgorithm(MPI_COMM_WORLD, *hps_app_context.mesh, solver);
+    auto& HPS = *hps_app_context.HPS;
 
     // Save HPS into ForestClaw glob
     // TODO: Should I put this somewhere else?
-    glob->user = (HPSAlgorithm*) HPS;
+    // glob->user = (HPSAlgorithm*) HPS;
 
     // Call setup stage
-    fclaw2d_domain_t* domain = glob->domain;
-    p4est_wrap_t* p4est_wrap = (p4est_wrap_t*) domain->pp;
-    p4est_t* p4est = p4est_wrap->p4est;
-    HPS->setupStage(p4est);
+    // TODO: Does this do anything anymore...?
+    hps_app_context.HPS->setupStage();
 }
 
 void hps_factor_solver(fclaw2d_global_t* glob) {
-    HPSAlgorithm* HPS = (HPSAlgorithm*) glob->user;
+    // HPSAlgorithm* HPS = (HPSAlgorithm*) glob->user;
     // HPS->patchSolver = EllipticForest::FISHPACK::FISHPACKFVSolver(fc2d_hps_heat_get_lambda());
+    auto* HPS = hps_app_context.HPS;
     HPS->buildStage();
 }
 
@@ -155,128 +177,220 @@ void hps_rhs(fclaw2d_global_t *glob, fclaw2d_patch_t *patch, int blockno, int pa
 void hps_solve(fclaw2d_global_t *glob) {
     // Get EllipticForest app
     EllipticForest::EllipticForestApp& app = EllipticForest::EllipticForestApp::getInstance();
-    app.log("Beginning HPS solve...");
+    app.logHead("Beginning HPS solve...");
 
     // Get fc2d_hps virtual table
     fc2d_hps_vtable_t* hps_vt = fc2d_hps_vt();
-    fc2d_hps_options_t hps_opt = fc2d_hps_get_options(glob);
+    fc2d_hps_options_t* hps_opt = fc2d_hps_get_options(glob);
+    fclaw2d_global_set_global(glob);
 
     // Get HPS algorithm from glob
     // TODO: Should I get this from somewhere else?
-    HPSAlgorithm* HPS = (HPSAlgorithm*) glob->user;
-
-    //
-    // HPS->quadtree.merge([&](EllipticForest::FISHPACK::FISHPACKPatch& tau, EllipticForest::FISHPACK::FISHPACKPatch& alpha, EllipticForest::FISHPACK::FISHPACKPatch& beta, EllipticForest::FISHPACK::FISHPACKPatch& gamma, EllipticForest::FISHPACK::FISHPACKPatch& omega){
-
-    //     HPS->coarsen_(tau, alpha, beta, gamma, omega);
-    //     // HPS->createIndexSets_(tau, alpha, beta, gamma, omega);
-    //     // HPS->createMatrixBlocks_(tau, alpha, beta, gamma, omega);
-
-    //     // EllipticForest::Matrix<double>& T_alpha = alpha.matrixT();
-    //     // EllipticForest::Matrix<double>& T_beta = beta.matrixT();
-    //     // EllipticForest::Matrix<double>& T_gamma = gamma.matrixT();
-    //     // EllipticForest::Matrix<double>& T_omega = omega.matrixT();
-
-    //     // int n_alpha = T_alpha.nRows();
-    //     // int n_beta = T_beta.nRows();
-    //     // int n_gamma = T_gamma.nRows();
-    //     // int n_omega = T_omega.nRows();
-
-    //     // app.log("Pre-solve merge:");
-    //     // app.log("\tn_alpha = %i, n_beta = %i, n_gamma = %i, n_omega = %i", n_alpha, n_beta, n_gamma, n_omega);
-
-
-
-    // });
+    // HPSAlgorithm* HPS = (HPSAlgorithm*) glob->user;
+    auto* HPS = hps_app_context.HPS;
 
     // Update solver with lambda
     // TODO: There's gotta be a better way to do this...
     // app.log("Setting lambda to: %e", fc2d_hps_heat_get_lambda());
-    HPS->patchSolver = EllipticForest::FISHPACK::FISHPACKFVSolver(fc2d_hps_heat_get_lambda());
+    // HPS->patchSolver.setLambdaFunction([&](double x, double y){
+    //     return fc2d_hps_heat_get_lambda();
+    // });
 
     // Call build stage
-    HPS->buildStage();
+    // HPS->buildStage();
+
+    // Iterate through tree and update leaf IDs on patches
+    p4est_iterate(
+        HPS->mesh.quadtree.p4est,
+        NULL,
+        HPS,
+        [](p4est_iter_volume_info_t* info, void* user_data){
+            auto* HPS = (HPSAlgorithm*) user_data;
+            auto* quadrant = info->quad;
+            auto path = EllipticForest::p4est::p4est_quadrant_path(quadrant);
+            auto& map = HPS->mesh.quadtree.map;
+            auto& patch = map[path]->data;
+            patch.leafID = (int) info->quadid;
+            patch.isLeaf = true;
+        },
+        NULL,
+        NULL
+    );
 
     // Call upwards stage
-    HPS->upwardsStage([&](EllipticForest::FISHPACK::FISHPACKPatch& leafPatch){
-        EllipticForest::FISHPACK::FISHPACKFVGrid& grid = leafPatch.grid();
-        fclaw2d_patch_t* fc_patch = &(glob->domain->blocks->patches[leafPatch.leafID]);
+    switch (hps_opt->rhs_function_type) {
+    case fc2d_hps_function_interface_types::COPY_FROM_FC:
+        HPS->upwardsStage([&](EllipticForest::Petsc::PetscPatch& leafPatch){
+            auto& grid = leafPatch.grid();
+            auto* clawpatch = &(glob->domain->blocks->patches[leafPatch.leafID]);
 
-        int mx, my;
-        int mbc;
-        double x_lower, y_lower, dx, dy;
-        int mfields;
-        double* rhs;
-        fclaw2d_clawpatch_grid_data(glob, fc_patch, &mx, &my, &mbc, &x_lower, &y_lower, &dx, &dy);
-        fclaw2d_clawpatch_rhs_data(glob, fc_patch, &rhs, &mfields);
-        int nx = mx + 2*mbc;
-        int ny = mx + 2*mbc;
+            int mx, my;
+            int mbc;
+            double x_lower, y_lower, dx, dy;
+            int mfields;
+            double* rhs;
+            fclaw2d_clawpatch_grid_data(glob, clawpatch, &mx, &my, &mbc, &x_lower, &y_lower, &dx, &dy);
+            fclaw2d_clawpatch_rhs_data(glob, clawpatch, &rhs, &mfields);
+            int nx = mx + 2*mbc;
+            int ny = mx + 2*mbc;
 
-        leafPatch.vectorF() = EllipticForest::Vector<double>(grid.nPointsX() * grid.nPointsY());
-        for (auto i = 0; i < nx; i++) {
-            for (auto j = 0; j < ny; j++) {
-                if (i > mbc-1 && i < nx-mbc && j > mbc-1 && j < ny-mbc) {
-                    int ii = i - mbc;
-                    int jj = j - mbc;
-                    int idx_ef = jj + ii*mx;
-                    int idx_ef_T = ii + jj*my;
-                    int idx_fc = j + i*nx;
-                    int idx_fc_T = i + j*ny;
+            leafPatch.vectorF() = EllipticForest::Vector<double>(grid.nPointsX() * grid.nPointsY());
+            for (auto i = 0; i < nx; i++) {
+                for (auto j = 0; j < ny; j++) {
+                    if (i > mbc-1 && i < nx-mbc && j > mbc-1 && j < ny-mbc) {
+                        int ii = i - mbc;
+                        int jj = j - mbc;
+                        int idx_ef = jj + ii*mx;
+                        int idx_ef_T = ii + jj*my;
+                        int idx_fc = j + i*nx;
+                        int idx_fc_T = i + j*ny;
 
-                    // q[idx_fc] = patch.vectorU()[idx_ef];
-                    // rhs[idx_fc] = patch.vectorU()[idx_ef];
-                    leafPatch.vectorF()[idx_ef] = rhs[idx_fc];
+                        // q[idx_fc] = patch.vectorU()[idx_ef];
+                        // rhs[idx_fc] = patch.vectorU()[idx_ef];
+                        leafPatch.vectorF()[idx_ef] = rhs[idx_fc];
+                    }
                 }
-                // int idx = j + i*grid.nPointsY();
-                // int idx_T = i + j*grid.nPointsX();
-                // leafPatch.vectorF()[idx] = rhs[idx];
-                // printf("idx = %i, idx_T = %i, rhs = %f\n", idx, idx_T, rhs[idx_T]);
             }
-        }
-        return;
-    });
+            return;
+        });
+        break;
+
+    case fc2d_hps_function_interface_types::ANALYTIC:
+        HPS->upwardsStage([&](double x, double y){
+            return hps_vt->cb_rhs_analytic(x, y, glob->curr_time);
+        });
+        break;
+
+    case fc2d_hps_function_interface_types::EXTENDED:
+        HPS->upwardsStage([&](EllipticForest::Petsc::PetscPatch& leafPatch){
+
+            auto* clawpatch = &(glob->domain->blocks->patches[leafPatch.leafID]);
+
+            int mbc, meqn, mrhs, maux, mx, my;
+            double xlower, ylower, dx, dy;
+            double* q;
+            double* rhs;
+            double* aux;
+            fclaw2d_clawpatch_grid_data(glob, clawpatch, &mx, &my, &mbc, &xlower, &ylower, &dx, &dy);
+            fclaw2d_clawpatch_soln_data(glob, clawpatch, &q, &meqn);
+            fclaw2d_clawpatch_rhs_data(glob, clawpatch, &rhs, &mrhs);
+            fclaw2d_clawpatch_aux_data(glob, clawpatch, &aux, &maux);
+
+            hps_vt->cb_rhs_extended(leafPatch, mbc, meqn, mrhs, maux, mx, my, xlower, ylower, dx, dy, q, rhs, aux);
+
+            return;
+        });
+        break;
+    
+    default:
+        // TODO: Better error handling
+        std::cerr << "Invalid RHS function type." << std::endl;
+        break;
+    }
 
     // Call solve stage; provide Dirichlet data via function
-    std::vector<int> boundaryTypes = {
-        std::get<int>(app.options["boundary-type-west"]),
-        std::get<int>(app.options["boundary-type-east"]),
-        std::get<int>(app.options["boundary-type-south"]),
-        std::get<int>(app.options["boundary-type-north"])
-    };
-    if (!hps_opt->use_ext_bc) {
+    // std::vector<int> boundaryTypes = {
+    //     // std::get<int>(app.options["boundary-type-west"]),
+    //     // std::get<int>(app.options["boundary-type-east"]),
+    //     // std::get<int>(app.options["boundary-type-south"]),
+    //     // std::get<int>(app.options["boundary-type-north"])
+    //     0, 0, 0, 0
+    // };
+    std::vector<std::vector<int>> boundary_patch_numbers(4);
+    switch (hps_opt->bc_function_type) {
+    case fc2d_hps_function_interface_types::COPY_FROM_FC:
+        /* code */
+        break;
+
+    case fc2d_hps_function_interface_types::ANALYTIC:
         HPS->solveStage([&](int side, double x, double y, double* a, double* b){
             double time = glob->curr_time;
-            if (boundaryTypes[side] == 0) {
+            if (hps_opt->boundary_condition_types[side] == 0) {
                 *a = 1.0;
                 *b = 0.0;
             }
-            else if (boundaryTypes[side] == 1) {
+            else if (hps_opt->boundary_condition_types[side] == 1) {
                 *a = 0.0;
                 *b = 1.0;
             }
             else {
                 std::cerr << "INVALID BC TYPE" << std::endl;
             }
-            return hps_vt->fort_eval_bc(&side, &time, &x, &y);
+            return hps_vt->cb_bc_analytic(side, x, y, time);
         });
+        break;
+
+    case fc2d_hps_function_interface_types::EXTENDED:
+        
+        // Get list of patches that intersect the boundary; stored in boundary_patch_numbers
+        // Ordering is assured
+        fclaw2d_global_iterate_patches(
+            glob,
+            [](fclaw2d_domain_t* domain, fclaw2d_patch_t* patch, int blockno, int patchno, void* user){
+                fclaw2d_global_iterate_t *g = (fclaw2d_global_iterate_t *) user;
+                auto* glob = g->glob;
+                auto& boundary_patch_numbers = *(std::vector<std::vector<int>>*) g->user;
+                int intersects_boundary[4];
+                fclaw2d_physical_get_bc(glob, blockno, patchno, intersects_boundary);
+                for (int s = 0; s < 4; s++) {
+                    if (intersects_boundary[s]) {
+                        boundary_patch_numbers[s].push_back(patchno);
+                    }
+                }
+
+                return;
+            },
+            &boundary_patch_numbers
+        );
+
+        HPS->solveStage([&](EllipticForest::Petsc::PetscPatch& root_patch){
+            // auto& grid = root_patch.grid();
+            // root_patch.vectorG() = EllipticForest::Vector<double>(2*grid.nPointsX() + 2*grid.nPointsY(), 0.0);
+            hps_vt->cb_bc_extended(root_patch, boundary_patch_numbers);
+        });
+
+        // int intersects_bc[4];
+        // fclaw2d_physical_get_bc(glob,blockno,patchno,intersects_bc);
+        break;
+    
+    default:
+        // TODO: Better error handling
+        std::cerr << "Invalid BC function type." << std::endl;
+        break;
     }
-    else {
-        // Can I create an interpolation function by iterating through forestclaw patches, then call that interpolation function for the actual solveStage call?
-        // Use Numerical Recipies algorithms!
-        // NOTE: Need to determine order of interpolation
-        HPS->solveStage([&](EllipticForest::FISHPACK::FISHPACKPatch& rootPatch){
-            // Iterate through patches; get boundary intersections; call extended boundary function
-            fclaw2d_global_iterate_patches(
-                fclaw2d_global_t* glob,
-                [](fclaw2d_domain_t* domain, fclaw2d_patch_t* patch, int blockno, int patchno, void* user){
-                    // 
+
+    
+    // if (!hps_opt->use_ext_bc) {
+        
+    // }
+    // else {
+    //     // Can I create an interpolation function by iterating through forestclaw patches, then call that interpolation function for the actual solveStage call?
+    //     // Use Numerical Recipies algorithms!
+    //     fc2d_hps_boundary_vectors_t boundary_vectors;
+    //     fclaw2d_global_iterate_patches(
+    //         glob,
+    //         [](fclaw2d_domain_t* domain, fclaw2d_patch_t* patch, int blockno, int patchno, void* user){
+    //             auto* s = (fclaw2d_global_iterate_t*) user;
+    //             auto* boundary_vectors = (fc2d_hps_boundary_vectors_t*) s->user;
+                
+    //         },
+    //         (void*) &boundary_vectors
+    //     );
 
 
-                },
-                NULL);
+    //     HPS->solveStage([&](EllipticForest::Petsc::PetscPatch& rootPatch){
+    //         // Iterate through patches; get boundary intersections; call extended boundary function
+    //         fclaw2d_global_iterate_patches(
+    //             fclaw2d_global_t* glob,
+    //             [](fclaw2d_domain_t* domain, fclaw2d_patch_t* patch, int blockno, int patchno, void* user){
+    //                 // 
+
+
+    //             },
+    //             NULL);
             
-        });
-    }
+    //     });
+    // }
 
     // HPS->solveStage([&](EllipticForest::FISHPACK::FISHPACKPatch& rootPatch){
     //     fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
@@ -368,7 +482,7 @@ void hps_solve(fclaw2d_global_t *glob) {
     // });
 
     // Copy data to ForestClaw patch
-    HPS->quadtree.traversePreOrder([&](EllipticForest::FISHPACK::FISHPACKPatch& patch){
+    HPS->mesh.quadtree.traversePreOrder([&](EllipticForest::Petsc::PetscPatch& patch){
         if (patch.isLeaf) {
             fclaw2d_patch_t* fc_patch = &(glob->domain->blocks->patches[patch.leafID]);
 
@@ -382,7 +496,7 @@ void hps_solve(fclaw2d_global_t *glob) {
             fclaw2d_clawpatch_soln_data(glob, fc_patch, &q, &meqn);
             fclaw2d_clawpatch_rhs_data(glob, fc_patch, &rhs, &mfields);
 
-            EllipticForest::FISHPACK::FISHPACKFVGrid& grid = patch.grid();
+            EllipticForest::Petsc::PetscGrid& grid = patch.grid();
             int nx = mx + 2*mbc;
             int ny = mx + 2*mbc;
             for (auto i = 0; i < nx; i++) {
@@ -396,7 +510,7 @@ void hps_solve(fclaw2d_global_t *glob) {
                         int idx_fc_T = i + j*ny;
 
                         // q[idx_fc] = patch.vectorU()[idx_ef];
-                        rhs[idx_fc] = patch.vectorU()[idx_ef];
+                        rhs[idx_fc] = patch.vectorU()[idx_ef_T];
                     }
                 }
             }
@@ -558,7 +672,7 @@ void hps_conservation_check(fclaw2d_global_t *glob, fclaw2d_patch_t *patch, int 
     /* Sum up the normal derivative around the boundary */
     hps_vt->fort_apply_bc(&blockno, &mx, &my, &mbc, &mfields, 
                          &xlower, &ylower, &dx,&dy,&t, intersects_bc,
-                         hps_opt->boundary_conditions,rhs, hps_vt->fort_eval_bc,
+                         hps_opt->boundary_condition_types,rhs, hps_vt->fort_eval_bc,
                          &cons_check, error_data->boundary);
 }
 
@@ -576,7 +690,7 @@ void hps_regrid_hook(fclaw2d_domain_t * old_domain,
                      int old_patchno,
                      int new_patchno,
                      void *user) {
-
+#if 0 // Commented out because new interface doesn't work with this format...
     // Get the EF app, HPS, and quadtree
     EllipticForest::EllipticForestApp& app = EllipticForest::EllipticForestApp::getInstance();
     // app.log("REGRID HOOK");
@@ -584,7 +698,7 @@ void hps_regrid_hook(fclaw2d_domain_t * old_domain,
     // app.log("  NEW_PATCH # = %i", new_patchno);
     fclaw2d_global_t* glob = fclaw2d_global_get_global();
     HPSAlgorithm* HPS = (HPSAlgorithm*) glob->user;
-    auto& quadtree = HPS->quadtree;
+    auto& quadtree = HPS->mesh.quadtree;
     auto& solver = HPS->patchSolver;
 
     // Get current quadtree node
@@ -775,7 +889,7 @@ void hps_regrid_hook(fclaw2d_domain_t * old_domain,
     // }
 
     return;
-
+#endif
 }
 
 /*************************************************/
@@ -818,7 +932,7 @@ void cb_fc2d_hps_physical_bc(fclaw2d_domain_t *domain, fclaw2d_patch_t *patch, i
 
     hps_vt->fort_apply_bc(&blockno, &mx, &my, &mbc, &mfields, 
                          &xlower, &ylower, &dx,&dy,&t, intersects_bc,
-                         hps_opt->boundary_conditions,rhs, hps_vt->fort_eval_bc,
+                         hps_opt->boundary_condition_types,rhs, hps_vt->fort_eval_bc,
                          &cons_check, flux_sum);
 }
 
@@ -944,6 +1058,13 @@ fc2d_hps_options_t*  fc2d_hps_options_register (fclaw_app_t * app, const char *c
                                 &hps_options_vtable, hps_opt);
     
     fclaw_app_set_attribute(app,"hps",hps_opt);
+
+    hps_opt->boundary_condition_types = FCLAW_ALLOC(int, 4);
+    hps_opt->boundary_condition_types[0] = hps_opt->west_bc_type;
+    hps_opt->boundary_condition_types[1] = hps_opt->east_bc_type;
+    hps_opt->boundary_condition_types[2] = hps_opt->south_bc_type;
+    hps_opt->boundary_condition_types[3] = hps_opt->north_bc_type;
+
     return hps_opt;
 }
 
@@ -963,24 +1084,41 @@ void fc2d_hps_options_store (struct fclaw2d_global* glob, fc2d_hps_options_t* hp
 
 void* hps_register (fc2d_hps_options_t* hps_opt, sc_options_t * opt) {
 
-    sc_options_add_bool(opt, 0, "use-ext-bc", &hps_opt->use_ext_bc, 0, "Option to use extended boundary condition FORTRAN function");
+    // sc_options_add_bool(opt, 0, "use-ext-bc", &hps_opt->use_ext_bc, 0, "Option to use extended boundary condition FORTRAN function");
+
+    // int rhs_function_type; // 0 = Copy RHS from ForestClaw data, 1 = Provide RHS function, 2 = Provide RHS callback
+    sc_options_add_int(opt, 0, "rhs-function-type", &hps_opt->rhs_function_type, 0,
+        "Type of interface to provide RHS data to HPS solver [0]");
+
+    // int bc_function_type; // 0 = Copy BC from ForestClaw data, 1 = Provide BC function, 2 = Provide BC callback
+    sc_options_add_int(opt, 0, "bc-function-type", &hps_opt->bc_function_type, 0,
+        "Type of interface to provide BC data to HPS solver [0]");
+
+    sc_options_add_int(opt, 0, "west-bc-type", &hps_opt->west_bc_type, 0,
+        "Type of boundary condition for the west side [0]");
+
+    sc_options_add_int(opt, 0, "east-bc-type", &hps_opt->east_bc_type, 0,
+        "Type of boundary condition for the east side [0]");
+
+    sc_options_add_int(opt, 0, "south-bc-type", &hps_opt->south_bc_type, 0,
+        "Type of boundary condition for the south side [0]");
+
+    sc_options_add_int(opt, 0, "north-bc-type", &hps_opt->north_bc_type, 0,
+        "Type of boundary condition for the north side [0]");
 
     /* Array of NumFaces=4 values */
-    fclaw_options_add_int_array (opt, 0, "boundary_conditions", 
-                                 &hps_opt->bc_cond_string, "1 1 1 1",
-                                 &hps_opt->boundary_conditions, 4,
-                                 "[hps] Physical boundary condition type [1 1 1 1]");
+    // fclaw_options_add_int_array (opt, 0, "boundary-conditions", 
+    //                              &hps_opt->bc_cond_string, "1 1 1 1",
+    //                              &hps_opt->boundary_condition_types, 4,
+    //                              "[hps] Physical boundary condition type [1 1 1 1]");
 
-    sc_options_add_bool (opt, 0, "use-ext-bc", &hps_opt->use_ext_bc, 0, "Option to use extended version of boundary condition function (user supplied)");
+    // sc_options_add_bool (opt, 0, "use-ext-bc", &hps_opt->use_ext_bc, 0, "Option to use extended version of boundary condition function (user supplied)");
 
     sc_options_add_bool (opt, 0, "ascii-out", &hps_opt->ascii_out, 0,
                            "Output ASCII formatted data [F]");
 
     sc_options_add_bool (opt, 0, "vtk-out", &hps_opt->vtk_out, 0,
                            "Output VTK formatted data [F]");
-
-    // sc_options_add_bool(opt, 0, "mmio_out", &hps_opt->mmio_out, 0,
-    //                         "Output matrices in Matrix Market format [F]");
 
     sc_options_add_bool(opt, 0, "cache_T", &hps_opt->cache_T, 1,
                             "Cache DtN matrix T by level [T]");
@@ -997,42 +1135,19 @@ void* hps_register (fc2d_hps_options_t* hps_opt, sc_options_t * opt) {
     sc_options_add_bool(opt, 0, "time_solve", &hps_opt->time_solve, 0,
                             "Time solve stage of HPS method [F]");
 
-    // sc_options_add_bool(opt, 0, "time_copy", &hps_opt->time_copy, 0,
-    //                         "Time copy stage of HPS method [F]");
-
     sc_options_add_bool(opt, 0, "nonhomogeneous_rhs", &hps_opt->nonhomogeneous_rhs, 0,
                             "Flag for non-homogeneous RHS; determines if upwards pass is done [F]");
 
     sc_options_add_bool(opt, 0, "only_patch_solver", &hps_opt->only_patch_solver, 0,
                             "Option to bypass HPS method and just use the patch solver [F]");
 
-
-    /* Set operator type (laplace, varpoisson, heat, ...) */
-    // sc_keyvalue_t *kv_op = hps_opt->kv_operator_type = sc_keyvalue_new ();
-    // sc_keyvalue_set_int (kv_op, "laplace",  LAPLACE);     /* Uses FFT or BICG */
-    // sc_keyvalue_set_int (kv_op, "varpoisson", VARPOISSON);   /* Uses BICG */
-    // sc_keyvalue_set_int (kv_op, "heat",       HEAT);   /* Uses BICG */
-    // sc_keyvalue_set_int (kv_op, "user_solver",  USER_SOLVER);   /* Uses BICG */
-    // sc_options_add_keyvalue (opt, 0, "operator-type", &hps_opt->operator_type,
-    //                          "laplace", kv_op, "Set operator type [laplace]");
-
-    /* Set solver type (FFT, DST, BICG, ...) */
-    // sc_keyvalue_t *kv_s = hps_opt->kv_patch_solver = sc_keyvalue_new ();
-    // sc_keyvalue_set_int (kv_s, "bicg", BICG);
-    // sc_keyvalue_set_int (kv_s, "fishpack", FISHPACK);
-    // sc_keyvalue_set_int (kv_s, "dst", DST);
-    // sc_keyvalue_set_int (kv_s, "fft",  FFT);     
-    // sc_keyvalue_set_int (kv_s, "user_solver",  USER_SOLVER);     
-    // sc_options_add_keyvalue (opt, 0, "patch-solver", &hps_opt->patch_solver,
-    //                          "fishpack", kv_s, "Set patch solver [fishpack]");
-
     hps_opt->is_registered = 1;
     return NULL;
 }
 
 fclaw_exit_type_t hps_postprocess (fc2d_hps_options_t * hps_opt) {
-    fclaw_options_convert_int_array (hps_opt->bc_cond_string, 
-                                     &hps_opt->boundary_conditions,4);
+    // fclaw_options_convert_int_array (hps_opt->bc_cond_string, &hps_opt->boundary_condition_types,4);
+
     
     return FCLAW_NOEXIT;
 }
@@ -1042,13 +1157,8 @@ fclaw_exit_type_t hps_check(fc2d_hps_options_t *hps_opt, fclaw2d_clawpatch_optio
 }
 
 void hps_destroy (fc2d_hps_options_t * hps_opt) {
-    fclaw_options_destroy_array (hps_opt->boundary_conditions);
-
-    FCLAW_ASSERT (hps_opt->kv_patch_solver != NULL);
-    sc_keyvalue_destroy (hps_opt->kv_patch_solver);
-
-    FCLAW_ASSERT (hps_opt->kv_operator_type != NULL);
-    sc_keyvalue_destroy (hps_opt->kv_operator_type);
+    // fclaw_options_destroy_array (hps_opt->boundary_condition_types);
+    FCLAW_FREE(hps_opt->boundary_condition_types);
 }
 
 void* options_register (fclaw_app_t * app, void *package, sc_options_t * opt) {

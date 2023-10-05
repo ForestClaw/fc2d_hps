@@ -15,6 +15,15 @@
 // fc2d_hps
 /*************************************************/
 
+using HPSAlgorithm = EllipticForest::HPSAlgorithm<EllipticForest::Petsc::PetscGrid, EllipticForest::Petsc::PetscPatchSolver, EllipticForest::Petsc::PetscPatch, double>;
+
+typedef struct fc2d_hps_app_context {
+    EllipticForest::Petsc::PetscPatchNodeFactory* node_factory;
+    EllipticForest::Mesh<EllipticForest::Petsc::PetscPatch>* mesh;
+    EllipticForest::Petsc::PetscPatchSolver* solver;
+    HPSAlgorithm* HPS;
+} fc2d_hps_app_context_t;
+
 typedef void (*fc2d_hps_fort_qexact_t)(const int* example,
                                        const double* x,
                                        const double* y,
@@ -80,11 +89,30 @@ typedef struct fc2d_hps_vtable
     fc2d_hps_fort_eval_bc_ext_t fort_eval_bc_ext;
     fc2d_hps_fort_qexact_t      fort_qexact;
 
+    /* Callback functions */
+    std::function<double(double, double, double)> cb_rhs_analytic;
+    std::function<void(EllipticForest::Petsc::PetscPatch&, int, int, int, int, int, int, double, double, double, double, double*, double*, double*)> cb_rhs_extended;
+
+    std::function<double(int, double, double, double)> cb_bc_analytic;
+    std::function<void(EllipticForest::Petsc::PetscPatch&, std::vector<std::vector<int>>)> cb_bc_extended;
+
     /* Allows us to output error and exact solution, along with computed solution */
     fc2d_hps_fort_output_t     fort_output;   
 
 	  int is_set;
 } fc2d_hps_vtable_t;
+
+typedef struct fc2d_hps_boundary_vectors
+{
+    EllipticForest::Vector<double> x_west;
+    EllipticForest::Vector<double> y_west;
+    EllipticForest::Vector<double> x_east;
+    EllipticForest::Vector<double> y_east;
+    EllipticForest::Vector<double> x_south;
+    EllipticForest::Vector<double> y_south;
+    EllipticForest::Vector<double> x_north;
+    EllipticForest::Vector<double> y_north;
+} fc2d_hps_boundary_vectors_t;
 
 fc2d_hps_vtable_t* fc2d_hps_vt();
 void fc2d_hps_solver_initialize(fclaw2d_global_t* glob);
@@ -159,12 +187,23 @@ void cb_hps_output_ascii(fclaw2d_domain_t * domain, fclaw2d_patch_t * patch, int
 //     USER_SOLVER
 // } fc2d_hps_solver_types;
 
+typedef enum {
+    COPY_FROM_FC = 0,
+    ANALYTIC,
+    EXTENDED
+} fc2d_hps_function_interface_types;
+
 typedef struct fc2d_hps_options
 {
     /* Boundary conditions */
-    int use_ext_bc;
-    int *boundary_conditions;
-    const char *bc_cond_string;
+    int rhs_function_type; // 0 = Copy RHS from ForestClaw data, 1 = Provide RHS function, 2 = Provide RHS callback
+    int bc_function_type; // 0 = Copy BC from ForestClaw data, 1 = Provide BC function, 2 = Provide BC callback
+    
+    int west_bc_type;
+    int east_bc_type;
+    int south_bc_type;
+    int north_bc_type;
+    int* boundary_condition_types;
 
     /* Output */
     int ascii_out;
